@@ -1,6 +1,6 @@
 site:
-  name: AstroWind
-  site: 'https://astrowind.vercel.app'
+  name: Web 3 2025
+  site: 'https://web3-2025.vercel.app'
   base: '/'
   trailingSlash: false
 
@@ -9,14 +9,14 @@ site:
 # Default SEO metadata
 metadata:
   title:
-    default: AstroWind
+    default: Vinci Cours de Web 3 2025
     template: '%s — AstroWind'
-  description: "\U0001F680 Suitable for Startups, Small Business, Sass Websites, Professional Portfolios, Marketing Websites, Landing Pages & Blogs."
+  description: "\U0001F680 Matériel de cours, exercices et autres informations."
   robots:
     index: true
     follow: true
   openGraph:
-    site_name: AstroWind
+    site_name: Vinci Web 3
     images:
       - url: '~/assets/images/default.png'
         width: 1200

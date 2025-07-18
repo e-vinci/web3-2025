@@ -9,6 +9,7 @@ footer: '© 2025 - Formation Backend Moderne'
 ---
 
 # Web 2 Reloaded
+
 ## Concepts Théoriques du Backend Moderne
 
 **TypeScript + Express + Prisma**
@@ -30,12 +31,14 @@ footer: '© 2025 - Formation Backend Moderne'
 ## Pourquoi ces Technologies ?
 
 ### **Problèmes du JavaScript Vanilla**
+
 - Absence de typage → erreurs à l'exécution
 - Code difficile à maintenir
 - Refactoring risqué
 - Documentation insuffisante
 
 ### **Solutions Modernes**
+
 - **TypeScript** : Typage statique
 - **Express** : Framework mature et flexible
 - **Prisma** : ORM type-safe et moderne
@@ -45,6 +48,7 @@ footer: '© 2025 - Formation Backend Moderne'
 ## TypeScript : Le JavaScript Typé
 
 ### **Avantages**
+
 - 🔍 **Détection d'erreurs** à la compilation
 - 🧠 **IntelliSense** amélioré dans l'IDE
 - 📚 **Auto-documentation** du code
@@ -52,9 +56,10 @@ footer: '© 2025 - Formation Backend Moderne'
 - 👥 **Collaboration** facilitée en équipe
 
 ### **Concepts Clés**
+
 ```typescript
 // Types primitifs
-let nom: string = "Moustache";
+let nom: string = 'Moustache';
 let age: number = 25;
 let actif: boolean = true;
 
@@ -71,18 +76,20 @@ interface Utilisateur {
 ## Express.js : Le Framework Web
 
 ### **Philosophie**
+
 - **Minimaliste** : ne fournit que l'essentiel
 - **Middleware-centric** : architecture modulaire
 - **Flexible** : s'adapte à tous les besoins
 - **Mature** : écosystème riche
 
 ### **Architecture Middleware**
+
 ```typescript
-app.use(express.json());           // Parser JSON
-app.use(helmet());                 // Sécurité
-app.use(cors());                   // CORS
-app.use('/api', routesAPI);        // Routes
-app.use(errorHandler);             // Gestion erreurs
+app.use(express.json()); // Parser JSON
+app.use(helmet()); // Sécurité
+app.use(cors()); // CORS
+app.use('/api', routesAPI); // Routes
+app.use(errorHandler); // Gestion erreurs
 ```
 
 ---
@@ -90,9 +97,11 @@ app.use(errorHandler);             // Gestion erreurs
 ## Middleware : Le Cœur d'Express
 
 ### **Concept**
+
 Fonctions qui s'exécutent **séquentiellement** pour chaque requête
 
 ### **Types de Middleware**
+
 - **Application-level** : `app.use()`
 - **Router-level** : `router.use()`
 - **Error-handling** : `(err, req, res, next) => {}`
@@ -100,6 +109,7 @@ Fonctions qui s'exécutent **séquentiellement** pour chaque requête
 - **Third-party** : `helmet`, `cors`, `morgan`
 
 ### **Flux d'une Requête**
+
 ```
 Request → Middleware 1 → Middleware 2 → Route Handler → Response
 ```
@@ -109,9 +119,11 @@ Request → Middleware 1 → Middleware 2 → Route Handler → Response
 ## Prisma : L'ORM Moderne
 
 ### **Qu'est-ce qu'un ORM ?**
+
 **Object-Relational Mapping** : Pont entre objets et base de données
 
 ### **Avantages de Prisma**
+
 - 🎯 **Type-safe** : Pas d'erreurs de requête
 - 🔄 **Schema-first** : Base de données comme source de vérité
 - 🚀 **Performance** : Requêtes optimisées
@@ -123,6 +135,7 @@ Request → Middleware 1 → Middleware 2 → Route Handler → Response
 ## Prisma Schema : La Source de Vérité
 
 ### **Structure**
+
 ```prisma
 generator client {
   provider = "prisma-client-js"
@@ -173,12 +186,14 @@ model Post {
 ## Controller Layer
 
 ### **Responsabilités**
+
 - Validation des entrées
 - Orchestration des services
 - Formatage des réponses
 - Gestion des codes de statut HTTP
 
 ### **Exemple**
+
 ```typescript
 export class MustacheController {
   constructor(private mustacheService: MustacheService) {}
@@ -199,19 +214,21 @@ export class MustacheController {
 ## Service Layer
 
 ### **Responsabilités**
+
 - Logique métier complexe
 - Validation des règles business
 - Orchestration entre différents repositories
 - Transformation des données
 
 ### **Exemple**
+
 ```typescript
 export class MustacheService {
   constructor(private mustacheRepo: MustacheRepository) {}
 
   async findAll(): Promise<Mustache[]> {
     const mustaches = await this.mustacheRepo.findMany();
-    return mustaches.map(m => this.formatMustache(m));
+    return mustaches.map((m) => this.formatMustache(m));
   }
 
   private formatMustache(mustache: Mustache): Mustache {
@@ -226,6 +243,7 @@ export class MustacheService {
 ## Repository Pattern
 
 ### **Abstraction de l'Accès aux Données**
+
 ```typescript
 interface MustacheRepository {
   findMany(): Promise<Mustache[]>;
@@ -250,14 +268,17 @@ class PrismaMustacheRepository implements MustacheRepository {
 ## Dependency Injection
 
 ### **Principe**
+
 Fournir les dépendances depuis l'extérieur plutôt que de les créer dans la classe
 
 ### **Avantages**
+
 - **Testabilité** : Mock des dépendances
 - **Flexibilité** : Changement d'implémentation
 - **Découplage** : Classes indépendantes
 
 ### **Exemple**
+
 ```typescript
 // Sans DI - Couplage fort
 class UserService {
@@ -275,19 +296,21 @@ class UserService {
 ## Validation des Données
 
 ### **Pourquoi Valider ?**
+
 - **Sécurité** : Prévention des injections
 - **Intégrité** : Données cohérentes
 - **UX** : Messages d'erreur clairs
 - **Maintenance** : Contrats explicites
 
 ### **Outils de Validation**
+
 ```typescript
 import { z } from 'zod';
 
 const MustacheSchema = z.object({
   name: z.string().min(1).max(100),
   url: z.string().url().optional(),
-  tags: z.array(z.string()).default([])
+  tags: z.array(z.string()).default([]),
 });
 
 type MustacheInput = z.infer<typeof MustacheSchema>;
@@ -298,6 +321,7 @@ type MustacheInput = z.infer<typeof MustacheSchema>;
 ## Gestion des Erreurs
 
 ### **Types d'Erreurs**
+
 - **Validation** : Données incorrectes (400)
 - **Authentification** : Non autorisé (401)
 - **Authorization** : Accès interdit (403)
@@ -305,12 +329,13 @@ type MustacheInput = z.infer<typeof MustacheSchema>;
 - **Serveur** : Erreur interne (500)
 
 ### **Error Handling Middleware**
+
 ```typescript
 const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof ValidationError) {
     return res.status(400).json({ error: err.message });
   }
-  
+
   console.error(err);
   res.status(500).json({ error: 'Erreur interne du serveur' });
 };
@@ -321,12 +346,14 @@ const errorHandler = (err: Error, req: Request, res: Response, next: NextFunctio
 ## API RESTful
 
 ### **Principes REST**
+
 - **Stateless** : Chaque requête est indépendante
 - **Resource-based** : URLs représentent des ressources
 - **HTTP Methods** : GET, POST, PUT, DELETE
 - **Status Codes** : Communication claire des résultats
 
 ### **Convention de Nommage**
+
 ```
 GET    /mustaches        # Liste toutes les moustaches
 GET    /mustaches/1      # Récupère la moustache #1
@@ -340,6 +367,7 @@ DELETE /mustaches/1      # Supprime la moustache #1
 ## Sécurité Backend
 
 ### **Menaces Communes**
+
 - **Injection SQL** : Requêtes malveillantes
 - **XSS** : Scripts malveillants côté client
 - **CSRF** : Requêtes cross-site forgées
@@ -347,8 +375,9 @@ DELETE /mustaches/1      # Supprime la moustache #1
 - **Data Exposure** : Exposition de données sensibles
 
 ### **Protections**
+
 ```typescript
-app.use(helmet());                    // Headers de sécurité
+app.use(helmet()); // Headers de sécurité
 app.use(cors({ origin: allowedOrigins })); // CORS strict
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })); // Rate limiting
 app.use(express.json({ limit: '10mb' })); // Limite de payload
@@ -359,9 +388,11 @@ app.use(express.json({ limit: '10mb' })); // Limite de payload
 ## Environment et Configuration
 
 ### **Principe des 12 Factors**
+
 Configuration via variables d'environnement
 
 ### **Structure .env**
+
 ```env
 # Database
 DATABASE_URL="file:./dev.db"
@@ -384,6 +415,7 @@ SENDGRID_API_KEY="SG..."
 ## Testing Strategy
 
 ### **Pyramide des Tests**
+
 ```
          /\
         /  \
@@ -398,6 +430,7 @@ SENDGRID_API_KEY="SG..."
 ```
 
 ### **Types de Tests Backend**
+
 - **Unit** : Fonctions individuelles
 - **Integration** : API endpoints
 - **E2E** : Scénarios complets
@@ -407,6 +440,7 @@ SENDGRID_API_KEY="SG..."
 ## Tests avec Jest et Supertest
 
 ### **Configuration**
+
 ```typescript
 // jest.config.js
 module.exports = {
@@ -417,16 +451,15 @@ module.exports = {
 ```
 
 ### **Test d'API**
+
 ```typescript
 import request from 'supertest';
 import app from '../app';
 
 describe('Mustaches API', () => {
   it('should get all mustaches', async () => {
-    const response = await request(app)
-      .get('/mustaches')
-      .expect(200);
-    
+    const response = await request(app).get('/mustaches').expect(200);
+
     expect(response.body.success).toBe(true);
     expect(Array.isArray(response.body.data)).toBe(true);
   });
@@ -438,24 +471,20 @@ describe('Mustaches API', () => {
 ## Monitoring et Logging
 
 ### **Observabilité**
+
 - **Logs** : Traçabilité des événements
 - **Metrics** : Performance et usage
 - **Tracing** : Suivi des requêtes
 
 ### **Structured Logging**
+
 ```typescript
 import winston from 'winston';
 
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: 'app.log' }),
-    new winston.transports.Console()
-  ]
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  transports: [new winston.transports.File({ filename: 'app.log' }), new winston.transports.Console()],
 });
 
 logger.info('User created', { userId: 123, email: 'user@example.com' });
@@ -466,6 +495,7 @@ logger.info('User created', { userId: 123, email: 'user@example.com' });
 ## Performance et Optimisation
 
 ### **Stratégies d'Optimisation**
+
 - **Database Indexing** : Requêtes rapides
 - **Connection Pooling** : Réutilisation des connexions
 - **Caching** : Réduction des requêtes
@@ -473,6 +503,7 @@ logger.info('User created', { userId: 123, email: 'user@example.com' });
 - **Rate Limiting** : Protection contre les abus
 
 ### **Caching avec Redis**
+
 ```typescript
 import Redis from 'redis';
 
@@ -481,7 +512,7 @@ const redis = Redis.createClient();
 async function getCachedMustaches() {
   const cached = await redis.get('mustaches');
   if (cached) return JSON.parse(cached);
-  
+
   const mustaches = await prisma.mustache.findMany();
   await redis.setex('mustaches', 300, JSON.stringify(mustaches)); // 5 min TTL
   return mustaches;
@@ -493,11 +524,13 @@ async function getCachedMustaches() {
 ## Déploiement et DevOps
 
 ### **Environnements**
+
 - **Development** : Machine locale
 - **Staging** : Réplique de production
 - **Production** : Environnement live
 
 ### **CI/CD Pipeline**
+
 ```yaml
 # .github/workflows/deploy.yml
 name: Deploy
@@ -512,7 +545,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: npm ci
       - run: npm test
-      
+
   deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -526,12 +559,14 @@ jobs:
 ## Docker et Containerisation
 
 ### **Avantages**
+
 - **Portabilité** : Même environnement partout
 - **Isolation** : Pas de conflits de dépendances
 - **Scalabilité** : Déploiement facile
 - **Reproductibilité** : Builds identiques
 
 ### **Dockerfile**
+
 ```dockerfile
 FROM node:18-alpine
 
@@ -553,15 +588,18 @@ CMD ["npm", "start"]
 ## Database Migrations
 
 ### **Principe**
+
 Évolution contrôlée du schéma de base de données
 
 ### **Avantages avec Prisma**
+
 - **Versioning** : Historique des changements
 - **Rollback** : Retour en arrière possible
 - **Team Sync** : Synchronisation d'équipe
 - **Production Safety** : Déploiements sécurisés
 
 ### **Workflow**
+
 ```bash
 # 1. Modifier le schema.prisma
 # 2. Créer la migration
@@ -576,18 +614,23 @@ npx prisma migrate deploy
 ## Patterns Avancés
 
 ### **Repository Pattern**
+
 Abstraction de l'accès aux données
 
 ### **Service Layer Pattern**
+
 Encapsulation de la logique métier
 
 ### **Dependency Injection**
+
 Inversion de contrôle
 
 ### **Observer Pattern**
+
 Événements et notifications
 
 ### **Strategy Pattern**
+
 Algorithmes interchangeables
 
 ---
@@ -595,12 +638,14 @@ Algorithmes interchangeables
 ## Microservices vs Monolithe
 
 ### **Monolithe**
+
 ✅ **Simplicité** de développement et déploiement
 ✅ **Performance** : pas de latence réseau
 ❌ **Scalabilité** limitée
 ❌ **Technology Lock-in**
 
 ### **Microservices**
+
 ✅ **Scalabilité** indépendante
 ✅ **Technology Diversity**
 ✅ **Team Independence**
@@ -612,12 +657,14 @@ Algorithmes interchangeables
 ## GraphQL vs REST
 
 ### **REST**
+
 ✅ **Simplicité** et maturité
 ✅ **Caching** HTTP standard
 ✅ **Tooling** riche
 ❌ **Over/Under-fetching**
 
 ### **GraphQL**
+
 ✅ **Flexible** : un seul endpoint
 ✅ **Type System** fort
 ✅ **Real-time** avec subscriptions
@@ -629,6 +676,7 @@ Algorithmes interchangeables
 ## Conclusion
 
 ### **Compétences Acquises**
+
 - ✅ **Architecture** backend moderne
 - ✅ **TypeScript** pour la robustesse
 - ✅ **Express.js** pour les APIs
@@ -639,6 +687,7 @@ Algorithmes interchangeables
 - ✅ **Déploiement** et monitoring
 
 ### **Prochaines Étapes**
+
 - Authentication (JWT, OAuth)
 - Real-time (WebSockets)
 - Message Queues (Redis, RabbitMQ)
@@ -651,11 +700,13 @@ Algorithmes interchangeables
 ### **Ressources pour Aller Plus Loin**
 
 📚 **Documentation**
+
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Express.js Guide](https://expressjs.com/en/guide/)
 - [Prisma Documentation](https://www.prisma.io/docs/)
 
 🎯 **Pratique**
+
 - Projets personnels
 - Contributions open source
 - Code reviews en équipe

@@ -92,7 +92,7 @@ model Mustache {
   id   Int    @id @default(autoincrement())
   name String
   url  String?
-  
+
   @@map("mustaches")
 }
 ```
@@ -145,10 +145,10 @@ app.use(express.json());
 
 // Routes de base
 app.get('/healthcheck', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.status(200).json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    message: 'Le serveur fonctionne correctement' 
+    message: 'Le serveur fonctionne correctement',
   });
 });
 
@@ -158,20 +158,20 @@ app.get('/mustaches', async (req, res) => {
     const mustaches = await prisma.mustache.findMany({
       select: {
         id: true,
-        name: true
-      }
+        name: true,
+      },
     });
-    
+
     res.status(200).json({
       success: true,
       data: mustaches,
-      count: mustaches.length
+      count: mustaches.length,
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des moustaches:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur interne du serveur'
+      message: 'Erreur interne du serveur',
     });
   }
 });
@@ -276,6 +276,7 @@ npm run dev
 Testez vos routes :
 
 1. **Health check** : `GET http://localhost:3000/healthcheck`
+
    - Devrait retourner un status 200 avec un message de confirmation
 
 2. **Liste des moustaches** : `GET http://localhost:3000/mustaches`
@@ -347,6 +348,7 @@ src/
 ### Exemple d'architecture avancée
 
 **src/controllers/mustacheController.ts**
+
 ```typescript
 import { Request, Response } from 'express';
 import { MustacheService } from '../services/mustacheService';
@@ -364,12 +366,12 @@ export class MustacheController {
       res.json({
         success: true,
         data: mustaches,
-        count: mustaches.length
+        count: mustaches.length,
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la récupération des moustaches'
+        message: 'Erreur lors de la récupération des moustaches',
       });
     }
   }
@@ -378,22 +380,22 @@ export class MustacheController {
     try {
       const { id } = req.params;
       const mustache = await this.mustacheService.findById(parseInt(id));
-      
+
       if (!mustache) {
         return res.status(404).json({
           success: false,
-          message: 'Moustache non trouvée'
+          message: 'Moustache non trouvée',
         });
       }
 
       res.json({
         success: true,
-        data: mustache
+        data: mustache,
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la récupération de la moustache'
+        message: 'Erreur lors de la récupération de la moustache',
       });
     }
   }
@@ -410,7 +412,7 @@ import { z } from 'zod';
 // Schéma de validation pour une moustache
 const MustacheSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long'),
-  url: z.string().url('URL invalide').optional()
+  url: z.string().url('URL invalide').optional(),
 });
 
 // Middleware de validation
@@ -422,7 +424,7 @@ export const validateMustache = (req: Request, res: Response, next: NextFunction
     res.status(400).json({
       success: false,
       message: 'Données invalides',
-      errors: error.errors
+      errors: error.errors,
     });
   }
 };
@@ -449,10 +451,12 @@ import compression from 'compression';
 
 // Sécurité
 app.use(helmet());
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    credentials: true,
+  })
+);
 
 // Logging
 app.use(morgan('combined'));
@@ -512,10 +516,7 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts'],
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-  ],
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
 };
 ```
 
@@ -528,18 +529,14 @@ import app from '../app';
 
 describe('Mustache API', () => {
   it('should return health check', async () => {
-    const response = await request(app)
-      .get('/healthcheck')
-      .expect(200);
-    
+    const response = await request(app).get('/healthcheck').expect(200);
+
     expect(response.body.status).toBe('OK');
   });
 
   it('should return list of mustaches', async () => {
-    const response = await request(app)
-      .get('/mustaches')
-      .expect(200);
-    
+    const response = await request(app).get('/mustaches').expect(200);
+
     expect(response.body.success).toBe(true);
     expect(Array.isArray(response.body.data)).toBe(true);
   });

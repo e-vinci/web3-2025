@@ -1,6 +1,6 @@
 ---
 publishDate: 2023-01-02T00:00:00Z
-title: Web 2 reloaded
+title: Web 2 reloaded - backend
 excerpt: Sint sit cillum pariatur eiusmod nulla pariatur ipsum. Sit laborum anim qui mollit tempor pariatur nisi minim dolor.
 tags:
   - markdown
@@ -13,9 +13,543 @@ import { YouTube, Tweet, Vimeo } from 'astro-embed';
 
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-## <a name="Headings"></a>Headings
+## Objectifs
 
-Sint sit cillum pariatur eiusmod nulla pariatur ipsum. Sit laborum anim qui mollit tempor pariatur nisi minim dolor. Aliquip et adipisicing sit sit fugiat commodo id sunt. Nostrud enim ad commodo incididunt cupidatat in ullamco ullamco Lorem cupidatat velit enim et Lorem. Ut laborum cillum laboris fugiat culpa sint irure do reprehenderit culpa occaecat. Exercitation esse mollit tempor magna aliqua in occaecat aliquip veniam reprehenderit nisi dolor in laboris dolore velit.
+Nous allons créer une application backend moderne avec TypeScript, Express et Prisma. Cette application sera une API REST qui permettra de gérer une collection de photos de moustaches.
+
+## Guide pas à pas : Backend TypeScript + Express + Prisma
+
+### 1. Initialisation du projet
+
+Commencez par créer un nouveau dossier pour votre projet backend :
+
+```bash
+mkdir mustaches-backend
+cd mustaches-backend
+```
+
+Initialisez un nouveau projet Node.js :
+
+```bash
+npm init -y
+```
+
+### 2. Installation des dépendances
+
+Installez les dépendances principales :
+
+```bash
+npm install express prisma @prisma/client
+npm install -D typescript @types/node @types/express ts-node nodemon
+```
+
+### 3. Configuration TypeScript
+
+Créez un fichier `tsconfig.json` :
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+### 4. Configuration de Prisma
+
+Initialisez Prisma :
+
+```bash
+npx prisma init --datasource-provider sqlite
+```
+
+Ceci créera un dossier `prisma` avec un fichier `schema.prisma` et un fichier `.env`.
+
+Modifiez le fichier `prisma/schema.prisma` :
+
+```prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Mustache {
+  id   Int    @id @default(autoincrement())
+  name String
+  url  String?
+  
+  @@map("mustaches")
+}
+```
+
+### 5. Configuration de la base de données
+
+Le fichier `.env` devrait contenir :
+
+```env
+DATABASE_URL="file:./dev.db"
+```
+
+Créez et appliquez la migration :
+
+```bash
+npx prisma migrate dev --name init
+```
+
+Générez le client Prisma :
+
+```bash
+npx prisma generate
+```
+
+### 6. Structure des dossiers
+
+Créez la structure de dossiers suivante :
+
+```
+src/
+  ├── routes/
+  ├── controllers/
+  ├── services/
+  └── types/
+```
+
+### 7. Configuration Express
+
+Créez le fichier `src/app.ts` :
+
+```typescript
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const app = express();
+const prisma = new PrismaClient();
+
+// Middleware
+app.use(express.json());
+
+// Routes de base
+app.get('/healthcheck', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    message: 'Le serveur fonctionne correctement' 
+  });
+});
+
+// Route pour récupérer la liste des moustaches
+app.get('/mustaches', async (req, res) => {
+  try {
+    const mustaches = await prisma.mustache.findMany({
+      select: {
+        id: true,
+        name: true
+      }
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: mustaches,
+      count: mustaches.length
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des moustaches:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur interne du serveur'
+    });
+  }
+});
+
+export default app;
+```
+
+Créez le fichier `src/server.ts` :
+
+```typescript
+import app from './app';
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  console.log(`📍 URL: http://localhost:${PORT}`);
+  console.log(`🏥 Health check: http://localhost:${PORT}/healthcheck`);
+  console.log(`👨 Moustaches: http://localhost:${PORT}/mustaches`);
+});
+```
+
+### 8. Scripts npm
+
+Modifiez le fichier `package.json` pour ajouter les scripts :
+
+```json
+{
+  "scripts": {
+    "dev": "nodemon src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
+  }
+}
+```
+
+### 9. Données de test
+
+Créez un fichier `prisma/seed.ts` pour ajouter des données de test :
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Supprimer les données existantes
+  await prisma.mustache.deleteMany();
+
+  // Créer des données de test
+  const mustaches = await prisma.mustache.createMany({
+    data: [
+      { name: 'La Française', url: 'https://example.com/francaise.jpg' },
+      { name: 'La Guidon', url: 'https://example.com/guidon.jpg' },
+      { name: 'La Pencil', url: 'https://example.com/pencil.jpg' },
+      { name: 'La Horseshoe', url: 'https://example.com/horseshoe.jpg' },
+      { name: 'La Walrus', url: 'https://example.com/walrus.jpg' },
+    ],
+  });
+
+  console.log(`✅ ${mustaches.count} moustaches créées`);
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+Ajoutez le script de seed dans `package.json` :
+
+```json
+{
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+}
+```
+
+Installez ts-node globalement si nécessaire et exécutez le seed :
+
+```bash
+npm install -D ts-node
+npx prisma db seed
+```
+
+### 10. Démarrage et test
+
+Démarrez le serveur en mode développement :
+
+```bash
+npm run dev
+```
+
+Testez vos routes :
+
+1. **Health check** : `GET http://localhost:3000/healthcheck`
+   - Devrait retourner un status 200 avec un message de confirmation
+
+2. **Liste des moustaches** : `GET http://localhost:3000/mustaches`
+   - Devrait retourner la liste des moustaches avec leur ID et nom
+
+### 11. Test avec curl ou un client REST
+
+Vous pouvez tester les routes avec curl :
+
+```bash
+# Test du health check
+curl http://localhost:3000/healthcheck
+
+# Test de la liste des moustaches
+curl http://localhost:3000/mustaches
+```
+
+### 12. Prochaines étapes
+
+Votre API backend est maintenant fonctionnelle ! Vous pouvez l'étendre en ajoutant :
+
+- Authentification et autorisation
+- Validation des données avec Joi ou Zod
+- Logging avec Winston
+- Tests avec Jest
+- Documentation avec Swagger
+- Gestion des erreurs plus sophistiquée
+- CORS pour les requêtes cross-origin
+- Rate limiting
+- Compression des réponses
+
+### Structure finale du projet
+
+```
+mustaches-backend/
+├── prisma/
+│   ├── schema.prisma
+│   ├── seed.ts
+│   └── migrations/
+├── src/
+│   ├── app.ts
+│   └── server.ts
+├── .env
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+Félicitations ! Vous avez maintenant une API backend moderne avec TypeScript, Express et Prisma qui fonctionne parfaitement.
+
+## <a name="Headings"></a>Architecture et bonnes pratiques
+
+### Organisation du code
+
+Pour un projet plus important, il est recommandé d'organiser le code de la manière suivante :
+
+```
+src/
+├── controllers/     # Logique des contrôleurs
+├── services/        # Logique métier
+├── routes/          # Définition des routes
+├── middleware/      # Middleware personnalisés
+├── types/           # Types TypeScript
+├── utils/           # Utilitaires
+├── config/          # Configuration
+└── __tests__/       # Tests
+```
+
+### Exemple d'architecture avancée
+
+**src/controllers/mustacheController.ts**
+```typescript
+import { Request, Response } from 'express';
+import { MustacheService } from '../services/mustacheService';
+
+export class MustacheController {
+  private mustacheService: MustacheService;
+
+  constructor() {
+    this.mustacheService = new MustacheService();
+  }
+
+  async getAllMustaches(req: Request, res: Response) {
+    try {
+      const mustaches = await this.mustacheService.findAll();
+      res.json({
+        success: true,
+        data: mustaches,
+        count: mustaches.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Erreur lors de la récupération des moustaches'
+      });
+    }
+  }
+
+  async getMustacheById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const mustache = await this.mustacheService.findById(parseInt(id));
+      
+      if (!mustache) {
+        return res.status(404).json({
+          success: false,
+          message: 'Moustache non trouvée'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: mustache
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Erreur lors de la récupération de la moustache'
+      });
+    }
+  }
+}
+```
+
+### Gestion des erreurs et validation
+
+Il est important d'ajouter une gestion d'erreurs robuste et une validation des données :
+
+```typescript
+import { z } from 'zod';
+
+// Schéma de validation pour une moustache
+const MustacheSchema = z.object({
+  name: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long'),
+  url: z.string().url('URL invalide').optional()
+});
+
+// Middleware de validation
+export const validateMustache = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    MustacheSchema.parse(req.body);
+    next();
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Données invalides',
+      errors: error.errors
+    });
+  }
+};
+```
+
+## Sécurité et déploiement
+
+### Sécurité de base
+
+Ajoutez ces packages pour améliorer la sécurité :
+
+```bash
+npm install helmet cors morgan compression dotenv
+npm install -D @types/cors @types/morgan @types/compression
+```
+
+Configuration sécurisée dans `app.ts` :
+
+```typescript
+import helmet from 'helmet';
+import cors from 'cors';
+import morgan from 'morgan';
+import compression from 'compression';
+
+// Sécurité
+app.use(helmet());
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  credentials: true
+}));
+
+// Logging
+app.use(morgan('combined'));
+
+// Compression
+app.use(compression());
+```
+
+### Variables d'environnement
+
+Créez un fichier `.env.example` :
+
+```env
+# Base de données
+DATABASE_URL="file:./dev.db"
+
+# Serveur
+PORT=3000
+NODE_ENV=development
+
+# Sécurité
+ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5173"
+JWT_SECRET="your-secret-key"
+
+# Logging
+LOG_LEVEL=info
+```
+
+### Déploiement
+
+Pour le déploiement, ajoutez ces scripts dans `package.json` :
+
+```json
+{
+  "scripts": {
+    "prebuild": "npm run db:generate",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "deploy": "npm run build && npm run db:migrate"
+  }
+}
+```
+
+## Tests et qualité du code
+
+### Configuration des tests avec Jest
+
+```bash
+npm install -D jest @types/jest ts-jest supertest @types/supertest
+```
+
+Créez `jest.config.js` :
+
+```javascript
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
+  testMatch: ['**/__tests__/**/*.test.ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+  ],
+};
+```
+
+Exemple de test pour l'API :
+
+```typescript
+// src/__tests__/mustache.test.ts
+import request from 'supertest';
+import app from '../app';
+
+describe('Mustache API', () => {
+  it('should return health check', async () => {
+    const response = await request(app)
+      .get('/healthcheck')
+      .expect(200);
+    
+    expect(response.body.status).toBe('OK');
+  });
+
+  it('should return list of mustaches', async () => {
+    const response = await request(app)
+      .get('/mustaches')
+      .expect(200);
+    
+    expect(response.body.success).toBe(true);
+    expect(Array.isArray(response.body.data)).toBe(true);
+  });
+});
+```
+
+Cette architecture vous donne une base solide pour développer une API backend moderne et maintenable avec TypeScript, Express et Prisma.
 
 ## Heading two
 

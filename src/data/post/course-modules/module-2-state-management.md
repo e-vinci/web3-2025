@@ -22,22 +22,25 @@ This module addresses more complex state management scenarios in React applicati
 
 ### Required Reading
 
-* **Full Stack Open – State Management with Redux (Part 6 Intro):** Read the beginning of Part 6 in Full Stack Open, which explains moving state logic out of React components as applications grow and introduces Redux. It also covers React's Context and the `useReducer` hook, as well as mentions React Query (we will focus on React Query in a later module). This gives a conceptual overview of why external state management is needed.
+- **Full Stack Open – State Management with Redux (Part 6 Intro):** Read the beginning of Part 6 in Full Stack Open, which explains moving state logic out of React components as applications grow and introduces Redux. It also covers React's Context and the `useReducer` hook, as well as mentions React Query (we will focus on React Query in a later module). This gives a conceptual overview of why external state management is needed.
+
   - [https://fullstackopen.com/en/part6](https://fullstackopen.com/en/part6)
 
-* **React Documentation – Context:** Read the official docs on React's Context API to learn how to create a context, provide values, and consume them in components. Focus especially on examples of avoiding prop drilling by using `React.createContext` and the `useContext` hook.
+- **React Documentation – Context:** Read the official docs on React's Context API to learn how to create a context, provide values, and consume them in components. Focus especially on examples of avoiding prop drilling by using `React.createContext` and the `useContext` hook.
+
   - [https://react.dev/reference/react/createContext](https://react.dev/reference/react/createContext)
   - [https://react.dev/reference/react/useContext](https://react.dev/reference/react/useContext)
 
-* **Zustand Documentation (pmndrs/zustand):** Zustand is a minimal state management library. Skim the README on the Zustand GitHub (or zustand docs site) to see how to create a global store and use it in components. Notice how it uses hooks to access state without the boilerplate of Redux. This will prepare you for implementing a simple global state store.
+- **Zustand Documentation (pmndrs/zustand):** Zustand is a minimal state management library. Skim the README on the Zustand GitHub (or zustand docs site) to see how to create a global store and use it in components. Notice how it uses hooks to access state without the boilerplate of Redux. This will prepare you for implementing a simple global state store.
+
   - [https://github.com/pmndrs/zustand](https://github.com/pmndrs/zustand)
 
-* **Redux Official Docs (Redux Toolkit):** If you haven't seen Redux before, read through the official Redux Toolkit quick-start guide. Redux Toolkit is the modern way to write Redux logic with less boilerplate. Understand concepts of a store, actions, and reducers. (Even if we don't implement Redux fully, it's useful to know how it structures state management).
+- **Redux Official Docs (Redux Toolkit):** If you haven't seen Redux before, read through the official Redux Toolkit quick-start guide. Redux Toolkit is the modern way to write Redux logic with less boilerplate. Understand concepts of a store, actions, and reducers. (Even if we don't implement Redux fully, it's useful to know how it structures state management).
   - [https://redux-toolkit.js.org/tutorials/quick-start](https://redux-toolkit.js.org/tutorials/quick-start)
 
 ### Additional Resources
 
-* **(Optional) XState and State Machines:** Read *"XState in React: Look Ma, no useState or useEffect!"*, a blog post that motivates using state machines for complex component logic. It explains the drawbacks of using only `useState`/`useEffect` for intricate states and how XState can make state transitions clearer. Optionally, also browse the official XState documentation on stately.ai to see basic concepts (states, events, transitions) and React integration (`useMachine` hook). This is an advanced topic, so focus on the high-level idea that state can be formalized as a state machine.
+- **(Optional) XState and State Machines:** Read _"XState in React: Look Ma, no useState or useEffect!"_, a blog post that motivates using state machines for complex component logic. It explains the drawbacks of using only `useState`/`useEffect` for intricate states and how XState can make state transitions clearer. Optionally, also browse the official XState documentation on stately.ai to see basic concepts (states, events, transitions) and React integration (`useMachine` hook). This is an advanced topic, so focus on the high-level idea that state can be formalized as a state machine.
   - [https://xstate.js.org/docs/](https://xstate.js.org/docs/)
 
 ## Exercises
@@ -88,12 +91,12 @@ Implement a simple global state store using **Zustand** to manage application st
 
 ## Summary
 
-* **Prop Drilling vs Context:** Prop drilling (passing state down through many levels of components) is cumbersome and can make code hard to maintain. React's Context API provides a way to **share state globally** without threading props through every level. Context is great for things like theme, user info, or any data that many components need. However, overusing context for everything can be anti-pattern; use it when prop passing becomes problematic.
+- **Prop Drilling vs Context:** Prop drilling (passing state down through many levels of components) is cumbersome and can make code hard to maintain. React's Context API provides a way to **share state globally** without threading props through every level. Context is great for things like theme, user info, or any data that many components need. However, overusing context for everything can be anti-pattern; use it when prop passing becomes problematic.
 
-* **Redux and Zustand:** As apps grow, keeping all state in React components can become complex. **Redux** was a popular solution to manage global state in a single store, enforcing unidirectional data flow and immutability. It's powerful for large applications but introduces boilerplate (actions, reducers). **Zustand**, on the other hand, offers a simpler hook-based global store with less ceremony. Both aim to handle state outside of the component tree so that any component can access or update global state directly.
+- **Redux and Zustand:** As apps grow, keeping all state in React components can become complex. **Redux** was a popular solution to manage global state in a single store, enforcing unidirectional data flow and immutability. It's powerful for large applications but introduces boilerplate (actions, reducers). **Zustand**, on the other hand, offers a simpler hook-based global store with less ceremony. Both aim to handle state outside of the component tree so that any component can access or update global state directly.
 
-* **When to use what:** For simple needs, React's built-in tools (`useState`, Context, `useReducer`) are often enough. Redux might be used in large apps where a predictable structure and dev tools are needed, whereas Zustand is a lightweight alternative for smaller to medium apps that need shared state without the overhead. It's important to choose the right tool based on the app complexity.
+- **When to use what:** For simple needs, React's built-in tools (`useState`, Context, `useReducer`) are often enough. Redux might be used in large apps where a predictable structure and dev tools are needed, whereas Zustand is a lightweight alternative for smaller to medium apps that need shared state without the overhead. It's important to choose the right tool based on the app complexity.
 
-* **State Machines (XState):** For complex interactive logic (like workflows, animations, or complex component states), **state machines** provide a structured approach. XState allows you to define explicit states and transitions, which can make such logic easier to understand and less error-prone. While not every app needs state machines, they are valuable for specific cases (e.g., multi-step forms with many conditional states).
+- **State Machines (XState):** For complex interactive logic (like workflows, animations, or complex component states), **state machines** provide a structured approach. XState allows you to define explicit states and transitions, which can make such logic easier to understand and less error-prone. While not every app needs state machines, they are valuable for specific cases (e.g., multi-step forms with many conditional states).
 
-* In summary, advanced state management is about organizing state updates and data sharing in a scalable way. This module teaches you to avoid common pitfalls (like prop drilling or excessive lifting of state) by leveraging Context and external state libraries. It also encourages thinking in terms of state structure (even as a state machine) for more complex scenarios.
+- In summary, advanced state management is about organizing state updates and data sharing in a scalable way. This module teaches you to avoid common pitfalls (like prop drilling or excessive lifting of state) by leveraging Context and external state libraries. It also encourages thinking in terms of state structure (even as a state machine) for more complex scenarios.

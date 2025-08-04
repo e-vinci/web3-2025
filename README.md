@@ -1,3 +1,7 @@
+# Web 3 course repo
+
+Based on Astro (initial readme below)
+
 # 🚀 AstroWind
 
 <img src="https://raw.githubusercontent.com/onwidget/.github/main/resources/astrowind/lighthouse-score.png" align="right"

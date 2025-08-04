@@ -23,6 +23,8 @@ const whenExternalScripts = (items: (() => AstroIntegration) | (() => AstroInteg
 
 export default defineConfig({
   output: 'static',
+  site: 'https://e-vinci.github.io',
+  base: '/github-pages',
 
   integrations: [
     tailwind({

@@ -112,5 +112,4 @@ This optional exercise helps you get exposure to styling React components using 
 
 - We typically update state in response to user **events** (like clicks or form inputs). React's event handling uses synthetic events (e.g., `onClick`, `onChange`) that wrap native browser events. By updating state in event handlers, we make the UI respond dynamically (e.g., counters increment, form text updates as you type).
 
-
 - Styling in React can be done with regular CSS or more advanced techniques. You can use global or modular CSS files, or libraries like **Styled-Components** to write CSS in JavaScript. While styling is not the primary focus of this module, remember that clean and consistent styling will improve your UI's appearance.

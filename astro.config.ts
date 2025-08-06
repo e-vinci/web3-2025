@@ -24,7 +24,7 @@ const whenExternalScripts = (items: (() => AstroIntegration) | (() => AstroInteg
 export default defineConfig({
   output: 'static',
   site: 'https://e-vinci.github.io',
-  base: '/github-pages',
+  base: 'web3-2025',
 
   integrations: [
     tailwind({

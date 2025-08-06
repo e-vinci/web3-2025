@@ -393,7 +393,7 @@ Configuration via variables d'environnement
 
 ### **Structure .env**
 
-```env
+```dotenv
 # Database
 DATABASE_URL="file:./dev.db"
 

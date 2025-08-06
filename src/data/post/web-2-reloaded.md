@@ -101,7 +101,7 @@ model Mustache {
 
 Le fichier `.env` devrait contenir :
 
-```env
+```dotenv
 DATABASE_URL="file:./dev.db"
 ```
 
@@ -469,7 +469,7 @@ app.use(compression());
 
 Créez un fichier `.env.example` :
 
-```env
+```dotenv
 # Base de données
 DATABASE_URL="file:./dev.db"
 

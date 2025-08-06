@@ -48,7 +48,9 @@ Create a new React application (use Vite or Create React App) and build a simple
 **Steps:**
 
 1. Initialize a React project with Vite.js and use the React template:  
-   `npm create vite@latest module_1 -- --template react`.
+   ```sh
+   npm create vite@latest module_1 -- --template react 
+   ```
 
 2. Create a functional component `Greeting` that accepts a prop (e.g. `name`) and displays a message like "Hello, {name}!".
 

@@ -38,6 +38,7 @@ All exercises relate to a new collaborative expense-sharing app. Begin by initia
 
 **Goal**: Set up your project with modern tooling.
 
+- Create and Navigate to your exercise directory, eg: `web3/exercises/lesson-1-refresh`
 - Create a new Vite React + TypeScript app in a `frontend/` directory using:
 
 ```bash
@@ -50,19 +51,42 @@ npm create vite@latest frontend -- --template react-ts
 npx express-generator --no-view backend
 ```
 
-- Install dependencies for both frontend and backend projects.
-- Verify that both servers can start successfully (frontend on development server, backend on Express).
+- Install dependencies for both frontend and backend projects by running `npm install` in each directory.
+- Verify that both servers can start successfully:
+  - Frontend development server (typically runs on port 5173 with Vite)
+  - Backend Express server (typically runs on port 3000)
+
+
+**Note**: You might have noticed that we are not using typescript for the backend. 
+We made this choice because this is a recap exercise and we want to keep things as simple as possible. `express-generator` is a tool provided by express which keeps things simple.
+A more solid choice would have been using a template repository [like this one](https://github.com/edwinhern/express-typescript) or maybe even a fully fledged framework. We'll consider these options in future lessons.
+
+One of the consequences of this choice is the backend using CommonJS modules and not ESModules. The difference between these two types of javascript modules is assumed to be known.
 
 ### 2. Basic React App Structure
 
 **Goal**: Create a working frontend structure using props.
 
-- Create a `frontend/src/components/ExpenseItem.tsx` component that displays a single expense item with all four fields (date, description, payer, amount).
-- Use props to pass expense data into `ExpenseItem` component, ensuring proper typing.
+- Create a TypeScript interface for the Expense type first. In `frontend/src/types/Expense.ts`:
+
+```typescript
+export interface Expense {
+  id: string;
+  date: string;
+  description: string;
+  payer: string;
+  amount: number;
+}
+```
+
+- Create a `frontend/src/components/ExpenseItem.tsx` component that displays a single expense item.
+- Use props to pass expense data into `ExpenseItem` component, reuse the type definition from above.
 - Create a `frontend/src/pages/Home.tsx` page component that renders a hardcoded list of at least 3 expense items using `ExpenseItem`.
 - Update `frontend/src/App.tsx` to render the Home page.
 - All components must receive data via props - no hardcoded data within components themselves.
 - Verify that the expense list displays correctly in the browser with proper formatting.
+
+**TypeScript Note**: If you encounter import errors with TypeScript, use `import type { Expense } from '../types/Expense'` for type-only imports when `verbatimModuleSyntax` is enabled in your TypeScript configuration.
 
 ### 3. Basic State in React
 
@@ -70,8 +94,13 @@ npx express-generator --no-view backend
 
 - Replace the hardcoded expense data in `frontend/src/pages/Home.tsx` with a `useState` hook that holds an array of expenses.
 - The state should be initialized with the same hardcoded expenses, but now stored in a state variable that can be updated.
-- Create a `frontend/src/components/ExpenseForm.tsx` component with only a button "Add", clicking on it will call the function `onAdd()` with a payer randomly selected between Alice, Bob, Charlie. The function `onAdd` is received via the Props.
-- Implement an "Add Expense" functionality that updates the expense list state when the form is submitted. The `Home` component will pass the `onAdd` prop to the `ExpenseForm` and implement it for adding an item to the list handled via `useState`
+- Create a `frontend/src/components/ExpenseAdd.tsx` component with only a button "Add", clicking on it will add a new Expense :
+    - with a payer randomly selected between Alice and Bob. 
+    - with a value between 0 and 100, maximum 2 decimal digits (cents).
+    - with an id generated from `Date.now().toString()`.
+    - The function `onAdd` will be declared in the component, create the Expense item, and then call `handleAdd(newExpense)`. Thet function must be received via the props.
+- Implement an "Add Expense" functionality that updates the expense list state when the form is submitted. 
+    - The `Home` component will implement the `handleAdd` function and pass it to the `ExpenseAdd` component. The implementation will rely on the setter from `useState`
 - The new expense should immediately appear in the expense list without requiring a page refresh.
 - Verify that the state updates work correctly and new expenses persist until page reload.
 
@@ -80,7 +109,16 @@ npx express-generator --no-view backend
 **Goal**: Create modular backend structure following separation of concerns.
 
 - Create `backend/data/expenses.json` and `backend/data/expenses.init.json` files in your backend directory.
-- Add one example expense item in both JSON files with all required fields (date, description, payer, amount).
+- Add example data in both JSON files with all required fields. Here is an example:
+
+```json
+[
+  { "id": "1", "date": "2025-01-16", "description": "Example expense #1 from Alice", "payer": "Alice", "amount": 25.5 },
+  { "id": "2", "date": "2025-01-15", "description": "Example expense #2 from Bob", "payer": "Bob", "amount": 35 },
+  { "id": "3", "date": "2025-01-15", "description": "Example expense #3 from Alice", "payer": "Alice", "amount": 2 }
+]
+```
+
 - Create `backend/routes/expenses.js` and define an Express router with:
   - GET `/expenses` route that returns all expenses from the JSON file
   - POST `/expenses` route that adds a new expense to the JSON file
@@ -92,6 +130,10 @@ npx express-generator --no-view backend
   - Verify GET returns the current expense list
   - Verify POST successfully adds a new expense and persists it
 - Configure CORS to allow frontend requests from localhost.
+  - You will need the [cors middleware](https://github.com/expressjs/cors)
+
+
+**Note**: remember that your backend with express is extremely simple and **does not refresh automatically**, do not forget to restart it manually after a change.
 
 ### 5. Reset Endpoint
 
@@ -108,7 +150,7 @@ npx express-generator --no-view backend
   - Verify they appear in GET `/expenses`
   - Call POST `/expenses/reset`
   - Verify the data has been reset to initial state
-- Add proper error handling for file operation failures.
+- Add proper error handling for file operation failures: log to console and respond with a 500 http code.
 
 ### 6. Connect Frontend to Backend
 
@@ -134,13 +176,16 @@ npx express-generator --no-view backend
 
 ### A. Expense Sorting
 
-Create a `frontend/src/components/ExpenseSorter.tsx` component that implements sorting functionality for the expense list. Include a `select` dropdown with options to sort by date (newest/oldest first) or amount (highest/lowest first). Use React state to manage the current sort preference and apply the sorting logic to the expense array before rendering. The sorting should persist until the user changes the selection or refreshes the page.
+Create a `frontend/src/components/ExpenseSorter.tsx` component that implements sorting functionality for the expense list. Include a `select` dropdown with options to sort by date (newest/oldest first) or amount (highest/lowest first).
+Use React state to manage the current sort preference and pass the sortingAlgorithm to the `Home` component responsible for displaying the items in the proper order.
+The sorting should persist until the user changes the selection or refreshes the page.
 
+**Warning**: This is a tricky question because `useState` has some unexpected behaviour. Read the documentation again if you observe strange behaviour.
 ---
 
 ## Summary
 
-- React components should receive data via **props** to stay reusable and testable, they can also receive calback functions.
+- React components should receive data via **props** to stay reusable and testable.
 - `useState` is used to manage dynamic local state in React components, such as expense lists and form data.
 - Express routing separates **HTTP handling (router)** from **business logic (service)** for better code organization.
 - File-based persistence using `fs` allows simple backend storage for small applications without database complexity.

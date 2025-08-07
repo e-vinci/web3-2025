@@ -1,8 +1,8 @@
 ---
-title: "Lesson 1 – JS2 Recap & Project Kickoff"
-description: "A recap of React and Express fundamentals, focused on preparing the base for a collaborative expense-sharing application."
+title: 'Lesson 1 – JS2 Recap & Project Kickoff'
+description: 'A recap of React and Express fundamentals, focused on preparing the base for a collaborative expense-sharing application.'
 publishDate: 2025-01-15T00:00:00Z
-excerpt: "Refresh React and Express knowledge while building the foundation for a collaborative expense-sharing app with TypeScript, Vite, and modular backend architecture."
+excerpt: 'Refresh React and Express knowledge while building the foundation for a collaborative expense-sharing app with TypeScript, Vite, and modular backend architecture.'
 tags:
   - react
   - express
@@ -12,7 +12,7 @@ tags:
   - nodejs
   - course
   - web3-2025
-category: "course-lesson"
+category: 'course-lesson'
 ---
 
 ## Introduction
@@ -30,7 +30,6 @@ In the backend, we'll continue using file-based data persistence with JSON files
 - [Node.js File System (fs)](https://nodejs.org/api/fs.html)
 - [Last year's JS course](https://e-vinci.github.io/js2)
 
-
 ## Exercises
 
 All exercises relate to a new collaborative expense-sharing app. Begin by initializing your project with Vite and Express in separate folders using the commands specified in Exercise 1.
@@ -39,14 +38,18 @@ All exercises relate to a new collaborative expense-sharing app. Begin by initia
 
 **Goal**: Set up your project with modern tooling.
 
-- Create a new Vite React + TypeScript app in a `frontend/` directory using: 
+- Create a new Vite React + TypeScript app in a `frontend/` directory using:
+
 ```bash
 npm create vite@latest frontend -- --template react-ts
 ```
-- Initialize an Express server in a `backend/` directory using: 
+
+- Initialize an Express server in a `backend/` directory using:
+
 ```bash
 npx express-generator --no-view backend
 ```
+
 - Install dependencies for both frontend and backend projects.
 - Verify that both servers can start successfully (frontend on development server, backend on Express).
 
@@ -67,7 +70,7 @@ npx express-generator --no-view backend
 
 - Replace the hardcoded expense data in `frontend/src/pages/Home.tsx` with a `useState` hook that holds an array of expenses.
 - The state should be initialized with the same hardcoded expenses, but now stored in a state variable that can be updated.
-- Create a `frontend/src/components/ExpenseForm.tsx` component with only a button "Add", clicking on it will call the function `onAdd()` with a payer randomly selected between Alice, Bob, Charlie. The function `onAdd` is received via the Props. 
+- Create a `frontend/src/components/ExpenseForm.tsx` component with only a button "Add", clicking on it will call the function `onAdd()` with a payer randomly selected between Alice, Bob, Charlie. The function `onAdd` is received via the Props.
 - Implement an "Add Expense" functionality that updates the expense list state when the form is submitted. The `Home` component will pass the `onAdd` prop to the `ExpenseForm` and implement it for adding an item to the list handled via `useState`
 - The new expense should immediately appear in the expense list without requiring a page refresh.
 - Verify that the state updates work correctly and new expenses persist until page reload.
@@ -143,4 +146,3 @@ Create a `frontend/src/components/ExpenseSorter.tsx` component that implements s
 - File-based persistence using `fs` allows simple backend storage for small applications without database complexity.
 - When working with demo data, keep an easy way to reset your data to something clean.
 - Organizing your code from the start with proper separation of concerns helps scale your app more easily.
-

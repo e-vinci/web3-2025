@@ -34,7 +34,6 @@ export default function ExpenseSorter({ setSortingAlgo }: ExpenseSorterProps) {
         setSortingAlgo(amountLowestAlgo);
         break;
     }
-
   };
 
   return (
@@ -47,5 +46,5 @@ export default function ExpenseSorter({ setSortingAlgo }: ExpenseSorterProps) {
         <option value="amount-lowest">Amount (Lowest First)</option>
       </select>
     </div>
-  )
+  );
 }

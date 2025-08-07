@@ -1,11 +1,10 @@
-import type { Expense } from "../types/Expense";
+import type { Expense } from '../types/Expense';
 
 interface ExpenseAddProps {
   addExpense: (expense: Expense) => void;
 }
 
 export default function ExpenseAdd({ addExpense }: ExpenseAddProps) {
-
   const onAdd = () => {
     const id = Date.now().toString();
     const date = new Date().toISOString();
@@ -18,17 +17,13 @@ export default function ExpenseAdd({ addExpense }: ExpenseAddProps) {
       date,
       description,
       payer,
-      amount
-    })
-  }
+      amount,
+    });
+  };
 
   return (
     <div>
-      <button
-        onClick={onAdd}
-      > 
-        Add
-      </button>
+      <button onClick={onAdd}>Add</button>
     </div>
   );
 }

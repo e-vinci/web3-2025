@@ -19,9 +19,9 @@ router.post('/', (req, res) => {
       date: req.body.date,
       description: req.body.description,
       payer: req.body.payer,
-      amount: parseFloat(req.body.amount)
+      amount: parseFloat(req.body.amount),
     };
-    
+
     const addedExpense = expensesService.addExpense(newExpense);
     res.status(201).json(addedExpense);
   } catch (error) {
@@ -33,9 +33,9 @@ router.post('/', (req, res) => {
 router.post('/reset', (req, res) => {
   try {
     const resetData = expensesService.resetExpenses();
-    res.json({ 
-      message: 'Expenses reset successfully', 
-      data: resetData 
+    res.json({
+      message: 'Expenses reset successfully',
+      data: resetData,
     });
   } catch (error) {
     console.error('Error resetting expenses:', error);

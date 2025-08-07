@@ -56,8 +56,7 @@ npx express-generator --no-view backend
   - Frontend development server (typically runs on port 5173 with Vite)
   - Backend Express server (typically runs on port 3000)
 
-
-**Note**: You might have noticed that we are not using typescript for the backend. 
+**Note**: You might have noticed that we are not using typescript for the backend.
 We made this choice because this is a recap exercise and we want to keep things as simple as possible. `express-generator` is a tool provided by express which keeps things simple.
 A more solid choice would have been using a template repository [like this one](https://github.com/edwinhern/express-typescript) or maybe even a fully fledged framework. We'll consider these options in future lessons.
 
@@ -95,12 +94,12 @@ export interface Expense {
 - Replace the hardcoded expense data in `frontend/src/pages/Home.tsx` with a `useState` hook that holds an array of expenses.
 - The state should be initialized with the same hardcoded expenses, but now stored in a state variable that can be updated.
 - Create a `frontend/src/components/ExpenseAdd.tsx` component with only a button "Add", clicking on it will add a new Expense :
-    - with a payer randomly selected between Alice and Bob. 
-    - with a value between 0 and 100, maximum 2 decimal digits (cents).
-    - with an id generated from `Date.now().toString()`.
-    - The function `onAdd` will be declared in the component, create the Expense item, and then call `handleAdd(newExpense)`. Thet function must be received via the props.
-- Implement an "Add Expense" functionality that updates the expense list state when the form is submitted. 
-    - The `Home` component will implement the `handleAdd` function and pass it to the `ExpenseAdd` component. The implementation will rely on the setter from `useState`
+  - with a payer randomly selected between Alice and Bob.
+  - with a value between 0 and 100, maximum 2 decimal digits (cents).
+  - with an id generated from `Date.now().toString()`.
+  - The function `onAdd` will be declared in the component, create the Expense item, and then call `handleAdd(newExpense)`. Thet function must be received via the props.
+- Implement an "Add Expense" functionality that updates the expense list state when the form is submitted.
+  - The `Home` component will implement the `handleAdd` function and pass it to the `ExpenseAdd` component. The implementation will rely on the setter from `useState`
 - The new expense should immediately appear in the expense list without requiring a page refresh.
 - Verify that the state updates work correctly and new expenses persist until page reload.
 
@@ -131,7 +130,6 @@ export interface Expense {
   - Verify POST successfully adds a new expense and persists it
 - Configure CORS to allow frontend requests from localhost.
   - You will need the [cors middleware](https://github.com/expressjs/cors)
-
 
 **Note**: remember that your backend with express is extremely simple and **does not refresh automatically**, do not forget to restart it manually after a change.
 
@@ -180,8 +178,7 @@ Create a `frontend/src/components/ExpenseSorter.tsx` component that implements s
 Use React state to manage the current sort preference and pass the sortingAlgorithm to the `Home` component responsible for displaying the items in the proper order.
 The sorting should persist until the user changes the selection or refreshes the page.
 
-**Warning**: This is a tricky question because `useState` has some unexpected behaviour. Read the documentation again if you observe strange behaviour.
----
+## **Warning**: This is a tricky question because `useState` has some unexpected behaviour. Read the documentation again if you observe strange behaviour.
 
 ## Summary
 

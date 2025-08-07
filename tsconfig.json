@@ -9,5 +9,5 @@
     }
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist/"]
+  "exclude": ["dist/", "exercises/", "node_modules/", "public/"],
 }

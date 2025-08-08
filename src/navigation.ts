@@ -30,7 +30,10 @@ export const headerData = {
           text: 'Lesson 1: React Basics Recap',
           href: getPermalink('course-lessons/lesson-1-refresh', 'post'),
         },
-
+        {
+          text: 'Lesson 2: Deploy and persistence',
+          href: getPermalink('course-lessons/lesson-2-deploy-persistence', 'post'),
+        },
         {
           text: 'All',
           href: getBlogPermalink(),

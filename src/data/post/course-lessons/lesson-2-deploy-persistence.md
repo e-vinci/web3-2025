@@ -47,12 +47,11 @@ All exercises relate to the new collaborative expense-sharing app we started las
 - Create a .env in the frontend folder with an new variable VITE_API_URL=http://localhost:3000
 - Use this variable for the host of the api call in the App.tsx file:
 
-
 ```typescript
-const host = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const host = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 ```
 
-(using VITE_ as a prefix is needed for the variable to be recognized)
+(using VITE\_ as a prefix is needed for the variable to be recognized)
 
 - Make sure your application is still working - commit, push, etc
 
@@ -82,9 +81,7 @@ Confirm, get it deployed and test. It may work already if your local server is s
 
 Go under the Environment tab on render, add a variable `VITE_API_URL` and put the url of your backend (something like `https://my-project-name.onrender.com`). Confirm, this should trigger a new deployment. Checks that the url is correctly going toward the backend.
 
-
 **Congrats**: You got yourself a working production application. From now on we'll redeploy with each new push (render will do that itself) - so remember to test your application in production, not only locally.
-
 
 ### 2. Install Prisma
 
@@ -160,9 +157,8 @@ You should see a new `/generated` folder - as this is generated code, we should 
 
 We're going to test it using a simple db.js file:
 
-
 ```javascript
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
@@ -231,7 +227,6 @@ Check that everything is running properly.
 
 - Replace the console.log to a call to the create API. Disregard validation issues for now.
 
-
 ### 7. React Hook Form
 
 > What's wrong with using just the HTML components? Nothing... but managing a form state is not that easy - you have to tackle databinding (how does the form input gets into your object) and also validation. We'll see that react-hook-form helps a lot there.
@@ -247,13 +242,13 @@ Let's review our code using the package by:
 - Calling useForm at the start:
 
 ```typescript
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm()
+const {
+  register,
+  handleSubmit,
+  formState: { errors },
+} = useForm();
 
-  const onSubmit = (data) => console.log(data)
+const onSubmit = (data) => console.log(data);
 ```
 
 The onSubmit method is for us to implement (here a simple console.log, that can be moved to call addExperience). The hook manages the first step (notably to run validation before calling our onSubmit method).
@@ -263,7 +258,7 @@ The onSubmit method is for us to implement (here a simple console.log, that can 
 ```tsx
 <label>
   Amount:
-  <input type="number" {...register("amount", { required: true })} placeholder="Enter amount" />
+  <input type="number" {...register('amount', { required: true })} placeholder="Enter amount" />
   {errors.amount && <span>Amount field is required</span>}
 </label>
 ```

@@ -28,7 +28,20 @@
   "forwardPorts": [4321, 3000, 5173],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": ".devcontainer/post-create.sh"
+  "postCreateCommand": ".devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "astro-build.astro-vscode",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "unifiedjs.vscode-mdx",
+        "yzhang.markdown-all-in-one",
+        "eamodio.gitlens",
+        "Prisma.prisma"
+      ]
+    }
+  }
 
   // Configure tool-specific properties.
   // "customizations": {},

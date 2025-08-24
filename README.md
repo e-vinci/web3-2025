@@ -4,8 +4,6 @@ This repository contains the material and exerice for the Web3 course of Haute E
 
 It is based on [Astrowind template](https://astro.build/themes/details/astrowind/),and available online at https://e-vinci.github.io/web3-2025
 
-
-
 ### Project structure
 
 Inside **AstroWind** template, you'll see the following folders and files:
@@ -69,6 +67,7 @@ Any static assets, like images, can be placed in the `public/` directory if they
 
 Course lessons are found at `src/data/post/course-lessons`.
 All .md files under `src/data/post` are automatically available as blog posts thanks to:
+
 - the various pages components under `src/pages/[...blog]`
 - The `postCollection` defined in `src/content/config.ts`
 
@@ -103,7 +102,6 @@ All commands are run from the root of the project, from a terminal:
 Astro configuration file: `./astro.config.ts`
 Secondary configuration file: `./src/config.yaml`
 
-
 #### Customize Design
 
 To customize Font families, Colors or more Elements refer to the following files:
@@ -124,7 +122,6 @@ npm run build
 Now, your website is ready to be deployed. All generated files are located at
 `dist` folder, which you can deploy the folder to any hosting service you
 prefer.
-
 
 <br>
 

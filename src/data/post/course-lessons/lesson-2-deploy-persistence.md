@@ -174,7 +174,7 @@ main()
   .catch(async (e) => {
     console.error(e);
     process.exit(1);
-  })
+  });
 ```
 
 The important piece is the main function and especially:
@@ -216,10 +216,10 @@ So let's go:
 Looks like a good time to push and deploy.
 Check that everything works fine on render.
 
-You may encounter these two issues : 
+You may encounter these two issues :
+
 - if you have a cors error, remember to allow your backend to serve request from your frontend in `app.js`.
 - If it complains about generated/prisma not being present, it's because it is in the .gitignore. This is on purpose and you need to update your render setting to use the following build command: `npm install && npx prisma generate`
-
 
 ### 6. A basic form
 
@@ -281,10 +281,9 @@ We can already see some benefits:
 - We have nice error messages if some field are missing on submit
 - We get a properly formatted object on submit
 
-React Hook Form has many other features, but this already shows its power. Have a look at the documentation for understanding how it will make your forms much easier than handling all the useState manually : https://react-hook-form.com/get-started#Quickstart 
+React Hook Form has many other features, but this already shows its power. Have a look at the documentation for understanding how it will make your forms much easier than handling all the useState manually : https://react-hook-form.com/get-started#Quickstart
 
 Before you end your exercice, ensure your types are properly defined. The Form component should define the FormData type describing what is passed to onSubmit (all the fields from the UI). The file src/types/Core.ts should define `Identifiable` which only needs an id. The file src/types/Expense.ts should define the interface `ExpenseInput` which is what you send to the API and `Expense` which is what you get from the API.
-
 
 ---
 

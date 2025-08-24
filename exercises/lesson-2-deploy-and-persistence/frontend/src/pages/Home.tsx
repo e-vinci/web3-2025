@@ -6,7 +6,6 @@ import type { Expense, ExpenseInput } from '../types/Expense';
 
 const host = import.meta.env.VITE_API_URL;
 
-
 export default function Home() {
   const [sortingAlgo, setSortingAlgo] = useState<(_a: Expense, _b: Expense) => number>(() => () => 0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -48,7 +47,7 @@ export default function Home() {
   }, []);
 
   const handleAddExpense = async (newExpenseForm: ExpenseInput) => {
-    const newExpenseOptimistic = {id: "optimistic", ...newExpenseForm} as Expense; // We add a temporary id -1 for React key, it will be replaced when we get the real added expense from backend
+    const newExpenseOptimistic = { id: 'optimistic', ...newExpenseForm } as Expense; // We add a temporary id -1 for React key, it will be replaced when we get the real added expense from backend
     const newExpensesOptimistic = [newExpenseOptimistic, ...expenses]; // Optimistically update the state, whatever the sort method, add on top
     setExpenses(newExpensesOptimistic);
     const addedExpense = await sendApiRequestandHandleError('POST', 'expenses', newExpenseForm);
@@ -93,9 +92,7 @@ export default function Home() {
       <div>
         {sortedExpenses.length === 0 ? (
           <p>No expenses found.</p>
-        ) : 
-        
-        (
+        ) : (
           <table>
             <tbody>
               {sortedExpenses.map((expense) => (
@@ -104,7 +101,7 @@ export default function Home() {
             </tbody>
           </table>
         )}
-    </div>
+      </div>
     </div>
   );
 }

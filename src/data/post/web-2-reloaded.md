@@ -276,7 +276,6 @@ npm run dev
 Testez vos routes :
 
 1. **Health check** : `GET http://localhost:3000/healthcheck`
-
    - Devrait retourner un status 200 avec un message de confirmation
 
 2. **Liste des moustaches** : `GET http://localhost:3000/mustaches`

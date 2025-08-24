@@ -1,4 +1,4 @@
-import type { Identifiable } from "./Core";
+import type { Identifiable } from './Core';
 
 export interface ExpenseInput {
   date: string;

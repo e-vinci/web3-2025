@@ -1,6 +1,6 @@
 # Web 3 course repo
 
-This repository contains the material and exerice for the Web3 course of Haute Ecole Leonard de Vinci.
+This repository contains the material and exercises for the Web3 course of Haute Ecole Leonard de Vinci.
 
 It is based on [Astrowind template](https://astro.build/themes/details/astrowind/),and available online at https://e-vinci.github.io/web3-2025
 

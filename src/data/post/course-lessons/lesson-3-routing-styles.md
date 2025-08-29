@@ -21,9 +21,9 @@ Now let's be honest, looking at our screen, this looks more like a technical pro
 
 ![Basic App](../../../assets/images/basic-app.png)
 
-Our goal this week is to transform this into something that's *usable*. That means a lot of work on the front end.
+Our goal this week is to transform this into something that's _usable_. That means a lot of work on the front end.
 
-> From the trenches: 
+> From the trenches: User Experience (UX) is critical. Website design has improved a lot the last 10 years, especially in the B2C area. Users expect clean interfaces with clear actions and fast feedback. Not delivering those will hurt any business - well, [almost](https://brussels.craigslist.org/).
 
 ## Setup
 
@@ -78,3 +78,5 @@ Our goal this week is to transform this into something that's *usable*. That mea
 ---
 
 ## Optional Challenges
+
+- Compute what everyone owes (based on expenses from 5 people, can give a json file with the data)

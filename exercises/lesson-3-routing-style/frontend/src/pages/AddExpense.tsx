@@ -1,13 +1,13 @@
-import { useContext, useState } from "react";
-import { PageContext } from "../App";
+import { NavLink, useNavigate } from "react-router";
 import ExpenseAdd from "../components/ExpenseAdd";
 import type { ExpenseInput } from "../types/Expense";
+import { useState } from "react";
 
 const host = import.meta.env.VITE_API_URL;
 
 export default function AddExpense() {
-    const { setCurrentPage } = useContext(PageContext);
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const sendApiRequestandHandleError = async (method: string = 'GET', path: string, body?: unknown) => {
         try {
@@ -28,14 +28,11 @@ export default function AddExpense() {
     };
     const handleAddExpense = async (newExpenseForm: ExpenseInput) => {
         await sendApiRequestandHandleError('POST', 'expenses', newExpenseForm);
-        setCurrentPage("List");
+        navigate("/list");
     };
     return <>
         <div>
             <ExpenseAdd addExpense={handleAddExpense} />
         </div>
-        Add Expense
-        <button onClick={() => setCurrentPage("List")}>View Expenses</button>
-        <button onClick={() => setCurrentPage("Welcome")}>Back to Welcome</button>
     </>
 }

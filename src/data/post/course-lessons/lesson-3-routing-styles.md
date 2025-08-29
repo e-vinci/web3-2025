@@ -17,7 +17,7 @@ category: 'course-lesson'
 
 We've done a good job last week to get all parts of a modern application working - front end, API and database - we even deployed it.
 
-Now let's be honest, looking at our screen, this looks more like a technical proof of concept than something any real users may want to use - let alone may for:
+Now let's be honest, looking at our screen, this looks more like a technical proof of concept than something any real users may want to use - let alone may pay for:
 
 ![Basic App](../../../assets/images/basic-app.png)
 
@@ -108,7 +108,7 @@ We can now return our different pages wrapped in the context:
 if (currentPage == "Welcome") {
     return (
         <PageContext.Provider value={{ currentPage, setCurrentPage: handlePageChange }}>
-        <Welcome />
+            <Welcome />
         </PageContext.Provider>
     )
 }
@@ -199,55 +199,139 @@ You can see the related code in React Router [here](https://github.com/remix-run
 
 ### 3. Best routing with a library
 
-> From the trenches: Libaries are there for cross concerns - vs specific code/logic
+> From the trenches: Libraries are there for what is called "cross concerns" - features that every application need to implement but that are not differenciator - think login, permissions, state management, etc. The goal is to recover a maximum amount of time to work on your main features - your user is not going to pick your app because it has a better login system (except if you are bulding Okta but that's quite niche).
 
-- Implement React Router
-- Layout, Outlet and OutletContext
+Note that React Router is only one of the available options there (another is TanStack Router) and that routing libraries can work in many different ways (try to look at the Framework, Data and Declarative mode in the React Router doc)
 
-### 4. Sharing state again
+Time for a little React Router refresh - install it and replace our hand made version by it using the Data mode.
 
-- Fake user (we'll use a real in the Auth session)
-- Context to pass it everywhere
+Move the code from Home to the different pages:
+
+- Expenses table in List
+- Form into Add
+
+Replace the buttons by `NavLink` elements, and use `useNavigate` to navigate back to the list when an Expense is properly added to the form. Remove the context and the setCurrentPage prop.
+
+Make sure everything is still working.
+
+Create a new NavBar component with links to Home, List and Add (a priori an horizontal bar on the top with three links - don't worry about the style for now).
+
+Add the NavBar to all three pages.
+
+Time to use one of ReactRouter feature - `Outlet` - it allows you to create a general LayoutPage with common elements (for example the NavBar) and then leave it to children page to put their content in place of the Outlet.
 
 
-### 5. Styling with tailwind
+Create a new Layout page that will return the NavBar and an Outlet.
+Update the routes to use it, making our main three pages chidren of the Layout one:
 
-- Many options (CSS, direct styles, CSS-in-JS, ...)
-- Tailwind (divisive) approach
-- Let's create components
-  - A button ?
-- Styling everything
+````tsx
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Layout />,
+    children: [
+      {
+        path: "/",
+        element: <Welcome />
+      },
+      ...
+    ]
+  },
+]);
+````
+
+Check that everything is working properly. Note that this changed the way the `List` page works, as the `NavBar` is shown directly, while only the content has the "Loading" message.
+
+### 4. Styling with tailwind
+
+Despite our claims at the start of the session, our application is not much better looking. Time to do some styling.
+
+Styling in React is a hot debate with many options from using CSS as usual, to a series of variants (SCSS, ...) or using styles directly on components.
+
+We're going to use Tailwind (a CSS library) for this course.
+
+Tailwind is a "utility first" CSS library - the idea is that you will use classes to describe what the component looks like, not what it is (which may be the exact contrary of CSS usage advice).
+
+To make this a bit more concrete:
+
+````tsx
+// using a button.danger css selector
+<button className="danger" />
+// Tailwind
+<button className="text-white bg-red-600 border border-black" />
+````
+
+Tailwind can be divisive for making pretty much one css class per possible style, leading to very long list of styles. The upsides are in something very clear to read as long as you don't have to repeat the classes everywhere - which you should not as we have a reuse method - React's own components. 
+
+Install Tailwind on the project (we use the [Vite](https://tailwindcss.com/docs/installation/using-vite) plugin). It can be configured in many way, but we're going to use it "out of the box". Make sure you have the VS code extension too as autocomplete helps *a lot* with the styling.
+
+Let's style our first components - our NavBar. We want it to:
+
+- Use the full space of the screen (horizontally)
+- Use white text on dark green background with a small shadow
+- Get the links centered with some space around them
+
+Something like this: ![NavBar](../../../assets/images/styled-navbar.png)
+
+This uses color properties (`text-` and `bg-`), spacing (`p-` for padding) shadows (`shadow`) and some flex layout to help space the components. Between the docs and some retries, you should get it.
+
+Now we'd like for the current NavLink to be put in bold. You'll need three things for that:
+
+- Know the url - check `useLocation()` for this
+- The proper Tailwind class (`font-bold`)
+- A way to apply the className conditionnally:
+
+You're not restricted to simple string when putting properties - any JavaScript code is valid, ie this will show the large text if the variable "count" is above 10:
+
+````tsx
+<MyComponent className={count > 10 ? "text-xl" : "text-sm"} />
+````
+
+Time for some more styling:
+
+- Use the Layout to make sure every page runs into a centered div with some margins on both sides (a good base for non mobile use case is to devote 1280px to the main content - text is not easy to read on very long lines)
+- Create or generate some welcome text on the home page, make it big and center it. Keep links to both other pages looking like button (note: button normally react to being hovered)
+- Make the expense table bigger to help with readability - align all columns to the left, except the amount to the right (why?). Hover on the current line.
+- Same with the form - make each element on its own line with proper label alignment and that the add button is more visible
+
+As usual, commit, deploy and test.
 
 ### 5. Adding a library
 
-- Installing Shad
-- Why a library?
-- Shad approach
-- Selecting components
+While we can style components quite fast (as we've seen in the previous section) one of the benefits of React's ecosystem is the availability of component libraries - open source package that provide all the standard basic components that an application can need - from simple ones (button, links) to very complex (calendars, accordeons, etc).
 
-### 6. Using components
+Some examples includes Material UI (MUI), Chakra UI, Antd and Shadcn that we are going to use. Most of them allow you to customize the components further or at least to theme them (update the colors, etc).
+
+This goes again with the "common concern" - you're probably not there to reinvent how a button looks like, and making proper component is not easy - a simple button may require a good amount of work:
+
+- Different sizes
+- Variant for success, danger or outlines
+- Hover reaction
+- Enabled/disabled status
+- Option for text or icons
+- ...
+
+ShadCN is an open source components library recently bought by Vercel. It provide a good set of standard components, and allow further styling using Tailwind which make it a good combination. An usual part of shad is that you don't really install it as a npm package - instead it uses a CLI to copy the components you need into your own repository.
+
+Go install shad using the [Vite option](https://ui.shadcn.com/docs/installation) (we already have Tailwind installed, don't do it twice).
+
+Look at the component list of Shad, and start installing what we need ie:
 
 - Navbar
 - Footer
-- Table
-- Forms
-  - Components, errors, etc
-- Toast for feedback
+- Table (not the Data Table, the simple one)
+- Forms (DatePicker and Inputs)
+
+Go step by step in the application, using Shad component when appropriate.
+
+Put a carousel on the home page, using dummy images from the web.
+
+A good example of a complex component is the [sonner](https://ui.shadcn.com/docs/components/sonner) - a sort of notification. Use it when the user add a new expense - this is a good example of providing feedback to the user for each of their actions.
 
 ---
 
 ## Optional Challenges
 
-- Compute what everyone owes (based on expenses from 5 people, can give a json file with the data)
+- Under the expense list, show what each person has paid and what is their balance (the amount they owe or need to recover). This will need to make some computation on the React side (we don't want to update the API for this)
+- Replace the Table by a DataTable implementing sorting and filtering. 
 
----
-
-## The PR
-
-### Content
-
-New screen with data
-
-- Link "manual"
-- use data not from context
-- ???

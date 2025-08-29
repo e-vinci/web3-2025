@@ -11,5 +11,15 @@
   "yaml.schemas": {
     "./.vscode/astrowind/config-schema.json": "/src/config.yaml"
   },
-  "eslint.useFlatConfig": true
+  "eslint.useFlatConfig": true,
+  "folder-color.pathColors": [
+    {
+      "folderPath": "backend/",
+      "color": "foldercolorizer.color_00ccff"
+    },
+    {
+      "folderPath": "frontend/",
+      "color": "foldercolorizer.color_00cc66"
+    }
+  ]
 }

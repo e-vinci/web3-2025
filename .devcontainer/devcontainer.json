@@ -11,6 +11,13 @@
     },
     "ghcr.io/devcontainers-extra/features/act:1": {
       "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": true,
+      "upgradePackages": true
     }
   },
 
@@ -18,10 +25,23 @@
   // "features": {},
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  "forwardPorts": [4321, 3000, 5173]
+  "forwardPorts": [4321, 3000, 5173],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  // "postCreateCommand": "yarn install",
+  "postCreateCommand": ".devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "astro-build.astro-vscode",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "unifiedjs.vscode-mdx",
+        "yzhang.markdown-all-in-one",
+        "eamodio.gitlens",
+        "Prisma.prisma"
+      ]
+    }
+  }
 
   // Configure tool-specific properties.
   // "customizations": {},

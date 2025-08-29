@@ -1,0 +1,15 @@
+{
+  "folder-color.pathColors": [
+    {
+      "folderPath": "lesson-2-deploy-and-persistence/backend/",
+      "color": "foldercolorizer.color_00ccff"
+    },
+    {
+      "folderPath": "lesson-2-deploy-and-persistence/frontend/",
+      "color": "foldercolorizer.color_00cc66"
+    },
+    {
+      "folderPath": "lesson-2-deploy-and-persistence/.devcontainer/"
+    }
+  ]
+}

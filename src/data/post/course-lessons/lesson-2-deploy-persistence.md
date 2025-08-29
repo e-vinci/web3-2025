@@ -270,6 +270,8 @@ We can already see some benefits:
 
 React Hook Form has many other features, but this already shows its power.
 
+Make sure to deploy & test everything again.
+
 ---
 
 ## Optional Challenges<>
@@ -288,9 +290,7 @@ Make sure to show proper error messages for each case.
 
 ## Summary
 
-- React components should receive data via **props** to stay reusable and testable.
-- `useState` is used to manage dynamic local state in React components, such as expense lists and form data.
-- Express routing separates **HTTP handling (router)** from **business logic (service)** for better code organization.
-- File-based persistence using `fs` allows simple backend storage for small applications without database complexity.
-- When working with demo data, keep an easy way to reset your data to something clean.
-- Organizing your code from the start with proper separation of concerns helps scale your app more easily.
+- Deploying to "PaSS" like render can be done pretty easily
+- Prisma has the same concepts as JPA - model, migration, client
+- Well designed API & function allow you to make big changes (moving from json to a database) without touching 80% if the application
+- Forms states are complicated

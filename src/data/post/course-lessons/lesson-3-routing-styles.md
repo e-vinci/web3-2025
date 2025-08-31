@@ -1,7 +1,7 @@
 ---
 title: 'Lesson 3 – Navigation and style'
 description: 'Going from a technical proof of concept to an application a user may want to use'
-publishDate: 2025-01-15T00:00:00Z
+publishDate: 2025-10-03T00:00:00Z
 excerpt: 'Going from a technical proof of concept to an application a user may want to use.'
 tags:
   - react
@@ -11,6 +11,7 @@ tags:
   - course
   - web3-2025
 category: 'course-lesson'
+image: https://picsum.photos/id/36/200/200
 ---
 
 ## Introduction

@@ -1,7 +1,7 @@
 ---
 title: 'Lesson 2 – Deploy and persistence'
 description: 'Deploying and improving our collaborative expense-sharing application by switching to an actual database.'
-publishDate: 2025-01-15T00:00:00Z
+publishDate: 2025-09-26T00:00:00Z
 excerpt: 'Refresh React and Express knowledge while building the foundation for a collaborative expense-sharing app with TypeScript, Vite, and modular backend architecture.'
 tags:
   - react
@@ -17,6 +17,7 @@ tags:
   - course
   - web3-2025
 category: 'course-lesson'
+image: https://picsum.photos/id/48/200/200
 ---
 
 ## Introduction

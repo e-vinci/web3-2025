@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "nodemon --exec npm run start"
+    "dev": "nodemon --exec npm run start",
+    "//db:setup": "needed for generating prisma client with correct database url from .env file",
+    "db:setup": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.14.0",

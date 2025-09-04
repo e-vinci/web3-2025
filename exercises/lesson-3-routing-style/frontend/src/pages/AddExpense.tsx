@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import ExpenseAdd from '../components/ExpenseAdd';
 import type { ExpenseInput } from '../types/Expense';
 import { useState } from 'react';
@@ -6,7 +6,7 @@ import { useState } from 'react';
 const host = import.meta.env.VITE_API_URL;
 
 export default function AddExpense() {
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const sendApiRequestandHandleError = async (method: string = 'GET', path: string, body?: unknown) => {

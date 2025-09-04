@@ -108,7 +108,7 @@ We can now return our different pages wrapped in the context:
 ```tsx
 if (currentPage == 'Welcome') {
   return (
-    <PageContext.Provider value={{ currentPage, setCurrentPage: handlePageChange }}>
+    <PageContext.Provider value={{ currentPage, setCurrentPage }}>
       <Welcome />
     </PageContext.Provider>
   );
@@ -149,7 +149,7 @@ With this we can replace our if part with:
 const CurrentPageComponent = pages[currentPage];
 
 return (
-  <PageContext.Provider value={{ currentPage, setCurrentPage: handlePageChange }}>
+  <PageContext.Provider value={{ currentPage, setCurrentPage }}>
     <CurrentPageComponent />
   </PageContext.Provider>
 );
@@ -159,7 +159,9 @@ Some explanations are needed here - how can this work?
 
 First of all, jsx component are just JavaScript functions ie:
 
+```jsx
 <Welcome />
+```
 
 is the same as calling the `Welcome()` function.
 
@@ -198,13 +200,13 @@ Check that everything is still working, commit and deploy your code - congratula
 
 When you'll be using React Router (or another routing library), remember that while it's much more advanced that what we did here, it uses the same mechanisms.
 
-You can see the related code in React Router [here](https://github.com/remix-run/react-router/blob/main/packages/react-router/lib/context.ts#L112)
+You can see the related code in React Router [here](https://github.com/remix-run/react-router/blob/main/packages/react-router/lib/context.ts)
 
 ### 3. Best routing with a library
 
 > From the trenches: Libraries are there for what is called "cross concerns" - features that every application need to implement but that are not differenciator - think login, permissions, state management, etc. The goal is to recover a maximum amount of time to work on your main features - your user is not going to pick your app because it has a better login system (except if you are bulding Okta but that's quite niche).
 
-Note that React Router is only one of the available options there (another is TanStack Router) and that routing libraries can work in many different ways (try to look at the Framework, Data and Declarative mode in the React Router doc)
+Note that React Router is only one of the available options there (another widely used is [TanStack Router](https://tanstack.com/router/latest)) and that routing libraries can work in many different ways (try to look at the Framework, Data and Declarative mode in the [React Router doc](https://reactrouter.com/start/modes))
 
 Time for a little React Router refresh - install it and replace our hand made version by it using the Data mode.
 
@@ -229,11 +231,11 @@ Update the routes to use it, making our main three pages chidren of the Layout o
 ```tsx
 const router = createBrowserRouter([
   {
-    path: "/",
+    # No path for the layout route, @see https://reactrouter.com/start/data/routing#layout-routes
     element: <Layout />,
     children: [
       {
-        path: "/",
+        index: true,
         element: <Welcome />
       },
       ...

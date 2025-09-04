@@ -2,8 +2,6 @@ import ExpenseSorter from '../components/ExpenseSorter';
 import type { Expense } from '../types/Expense';
 import ExpenseItem from '../components/ExpenseItem';
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router';
-import NavBar from '../components/NavBar';
 
 const host = import.meta.env.VITE_API_URL;
 

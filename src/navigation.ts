@@ -38,10 +38,10 @@ export const headerData = {
           text: 'Lesson 3: Styles and navigation',
           href: getPermalink('course-lessons/lesson-3-routing-styles', 'post'),
         },
-        // {
-        //   text: 'Lesson 4: Advanced state and GraphQL',
-        //   href: getPermalink('course-lessons/lesson-4-advanced-state-graphql', 'post'),
-        // },
+        {
+          text: 'Lesson 4: Advanced state',
+          href: getPermalink('course-lessons/lesson-4-advanced-state', 'post'),
+        },
         // {
         //   text: 'Lesson 5: Authorization and error management',
         //   href: getPermalink('course-lessons/lesson-5-authorization-error-management', 'post'),

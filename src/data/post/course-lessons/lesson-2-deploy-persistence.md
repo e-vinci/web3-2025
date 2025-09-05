@@ -290,7 +290,7 @@ Make sure to deploy & test everything again.
 
 ---
 
-## Optional Challenges<>
+## Optional Challenges
 
 ### A. Use Zod for better validation
 

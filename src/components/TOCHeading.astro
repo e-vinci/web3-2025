@@ -1,4 +1,6 @@
 ---
+import type { Heading } from '~/types';
+
 // TableOfContentsHeading.astro
 const { heading } = Astro.props;
 ---
@@ -10,7 +12,7 @@ const { heading } = Astro.props;
   {
     heading.subheadings.length > 0 && (
       <ul>
-        {heading.subheadings.map((subheading) => (
+        {heading.subheadings.map((subheading: Heading) => (
           <Astro.self heading={subheading} />
         ))}
       </ul>

@@ -3,4 +3,4 @@ node_modules
 .github
 .changeset
 generated/
-course-lessons/**/*
+src/data/post/course-lessons/*.md

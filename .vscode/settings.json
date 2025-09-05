@@ -12,5 +12,5 @@
     "./.vscode/astrowind/config-schema.json": "/src/config.yaml"
   },
   "eslint.useFlatConfig": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

@@ -32,6 +32,7 @@ export interface Post {
 
   /**  */
   metadata?: MetaData;
+  headings?: Array<Heading>;
 
   /**  */
   draft?: boolean;
@@ -42,6 +43,13 @@ export interface Post {
 
   /**  */
   readingTime?: number;
+}
+
+export interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+  subheadings?: Array<Heading>;
 }
 
 export interface Taxonomy {

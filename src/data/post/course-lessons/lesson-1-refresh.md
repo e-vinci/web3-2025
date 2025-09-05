@@ -179,7 +179,7 @@ Create a `frontend/src/components/ExpenseSorter.tsx` component that implements s
 Use React state to manage the current sort preference and pass the sortingAlgorithm to the `Home` component responsible for displaying the items in the proper order.
 The sorting should persist until the user changes the selection or refreshes the page.
 
-## **Warning**: This is a tricky question because `useState` has some unexpected behaviour. Read the documentation again if you observe strange behaviour.
+> **Warning**: This is a tricky question because `useState` has some unexpected behaviour. Read the documentation again if you observe strange behaviour.
 
 ## Summary
 

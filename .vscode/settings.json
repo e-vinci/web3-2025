@@ -12,14 +12,5 @@
     "./.vscode/astrowind/config-schema.json": "/src/config.yaml"
   },
   "eslint.useFlatConfig": true,
-  "folder-color.pathColors": [
-    {
-      "folderPath": "backend/",
-      "color": "foldercolorizer.color_00ccff"
-    },
-    {
-      "folderPath": "frontend/",
-      "color": "foldercolorizer.color_00cc66"
-    }
-  ]
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
 }

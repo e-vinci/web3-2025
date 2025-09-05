@@ -38,7 +38,10 @@
         "unifiedjs.vscode-mdx",
         "yzhang.markdown-all-in-one",
         "eamodio.gitlens",
-        "Prisma.prisma"
+        "Prisma.prisma",
+        "humao.rest-client",
+        "redhat.vscode-yaml",
+        "bradlc.vscode-tailwindcss"
       ]
     }
   }

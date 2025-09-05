@@ -1,0 +1,49 @@
+---
+import Layout from '~/layouts/PageLayout.astro';
+
+import Hero from '~/components/widgets/Hero.astro';
+
+const metadata = {
+  title: 'Cours de Web 3 2025-2026 - Goals',
+  ignoreTitleTemplate: true,
+};
+---
+
+qfds
+<Layout metadata={metadata}>
+  <!-- Hero Widget ******************* -->
+
+  <Hero>
+    <Fragment slot="title">
+      <span class="text-accent dark:text-white">How this works</span>
+    </Fragment>
+  </Hero>
+  <Fragment>
+    <section class="px-6 sm:px-6 py-12 sm:py-10 lg:py-10 mx-auto max-w-4xl">
+      <h2 class="text-3xl font-bold mb-4">Course Objectives</h2>
+      <p class="my-4">
+        This course aims to equip you with the skills and knowledge necessary to develop modern web applications using
+        TypeScript, Express, React, and other relevant technologies. Both teachers are experienced developers - we want
+        to give you an insight on how things works in the real world
+      </p>
+      <p class="my-4">
+        Each week has a lesson on a specific topic - from routing to async, from exceptions to styles. We're going to
+        build a complete application similar to Tricount piece by piece, using it as an example as we learn new topics
+      </p>
+    </section>
+
+    <section class="px-6 sm:px-6 py-12 sm:py-10 lg:py-10 mx-auto max-w-4xl">
+      <h2 class="text-3xl font-bold mb-4">Weekly Structure</h2>
+      <p class="my-4">
+        The course is given on Fridays's morning, 4h in a bloc. Each bloc will start with a quick presentation of the
+        week's concept and a reading of the work to be done. Then, you'll have time to work on the exercises, with the
+        help of the teachers if needed.
+      </p>
+      <p class="my-4">
+        The last 30min will be a collective code review exercise - we'll look at some new code related to the session
+        materials and try to see how to improve it. This has two goals - give you an important skill - giving feedback
+        on code while preparing you for the exam, which will be a code review exercise.
+      </p>
+    </section>
+  </Fragment>
+</Layout>

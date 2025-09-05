@@ -32,6 +32,7 @@ export interface Post {
 
   /**  */
   metadata?: MetaData;
+  headings?: Array<{ depth: number; slug: string; text: string }>;
 
   /**  */
   draft?: boolean;

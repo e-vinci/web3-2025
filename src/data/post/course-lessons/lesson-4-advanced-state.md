@@ -71,6 +71,8 @@ All exercises continue building on our collaborative expense-sharing app. We wil
 
 Create a script `prisma/seed.ts` (or a standalone TypeScript file) where you instantiate a PrismaClient and create initial records with `prisma.user.createMany`, `prisma.expense.createMany`, etc. You can then run `npx prisma db seed` (after configuring the seed path in `package.json` or `schema.prisma`).
 
+---
+
 ### 2. Data Models and Migration
 
 **Goal**: Define the new Prisma data models for `User`, `Expense`, and `Transfer` with proper relations, then create and apply a migration to update the database schema.
@@ -221,6 +223,8 @@ Our app now requires understanding **who** paid or transferred money to whom. We
 
 - At this point, our database state is initialized with some example data. We have successfully managed complex state on the backend: multiple models and relationships that mirror real-world connections between data. Next, we’ll expose this data via new API endpoints.
 
+---
+
 ### 3. Backend API Changes
 
 **Goal**: Implement new REST API endpoints for users, transfers, and combined transactions, and refactor existing routes to conform to the template’s structure and the new schema.
@@ -327,6 +331,8 @@ The main advantage of doing a combined endpoint would be pagination but this is 
   - Also ensure error handling middleware in the template will catch and respond with errors appropriately.
 
 - With the backend API ready, we can focus on the frontend changes. Our state management on the backend is now more complex (multiple tables, relationships), but Prisma simplifies retrieving related data, and our organized structure makes it easier to maintain. Keep your server running as you proceed to frontend tasks.
+
+---
 
 ### 4. Frontend Routing with Loaders and Actions
 

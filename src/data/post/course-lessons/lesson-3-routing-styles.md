@@ -10,8 +10,7 @@ tags:
   - tailwind
   - course
   - web3-2025
-category: 'course-lesson'Posts
-# image: https://picsum.photos/id/36/200/200
+category: 'course-lesson'
 ---
 
 ## Introduction

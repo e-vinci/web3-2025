@@ -13,6 +13,10 @@ tags:
 category: 'course-lesson'
 ---
 
+## Course material
+
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-3-theory.pptx)
+
 ## Introduction
 
 We've done a good job last week to get all parts of a modern application working - front end, API and database - we even deployed it.

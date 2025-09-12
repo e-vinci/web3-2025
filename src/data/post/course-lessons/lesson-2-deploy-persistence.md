@@ -20,6 +20,10 @@ category: 'course-lesson'
 # image: https://picsum.photos/id/48/200/200
 ---
 
+## Course material
+
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-2-theory.pptx)
+
 ## Introduction
 
 Last week we started a new full stack app, brushing off last year course of React & Express. This week, we're going to deploy what we've done to the Internet for everyone to use, and try to get out of json file as a storage mecanism.

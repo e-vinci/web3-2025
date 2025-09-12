@@ -15,6 +15,10 @@ tags:
 category: 'course-lesson'
 ---
 
+## Course material
+
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-4-theory.pptx)
+
 ## Introduction
 
 Now that our application has basic features and a polished interface, we will take a big step forward by introducing **multiple users** and **money transfers** to our expense-sharing app (think Splitwise-like features). This lesson focuses on **advanced state management** across the stack – refining how we manage data on the backend and how the frontend interacts with it. On the backend, we'll migrate to a more robust Express + TypeScript template and design a relational database schema using Prisma for users, expenses, and transfers. On the frontend, we'll leverage React Router’s Data APIs (loaders and actions) and global state (context) to handle more complex interactions like selecting a current user and loading combined data.

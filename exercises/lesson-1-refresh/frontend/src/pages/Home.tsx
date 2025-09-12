@@ -68,9 +68,7 @@ export default function Home() {
   const sortedExpenses = expenses.sort(sortingAlgo);
 
   const handleDeleteExpense = async (id: string) => {
-    // Intentionally not resetting state to the new array after deletion
     await sendApiRequestandHandleError('POST', 'expenses/delete', { id });
-    // Should refetch or filter state, but this is left out for the example
   };
 
   if (loading) {

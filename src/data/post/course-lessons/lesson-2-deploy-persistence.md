@@ -314,3 +314,9 @@ Make sure to show proper error messages for each case.
 - Prisma has the same concepts as JPA - model, migration, client
 - Well designed API & function allow you to make big changes (moving from json to a database) without touching 80% if the application
 - Forms states are complicated
+
+---
+
+## The PR
+
+https://github.com/e-vinci/web3-2025/pull/6

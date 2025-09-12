@@ -54,6 +54,12 @@ We try to bring you our own experience from a world you're joining in a few mont
 
 ---
 
+## File rouge
+
+Session after session, we're going to create and improve an application to help people split expenses - something like Tricount
+
+---
+
 ## Evaluation
 
 - Project: 25% of the total - producing a video report of evaluating a new technology (in groups of 4-5)

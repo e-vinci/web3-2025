@@ -146,18 +146,6 @@ model Expense {
 
 ---
 
-## Benefits of React Hook Form
-
-- **Less Boilerplate**: Register fields, get values, and validate with minimal code
-- **Performance**: Minimizes re-renders
-- **Easy Validation**: Integrates with libraries like Zod
-- **Better UX**: Built-in error handling, field-level validation
-- **Flexible**: Works with controlled and uncontrolled components
-
-[React Hook Form Docs](https://react-hook-form.com/)
-
----
-
 ```tsx
 import { useState } from 'react';
 
@@ -192,9 +180,91 @@ function ExpenseAdd() {
 
 ---
 
-## Issues with Basic React Forms
+## Benefits of React Hook Form
 
-- Lots of boilerplate: state for every field, manual validation, error handling
-- Harder to scale for big forms
-- More code to maintain and test
-- Easy to forget edge cases (reset, validation, etc)
+- **Less Boilerplate**: Register fields, get values, and validate with minimal code
+- **Performance**: Minimizes re-renders
+- **Easy Validation**: Integrates with libraries like Zod
+- **Better UX**: Built-in error handling, field-level validation
+- **Flexible**: Works with controlled and uncontrolled components
+
+[React Hook Form Docs](https://react-hook-form.com/)
+
+---
+
+## Example: React Hook Form with Validation
+
+```tsx
+import { useForm } from 'react-hook-form';
+
+function ExpenseAdd() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const onSubmit = (data) => console.log(data);
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input
+        {...register('description', {
+          required: 'Description required',
+          maxLength: { value: 100, message: 'Max 100 chars' },
+        })}
+        placeholder="Description"
+      />
+      {errors.description && <span>{errors.description.message}</span>}
+      <input
+        type="number"
+        step="0.01"
+        {...register('amount', { required: 'Amount required', min: { value: 0.01, message: 'Must be positive' } })}
+        placeholder="Amount"
+      />
+      {errors.amount && <span>{errors.amount.message}</span>}
+      <button type="submit">Add</button>
+    </form>
+  );
+}
+```
+
+---
+
+## Introducing Zod: TypeScript-first Schema Validation
+
+- **Zod** is a TypeScript-first schema declaration and validation library
+- **Why Zod?**
+  - Type-safe validation for objects, forms, and APIs
+  - Works great with React Hook Form
+  - Generates types from schemas automatically
+- **Alternatives**: Yup, Joi, class-validator
+
+[Zod Documentation](https://zod.dev/)
+
+---
+
+## Example: Validating an Expense with Zod
+
+```typescript
+import { z } from 'zod';
+
+// Define a schema for an expense
+const ExpenseSchema = z.object({
+  description: z.string().min(1, 'Description required').max(100, 'Max 100 chars'),
+  amount: z.number().min(0.01, 'Amount must be positive'),
+  payer: z.enum(['Alice', 'Bob'], { errorMap: () => ({ message: 'Payer must be Alice or Bob' }) }),
+  date: z.string().optional(),
+});
+
+// Example usage
+const result = ExpenseSchema.safeParse({
+  description: '',
+  amount: -5,
+  payer: 'Charlie',
+});
+
+if (!result.success) {
+  console.log(result.error.format());
+  // Shows validation errors for each field
+}
+```

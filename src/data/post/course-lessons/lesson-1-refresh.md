@@ -16,6 +16,10 @@ category: 'course-lesson'
 # image: https://picsum.photos/id/84/200/200
 ---
 
+## Course material
+
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson1.pptx)
+
 ## Introduction
 
 Welcome back! This lesson serves as a comprehensive refresher of key concepts from last year’s JS2 course. We’ll revisit essential frontend and backend practices using React and Express, then scaffold the foundation for this year’s collaborative expense-sharing application (inspired by apps like Splitwise and Tricount). The goal is to reinforce patterns and structures that you'll use and extend throughout the course.

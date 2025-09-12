@@ -43,4 +43,15 @@ router.post('/reset', (req, res) => {
   }
 });
 
+// Intentionally using POST instead of DELETE and no try/catch for not found
+router.post('/delete', (req, res) => {
+  const { id } = req.body;
+  const deleted = expensesService.deleteExpense(id);
+  if (deleted) {
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, error: 'Expense not found' });
+  }
+});
+
 module.exports = router;

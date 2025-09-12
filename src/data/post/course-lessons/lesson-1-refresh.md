@@ -193,3 +193,8 @@ The sorting should persist until the user changes the selection or refreshes the
 - File-based persistence using `fs` allows simple backend storage for small applications without database complexity.
 - When working with demo data, keep an easy way to reset your data to something clean.
 - Organizing your code from the start with proper separation of concerns helps scale your app more easily.
+
+## The PR
+
+- Go check it on [GitHub](https://github.com/e-vinci/web3-2025/pull/5)
+- Let's review the code together

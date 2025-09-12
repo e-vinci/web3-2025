@@ -6,7 +6,6 @@ header: 'Web 3 2025 - Deploy & Persistence'
 footer: 'Web 3 2025 - Vinci'
 ---
 
-
 # Theoretical Introduction
 
 ## Lesson 2 – Deployment and Persistence
@@ -159,7 +158,6 @@ model Expense {
 
 ---
 
-
 ```tsx
 import { useState } from 'react';
 
@@ -182,18 +180,9 @@ function ExpenseAdd() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input
-        value={description}
-        onChange={e => setDescription(e.target.value)}
-        placeholder="Description"
-      />
+      <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" />
       {errors.description && <span>{errors.description}</span>}
-      <input
-        type="number"
-        value={amount}
-        onChange={e => setAmount(e.target.value)}
-        placeholder="Amount"
-      />
+      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" />
       {errors.amount && <span>{errors.amount}</span>}
       <button type="submit">Add</button>
     </form>
@@ -209,5 +198,3 @@ function ExpenseAdd() {
 - Harder to scale for big forms
 - More code to maintain and test
 - Easy to forget edge cases (reset, validation, etc)
-
-

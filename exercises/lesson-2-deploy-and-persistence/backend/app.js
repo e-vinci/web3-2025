@@ -4,6 +4,7 @@ var logger = require('morgan');
 var cors = require('cors');
 
 var expensesRouter = require('./routes/expenses.js');
+var topupRouter = require('./routes/topup.js');
 
 var app = express();
 
@@ -17,6 +18,6 @@ app.use(
   })
 );
 
-app.use('/api/expenses', expensesRouter);
+app.use('/api/topup', topupRouter);
 
 module.exports = app;

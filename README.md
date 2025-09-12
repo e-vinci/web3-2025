@@ -4,7 +4,6 @@ This repository contains the material and exercises for the Web3 course of Haute
 
 It is based on [Astrowind template](https://astro.build/themes/details/astrowind/),and available online at https://e-vinci.github.io/web3-2025
 
-
 ### Slides
 
 Slides can be edited in .md like the rest of the course, with a small frontmatter.
@@ -16,9 +15,9 @@ Things to know:
 
 Generate a pptx (options for pdf, html exists too):
 
-````bash
+```bash
 npx @marp-team/marp-cli@latest .\src\slides\lesson-4-theory.md --pptx --o .\src\slides\lesson-4-theory.pptx
-````
+```
 
 ### Project structure
 

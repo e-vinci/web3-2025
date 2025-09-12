@@ -7,11 +7,13 @@ footer: 'Gestion d’état avancée'
 ---
 
 # Theoretical Introduction
+
 ## Lesson 4 – Advanced State Management
 
 ---
 
 ## Lesson Objectives
+
 - Manage multiple users and money transfers
 - Structure global state on frontend and backend
 - Use Prisma for complex relations
@@ -20,6 +22,7 @@ footer: 'Gestion d’état avancée'
 ---
 
 ## Key Backend Concepts
+
 - **Express + TypeScript**: Professional structure
 - **Prisma relations**: Model User, Expense, Transfer
 - **Migrations**: Schema evolution
@@ -57,6 +60,7 @@ model Transfer {
 ---
 
 ## Key Frontend Concepts
+
 - **React Router Loaders/Actions**: Data loading and mutation
 - **Global context**: Share state between components
 - **Unified transactions**: Merge expenses and transfers
@@ -74,6 +78,7 @@ export async function loader() {
 ---
 
 ## Best Practices
+
 - Refactor to separate business logic and UI
 - Use TypeScript typing everywhere
 - Test migrations and seed before coding the UI
@@ -82,6 +87,7 @@ export async function loader() {
 ---
 
 ## Key Takeaways
+
 - Advanced state management enables powerful collaborative apps
 - Prisma makes modeling complex relations easier
 - React Router and global context simplify UI/backend sync

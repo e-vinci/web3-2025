@@ -7,11 +7,13 @@ footer: 'JS2 Recap & Project Kickoff'
 ---
 
 # Theoretical Introduction
+
 ## Lesson 1 – JS2 Recap & Project Kickoff
 
 ---
 
 ## Lesson Objectives
+
 - Refresh React and Express fundamentals
 - Understand the structure of a modern fullstack app
 - Prepare the foundation for a collaborative expense-sharing application
@@ -19,6 +21,7 @@ footer: 'JS2 Recap & Project Kickoff'
 ---
 
 ## Key React Concepts
+
 - **Components**: Reusable UI building blocks
 - **Props**: Passing data between components
 - **State**: Local state management
@@ -40,6 +43,7 @@ export interface Expense {
 ---
 
 ## Key Express Concepts
+
 - **Minimalist HTTP server**
 - **Routing**: Handling endpoints
 - **Persistence**: JSON files (for starters)
@@ -58,6 +62,7 @@ app.get('/api/expenses', (req, res) => {
 ---
 
 ## Tooling & Project Structure
+
 - **Vite**: Fast React frontend setup
 - **Express Generator**: Bootstrap the backend
 - **npm**: Dependency management
@@ -71,6 +76,7 @@ npx express-generator --no-view backend
 ---
 
 ## Useful Links
+
 - [Vite – Getting Started](https://vitejs.dev/guide/)
 - [Node.js File System (fs)](https://nodejs.org/api/fs.html)
 - [Last year's JS2 course](https://e-vinci.github.io/js2)
@@ -78,6 +84,7 @@ npx express-generator --no-view backend
 ---
 
 ## Key Takeaways
+
 - Use props for clarity and reusability
 - Keep a modular structure
 - Start simple, add complexity later

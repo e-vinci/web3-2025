@@ -7,11 +7,13 @@ footer: 'Navigation & Style'
 ---
 
 # Theoretical Introduction
+
 ## Lesson 3 – Navigation and Style
 
 ---
 
 ## Lesson Objectives
+
 - Move from a technical POC to a real usable application
 - Improve user experience (UX)
 - Discover routing and modern design
@@ -19,6 +21,7 @@ footer: 'Navigation & Style'
 ---
 
 ## Key Routing Concepts
+
 - **Navigation**: Split the app into pages (Welcome, List, Add)
 - **Navigation state**: Manage the current page
 - **React Router**: Routing library for React
@@ -34,12 +37,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
     <Route path="/list" element={<List />} />
     <Route path="/add" element={<AddExpense />} />
   </Routes>
-</BrowserRouter>
+</BrowserRouter>;
 ```
 
 ---
 
 ## Key Styling Concepts
+
 - **Tailwind CSS**: Utility-first styling
 - **shadcn/ui**: Modern, accessible UI components
 - **Responsive design**: Adaptation to all screens
@@ -50,6 +54,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 ---
 
 ## UX Best Practices
+
 - Clear interfaces and visible actions
 - Fast user feedback (loading, errors)
 - Smooth and intuitive navigation
@@ -57,6 +62,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 ---
 
 ## Key Takeaways
+
 - Design and navigation are essential for adoption
 - Use modern libraries to save time
 - Always test on different devices

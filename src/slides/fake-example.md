@@ -109,6 +109,7 @@ Fonctions qui s'exécutent **séquentiellement** pour chaque requête
 - **Error-handling** : `(err, req, res, next) => {}`
 - **Built-in** : `express.json()`, `express.static()`
 - **Third-party** : `helmet`, `cors`, `morgan`
+
 ### **Flux d'une Requête**
 
 ```

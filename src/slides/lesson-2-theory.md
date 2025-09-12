@@ -7,11 +7,13 @@ footer: 'Déploiement & Persistance'
 ---
 
 # Theoretical Introduction
+
 ## Lesson 2 – Deployment and Persistence
 
 ---
 
 ## Lesson Objectives
+
 - Deploy a fullstack application to the Internet
 - Replace file-based persistence with a real database
 - Discover Prisma ORM and the deployment workflow
@@ -19,6 +21,7 @@ footer: 'Déploiement & Persistance'
 ---
 
 ## Key Deployment Concepts
+
 - **Environments**: local vs production
 - **Environment variables**: secure secrets/API URLs
 - **Cloud services**: Render to host backend and frontend
@@ -29,6 +32,7 @@ footer: 'Déploiement & Persistance'
 ---
 
 ## Persistence with Prisma
+
 - **ORM**: Object ↔ database mapping
 - **Prisma**: Generates a type-safe client
 - **Migration**: Versioning the database schema
@@ -50,6 +54,7 @@ model Expense {
 ---
 
 ## Validation and Forms
+
 - **React Hook Form**: Form management in React
 - **Zod**: Data validation on frontend and backend
 
@@ -59,6 +64,7 @@ model Expense {
 ---
 
 ## Best Practices
+
 - Always use environment variables for URLs/API keys
 - Commit & push before every deployment
 - Test on the public URL after deployment
@@ -66,6 +72,7 @@ model Expense {
 ---
 
 ## Key Takeaways
+
 - Deployment = accessible to everyone
 - Persistence = data reliability
 - Prisma simplifies DB access and schema migration

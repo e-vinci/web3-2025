@@ -2,8 +2,8 @@
 marp: true
 theme: default
 paginate: true
-header: 'Web3-2025 - Lesson 4'
-footer: 'Gestion d’état avancée'
+header: 'Web 3 2025 - Complex state management'
+footer: 'Web 3 2025 - Vinci'
 ---
 
 # Theoretical Introduction

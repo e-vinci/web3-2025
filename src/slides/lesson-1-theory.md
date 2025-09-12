@@ -2,8 +2,8 @@
 marp: true
 theme: default
 paginate: true
-header: 'Web3-2025 - Lesson 1'
-footer: 'JS2 Recap & Project Kickoff'
+header: 'Web 3 2025 - Recap'
+footer: 'Web 3 2025 - Vinci'
 ---
 
 # Theoretical Introduction

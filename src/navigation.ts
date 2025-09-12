@@ -6,6 +6,10 @@ export const headerData = {
       text: 'Pages',
       links: [
         {
+          text: 'Introduction (slides)',
+          href: 'https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/intro.pptx',
+        },
+        {
           text: 'Moodle',
           href: 'https://moodle.vinci.be/course/view.php?id=494',
         },

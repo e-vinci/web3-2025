@@ -2,8 +2,8 @@
 marp: true
 theme: default
 paginate: true
-header: 'Web3-2025 - Lesson 3'
-footer: 'Navigation & Style'
+header: 'Web 3 2025 - Navigation & Style'
+footer: 'Web 3 2025 - Vinci'
 ---
 
 # Theoretical Introduction

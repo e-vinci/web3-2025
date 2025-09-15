@@ -56,19 +56,18 @@ We try to bring you our own experience from a world you're joining in a few mont
 
 ## Fil rouge
 
-Session after session, we're going to create and improve an application to help people split expenses 
+Session after session, we're going to create and improve an application to help people split expenses
 
-- similar to  Tricount, or Splitwise
+- similar to Tricount, or Splitwise
 - the point is to explore usual problems and acceptable solutions, not have a bulletproof app.
-
 
 ---
 
 ## Evaluation
 
-- Continuous: 25% of the total 
-  -  15%: producing a video report of evaluating a new technology (in groups of 4-5)
-  -  10%: providing feedback to other groups through at least 5 reviews
+- Continuous: 25% of the total
+  - 15%: producing a video report of evaluating a new technology (in groups of 4-5)
+  - 10%: providing feedback to other groups through at least 5 reviews
 - Exam: 75% of the total - reviewing a piece of code (on a school machine, limited internet, no AI)
 
 Note the continuous evaluation is final (no way to represent it in August)

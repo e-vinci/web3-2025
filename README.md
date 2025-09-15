@@ -16,7 +16,13 @@ Things to know:
 Generate a pptx (options for pdf, html exists too):
 
 ```bash
-npx @marp-team/marp-cli@latest .\src\slides\lesson-4-theory.md --pptx --o .\src\slides\lesson-4-theory.pptx
+npx @marp-team/marp-cli@latest src/slides/lesson-1-theory.md --pptx --o src/slides/lesson-1-theory.pptx
+```
+
+If you want to generate all the slidedecks, you can use this command (---parallel 1 might not be needed on your machine)
+
+```bash
+npx @marp-team/marp-cli@latest --input-dir src/slides/  --pptx --parallel 1
 ```
 
 ### Project structure

@@ -54,18 +54,24 @@ We try to bring you our own experience from a world you're joining in a few mont
 
 ---
 
-## File rouge
+## Fil rouge
 
-Session after session, we're going to create and improve an application to help people split expenses - something like Tricount
+Session after session, we're going to create and improve an application to help people split expenses 
+
+- similar to  Tricount, or Splitwise
+- the point is to explore usual problems and acceptable solutions, not have a bulletproof app.
+
 
 ---
 
 ## Evaluation
 
-- Project: 25% of the total - producing a video report of evaluating a new technology (in groups of 4-5)
-- Examen: 75% of the total - reviewing a piece of code (on a school machine, limited internet, no AI)
+- Continuous: 25% of the total 
+  -  15%: producing a video report of evaluating a new technology (in groups of 4-5)
+  -  10%: providing feedback to other groups through at least 5 reviews
+- Exam: 75% of the total - reviewing a piece of code (on a school machine, limited internet, no AI)
 
-Note the project code is final (no way to represent it in August)
+Note the continuous evaluation is final (no way to represent it in August)
 
 ---
 
@@ -77,10 +83,19 @@ Note the project code is final (no way to represent it in August)
 
 ---
 
-## Examen
+## Reviews
+
+- Individual
+- Watch other group videos and provide at least 5 reviews for at least 2 different groups.
+- The clarity, maturity, and helpfulness of your reviews will be evaluated.
+
+---
+
+## Exam
 
 - What's a Pull Request?
 - We want you to exercise **reading code** and giving **meaningful feedback**
+- There will be no AI nor Internet at your disposal but any code you write will not be evaluated on being runnable.
 - We're going to practice this every week together
 
 ---
@@ -101,7 +116,7 @@ Note the project code is final (no way to represent it in August)
 
 - Toussaint Holidays
 - Week 7 (07/11): Examen Dry Run
-- Week 8 (14/11): Performance and Async
+- Week 8 (14/11): Async && Pub/Sub
 - Week 9 (21/11): Projects preparation
   - 🎯Projects submitted
 - Week 10 (28/11): Projects presentation

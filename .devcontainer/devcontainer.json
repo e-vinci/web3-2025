@@ -41,7 +41,8 @@
         "Prisma.prisma",
         "humao.rest-client",
         "redhat.vscode-yaml",
-        "bradlc.vscode-tailwindcss"
+        "bradlc.vscode-tailwindcss",
+        "marp-team.marp-vscode"
       ]
     }
   }

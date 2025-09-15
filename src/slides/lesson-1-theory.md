@@ -100,6 +100,9 @@ interface Expense {
   participants: string[];
 }
 
+// Type 
+type Result = number | false | void; 
+
 // Function with types
 function add(a: number, b: number): number {
   return a + b;
@@ -144,12 +147,7 @@ app.listen(3000, () => {
 - **Vite**: Fast React frontend setup
 - **Express Generator**: Bootstrap the backend
 - **npm**: Dependency management
-- **Frontend/backend separation**
-
-```bash
-npm create vite@latest frontend -- --template react-ts
-npx express-generator --no-view backend
-```
+- **Frontend/backend separation**: two apps, two folders.
 
 ---
 

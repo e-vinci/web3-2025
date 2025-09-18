@@ -21,3 +21,11 @@ model Expense {
   payer       String
   amount      Float
 }
+
+// Faulty model: amount should be Float, but is string
+model TopUp {
+  id     Int    @id @default(autoincrement())
+  user   String
+  amount String
+  date   DateTime @default(now())
+}

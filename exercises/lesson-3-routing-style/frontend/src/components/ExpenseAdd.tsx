@@ -2,21 +2,8 @@ import type { ExpenseInput } from '../types/Expense';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface ExpenseAddProps {
   addExpense: (expense: ExpenseInput) => void;
@@ -56,7 +43,7 @@ export default function ExpenseAdd({ addExpense }: ExpenseAddProps) {
             <FormField
               control={form.control}
               name="description"
-              rules={{ required: "Description is required" }}
+              rules={{ required: 'Description is required' }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
@@ -94,23 +81,17 @@ export default function ExpenseAdd({ addExpense }: ExpenseAddProps) {
               control={form.control}
               name="amount"
               rules={{
-                required: "Amount is required",
+                required: 'Amount is required',
                 pattern: {
                   value: /^\d+(\.\d{1,2})?$/,
-                  message: "Please enter a valid amount"
-                }
+                  message: 'Please enter a valid amount',
+                },
               }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      min={0}
-                      step={0.01}
-                      {...field}
-                    />
+                    <Input type="number" placeholder="0.00" min={0} step={0.01} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

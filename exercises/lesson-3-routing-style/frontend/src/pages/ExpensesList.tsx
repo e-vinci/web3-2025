@@ -2,13 +2,7 @@ import ExpenseSorter from '../components/ExpenseSorter';
 import type { Expense } from '../types/Expense';
 import ExpenseItem from '../components/ExpenseItem';
 import { useEffect, useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const host = import.meta.env.VITE_API_URL;
 

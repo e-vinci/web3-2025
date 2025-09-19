@@ -16,31 +16,37 @@ export default function NavBar() {
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={location.pathname === '/' ? 'font-bold px-8 text-white bg-green-800' : 'px-8 text-white hover:bg-green-800'}
+              className={
+                location.pathname === '/'
+                  ? 'font-bold px-8 text-white bg-green-800'
+                  : 'px-8 text-white hover:bg-green-800'
+              }
             >
-              <NavLink to="/">
-                Welcome
-              </NavLink>
+              <NavLink to="/">Welcome</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={location.pathname === '/add' ? 'font-bold px-8 text-white bg-green-800' : 'px-8 text-white hover:bg-green-800'}
+              className={
+                location.pathname === '/add'
+                  ? 'font-bold px-8 text-white bg-green-800'
+                  : 'px-8 text-white hover:bg-green-800'
+              }
             >
-              <NavLink to="/add">
-                Add Expense
-              </NavLink>
+              <NavLink to="/add">Add Expense</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
           <NavigationMenuItem>
             <NavigationMenuLink
               asChild
-              className={location.pathname === '/list' ? 'font-bold px-8 text-white bg-green-800' : 'px-8 text-white hover:bg-green-800'}
+              className={
+                location.pathname === '/list'
+                  ? 'font-bold px-8 text-white bg-green-800'
+                  : 'px-8 text-white hover:bg-green-800'
+              }
             >
-              <NavLink to="/list">
-                Expense List
-              </NavLink>
+              <NavLink to="/list">Expense List</NavLink>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>

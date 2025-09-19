@@ -2,6 +2,13 @@ import ExpenseSorter from '../components/ExpenseSorter';
 import type { Expense } from '../types/Expense';
 import ExpenseItem from '../components/ExpenseItem';
 import { useEffect, useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const host = import.meta.env.VITE_API_URL;
 
@@ -74,22 +81,22 @@ export default function ExpensesList() {
         {sortedExpenses.length === 0 ? (
           <p>No expenses found.</p>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th className="text-left px-4">Id</th>
-                <th className="text-left px-4">Date</th>
-                <th className="text-left px-4">Description</th>
-                <th className="text-left px-4">Payer</th>
-                <th className="text-right px-4">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">Id</TableHead>
+                <TableHead className="text-left">Date</TableHead>
+                <TableHead className="text-left">Description</TableHead>
+                <TableHead className="text-left">Payer</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {sortedExpenses.map((expense: Expense) => (
                 <ExpenseItem key={expense.id} expense={expense} />
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

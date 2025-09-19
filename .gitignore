@@ -24,3 +24,6 @@ pnpm-lock.yaml
 .astro
 
 .local
+
+# LibreOffice lock files
+.~lock*

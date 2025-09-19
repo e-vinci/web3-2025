@@ -347,11 +347,15 @@ Our app looks good, but in a very generic way. Our design teams has given us the
 
 Update the application to follow those rules. Try to do a maximum using Tailwind config instead of having to update the styles everywhere.
 
-
-
 ---
 
 ## Optional Challenges
 
 - Under the expense list, show what each person has paid and what is their balance (the amount they owe or need to recover). This will need to make some computation on the React side (we don't want to update the API for this)
 - Replace the Table by a DataTable implementing sorting and filtering.
+
+---
+
+## The PR
+
+https://github.com/e-vinci/web3-2025/pull/9

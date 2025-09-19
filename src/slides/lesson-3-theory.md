@@ -86,12 +86,12 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 ## Tailwind Configuration & Variables
 
---- 
+---
+
 ### Modern CSS Configuration (2024+)
 
 ```css
 /* imports... */
-
 
 @layer base {
   :root {
@@ -121,10 +121,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 **Traditional CSS principles Tailwind violates:**
 
 1. **Separation of Concerns**: Mix styling directly in HTML
+
    ```html
    <!-- Traditional: Clean HTML, styles in CSS -->
    <div class="card">Content</div>
-   
+
    <!-- Tailwind: Styling mixed with markup -->
    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">Content</div>
    ```
@@ -135,18 +136,24 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
    ```html
    <!-- Same button styling repeated 10 times -->
    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-   <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"></button>
+   </button>
    ```
 
 ---
 
 3. **Semantic CSS**: Utility classes are non-semantic
+
    ```css
    /* Semantic (good) */
-   .submit-button { /* clearly describes purpose */ }
-   
+   .submit-button {
+     /* clearly describes purpose */
+   }
+
    /* Non-semantic (Tailwind) */
-   .bg-blue-500 { /* describes appearance, not meaning */ }
+   .bg-blue-500 {
+     /* describes appearance, not meaning */
+   }
    ```
 
 **Critics say**: "It's just inline styles with extra steps!"
@@ -155,16 +162,12 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 ## Tailwind: The Good Parts
 
-
 **1. "Separation of Concerns" is outdated in component-based apps:**
+
 ```tsx
 // React component = HTML + CSS + JS together anyway
 function Button({ children }) {
-  return (
-    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-      {children}
-    </button>
-  );
+  return <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">{children}</button>;
 }
 // Component encapsulates ALL concerns, not just HTML
 ```
@@ -172,6 +175,7 @@ function Button({ children }) {
 ---
 
 **2. DRY violation solved by components, not CSS:**
+
 ```tsx
 // Extract to reusable component, not CSS class
 <PrimaryButton>Submit</PrimaryButton>
@@ -182,12 +186,13 @@ function Button({ children }) {
 ---
 
 **3. Utility classes are MORE maintainable:**
+
 ```html
 <!-- Traditional: What does "card-header" actually look like? Need to check CSS -->
 <div class="card-header">
-
-<!-- Tailwind: Styling is immediately visible and predictable -->
-<div class="text-xl font-bold text-gray-800 mb-4">
+  <!-- Tailwind: Styling is immediately visible and predictable -->
+  <div class="text-xl font-bold text-gray-800 mb-4"></div>
+</div>
 ```
 
 ---
@@ -199,28 +204,30 @@ function Button({ children }) {
 Pre-built, reusable UI components that speed up development:
 
 - **Material UI (MUI)**: Google's Material Design for React
+
   ```tsx
   import { Button, TextField } from '@mui/material';
-  <Button variant="contained">Click me</Button>
+  <Button variant="contained">Click me</Button>;
   ```
 
 - **Chakra UI**: Simple, modular and accessible
+
   ```tsx
   import { Button, Input } from '@chakra-ui/react';
-  <Button colorScheme="blue">Click me</Button>
+  <Button colorScheme="blue">Click me</Button>;
   ```
 
 - **Shadcn/ui**: Modern, customizable, copy-paste components
   ```tsx
-  import { Button } from "@/components/ui/button";
-  <Button variant="outline">Click me</Button>
+  import { Button } from '@/components/ui/button';
+  <Button variant="outline">Click me</Button>;
   ```
 
 ---
 
 ## Headless Libraries
 
---- 
+---
 
 ### What is a "Headless" Library?
 
@@ -232,15 +239,14 @@ import * as Dialog from '@radix-ui/react-dialog';
 
 <Dialog.Root>
   <Dialog.Trigger className="my-custom-button">Open</Dialog.Trigger>
-  <Dialog.Content className="my-custom-modal">
-    {/* You style this however you want */}
-  </Dialog.Content>
-</Dialog.Root>
+  <Dialog.Content className="my-custom-modal">{/* You style this however you want */}</Dialog.Content>
+</Dialog.Root>;
 ```
 
 ---
 
-**Benefits**: 
+**Benefits**:
+
 - Complete control over appearance
 - Accessibility handled automatically
 - Framework agnostic
@@ -254,12 +260,14 @@ import * as Dialog from '@radix-ui/react-dialog';
 ### Installation Ideology: "Copy, Don't Import"
 
 **Traditional libraries**: Install via npm, import components
+
 ```bash
 npm install @mui/material  # Library in node_modules
 import { Button } from '@mui/material';
 ```
 
 **Shadcn approach**: Copy component source code into your project
+
 ```bash
 npx shadcn-ui@latest add button  # Copies code to your src/
 import { Button } from "@/components/ui/button";  # Your local file
@@ -278,7 +286,6 @@ import { Button } from "@/components/ui/button";  # Your local file
 3. **Copies files**: Places component in `src/components/ui/button.tsx`
 4. **Updates config**: Modifies import paths and styling
 
-
 **Result**: You have a fully customizable Button component in your codebase
 
 ---
@@ -293,21 +300,15 @@ Shadcn/ui components are **styled wrappers** around Radix headless components:
 
 ```tsx
 // Shadcn Button component (simplified)
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"  // Headless primitive
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot'; // Headless primitive
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
+    const Comp = asChild ? Slot : 'button';
+    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
   }
-)
+);
 ```
 
 **Radix provides**: Accessibility, keyboard navigation, focus management
@@ -322,14 +323,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 ### Customization Approaches
 
 1. **CSS Variables**: Change theme colors globally
+
 ```css
 :root {
-  --primary: 221.2 83.2% 53.3%;     /* Blue theme */
+  --primary: 221.2 83.2% 53.3%; /* Blue theme */
   --secondary: 210 40% 98%;
 }
 
-[data-theme="dark"] {
-  --primary: 217.2 91.2% 59.8%;     /* Darker blue */
+[data-theme='dark'] {
+  --primary: 217.2 91.2% 59.8%; /* Darker blue */
   --secondary: 217.2 32.6% 17.5%;
 }
 ```
@@ -337,37 +339,36 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 ---
 
 2. **Tailwind Config**: Extend color palette
+
 ```javascript
 // tailwind.config.js
 module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "hsl(var(--primary))",
-        secondary: "hsl(var(--secondary))"
-      }
-    }
-  }
-}
+        primary: 'hsl(var(--primary))',
+        secondary: 'hsl(var(--secondary))',
+      },
+    },
+  },
+};
 ```
 
 ---
 
 3. **Component Variants**: Modify component styling directly
+
 ```tsx
-const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        // Add your custom variant
-        gradient: "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-      }
-    }
-  }
-)
+const buttonVariants = cva('inline-flex items-center justify-center rounded-md text-sm font-medium', {
+  variants: {
+    variant: {
+      default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+      // Add your custom variant
+      gradient: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
+    },
+  },
+});
 ```
 
 ---

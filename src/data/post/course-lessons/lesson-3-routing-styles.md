@@ -333,7 +333,21 @@ Go step by step in the application, using Shad component when appropriate.
 
 Put a carousel on the home page, using dummy images from the web.
 
-A good example of a complex component is the [sonner](https://ui.shadcn.com/docs/components/sonner) - a sort of notification. Use it when the user add a new expense - this is a good example of providing feedback to the user for each of their actions.
+A good example of a complex component is the [sonner](https://ui.shadcn.com/docs/components/sonner) - a sort of notification. 
+
+Use it when the user add a new expense - this is a good example of providing feedback to the user for each of their actions.
+
+### 6. Add a theme
+
+Our app looks good, but in a very generic way. Our design teams has given us the following direction:
+
+- Color palette need to be chosen from: https://duo.alexpate.com/ (pick any duo of color - why are those "good choices"?)
+- Our product being friendly, we like using large rounded corner by default
+- Our default font family is Montserrat. It's available on Google Font
+
+Update the application to follow those rules. Try to do a maximum using Tailwind config instead of having to update the styles everywhere.
+
+
 
 ---
 

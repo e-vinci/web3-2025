@@ -69,7 +69,6 @@ function Counter() {
 ## TypeScript: Why and Basics
 
 - **Why TypeScript?**
-
   - Adds static typing to JavaScript
   - Catches errors at compile time
   - Improves code completion and refactoring
@@ -99,6 +98,9 @@ interface Expense {
   paidBy: string;
   participants: string[];
 }
+
+// Type
+type Result = number | false | void;
 
 // Function with types
 function add(a: number, b: number): number {
@@ -144,12 +146,7 @@ app.listen(3000, () => {
 - **Vite**: Fast React frontend setup
 - **Express Generator**: Bootstrap the backend
 - **npm**: Dependency management
-- **Frontend/backend separation**
-
-```bash
-npm create vite@latest frontend -- --template react-ts
-npx express-generator --no-view backend
-```
+- **Frontend/backend separation**: two apps, two folders.
 
 ---
 

@@ -14,6 +14,9 @@ footer: '© 2025 - Formation Backend Moderne'
 
 **TypeScript + Express + Prisma**
 
+<!-- HTML comment recognized as a presenter note per pages. -->
+<!-- You may place multiple comments in a single page. -->
+
 ---
 
 ## Plan de la Présentation

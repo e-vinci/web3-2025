@@ -175,7 +175,7 @@ export interface Expense {
 
 ---
 
-## Optional Challenges<>
+## Optional Challenges
 
 ### A. Expense Sorting
 

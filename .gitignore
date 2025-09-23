@@ -20,6 +20,7 @@ pnpm-debug.log*
 .DS_Store
 
 pnpm-lock.yaml
+.pnpm-store
 
 .astro
 

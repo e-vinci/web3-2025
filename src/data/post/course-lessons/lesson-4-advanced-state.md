@@ -21,13 +21,15 @@ category: 'course-lesson'
 
 ## Introduction
 
-Now that our application has basic features and a polished interface, we will take a big step forward by introducing **multiple users** and **money transfers** to our expense-sharing app (think Splitwise-like features). This lesson focuses on **advanced state management** across the stack – refining how we manage data on the backend and how the frontend interacts with it. On the backend, we'll migrate to a more robust Express + TypeScript template and design a relational database schema using Prisma for users, expenses, and transfers. On the frontend, we'll leverage React Router’s Data APIs (loaders and actions) and global state (context) to handle more complex interactions like selecting a current user and loading combined data.
+Now that our application has basic features and a polished interface, we will take a big step forward by introducing **multiple users** and **money transfers** to our expense-sharing app. 
+On the backend, we'll migrate to a more robust Express + TypeScript template and design a relational database schema using Prisma for users, expenses, and transfers. 
+On the frontend, we'll leverage React Router’s Data APIs (loaders and actions) and global state (context) to handle more complex interactions like selecting a current user and loading combined data.
 
 By the end of this lesson, our app will support multiple users who can owe or pay each other. We’ll have a unified **Transactions** list (combining expenses and direct transfers), the ability to record transfers of money, and a personal view for a selected user to see their own balance. This will involve significant changes: updating our API endpoints, enhancing our Prisma models with relationships, and refactoring the React app to use React Router’s recommended patterns for data loading and mutations.
 
-> **Note:** We’re moving our backend from the simple Express generator setup to a more scalable template that uses TypeScript and best practices (including better project structure, error handling, and testing). Don’t worry – we’ll guide you through integrating our existing functionality into this new structure. This is a valuable exercise in _state management_ at an application level: maintaining consistency across multiple models (Users, Expenses, Transfers) and keeping frontend UI state in sync with the backend.
+> **Note:** We’re moving our backend from the simple Express generator setup to a more scalable template that uses TypeScript and best practices (including better project structure, error handling, and testing).
 
-As always, commit your work regularly and push to your repository. If you’ve set up deployment (Render) in previous lessons, continue to deploy and test there as well – our new features should eventually run in production too!
+As always, commit your work regularly and push to your repository. Continue to deploy on Render and test there as well – any code you write only has value once it is usable by actual users.
 
 ## Recommended Reading
 
@@ -49,31 +51,47 @@ All exercises continue building on our collaborative expense-sharing app. We wil
   ```bash
   git clone https://github.com/edwinhern/express-typescript.git backend
   ```
-  This boilerplate provides a structured starting point (TypeScript, project architecture, testing, etc.). Navigate into `backend/` and run `npm install` (or `pnpm install` as the repo suggests) to install dependencies.
-- **Review Structure**: Open the project and briefly examine the structure. You’ll see an organized layout under `src/api` (with subfolders for features like `user`), middleware setup (Helmet, CORS, etc.), and other conveniences (logging, environment validation with Zod, etc.). Take note of how routes and controllers are defined (e.g., `src/api/user/userRouter.ts` and related files) – we will follow this pattern for our new features.
-- **Environment Setup**: Copy the provided `.env.template` to a new `.env` file in the backend folder. Fill in any required env vars. At minimum, ensure you have a `PORT` defined (if not provided) and set `NODE_ENV` to `"development"` for now. We will add a database connection URL here once we create one.
+  This boilerplate provides a structured starting point (TypeScript, project architecture, testing, etc.). Navigate into `backend/` and run `npm install` to install dependencies.
+- **Review Structure**: Open the project and briefly examine the structure. You’ll see an organized layout under `src/`: 
+  - an `api` folder where we will write features (with subfolders for like `user`, and `healthcheck`)
+  - an `api-docs` folder for serving the documentation of our API. We will not spend time maintaining the documentation of our API in the scope of this course, but the template is ready for it.
+  - a `common` folder for middleware setup and other conveniences (logging, environment validation with Zod, etc.). 
+  
+  Take note of the different files under the `user` feature: Router, Model, Controller, Service, Repository – we will follow this pattern for our new features. Notice as well that each feature has its own automated tests in a `__tests__` directory. These are based on the tool [vitest](https://vitest.dev/), in the scope of this course we will not write tests, but if we did, each feature folder would have their own. tests.
+
+
+- **Environment Setup**: Copy the provided `.env.template` to a new `.env` file in the backend folder. Fill in any required env vars. Set your `PORT` to `3000` and `CORS_ORIGIN` to `http://localhost:5173` (the url of your frontend) . We will add a database connection URL here later.
+- 
 - **Run the Template**: Try running the server in dev mode to ensure everything is working:
   ```bash
   npm run start:dev
   ```
-  You should see the template app start (it includes a health check endpoint at `/api/healthCheck`). If it fails, check that you installed all dependencies and set up the env file.
+  You can ignore the error about IPV6.
+
+  You should see the backend app start, validates that you can hit `http://localhost:3000/health-check` in your browser or your REST client. You can see in your dev console that this template has a lot of security already configured, mostly via the library [helmet](https://helmetjs.github.io/)
+
 - **Add Prisma to the Project**: Stop the server. We will now integrate Prisma into this template.
   - Install Prisma as a development dependency and initialize it:
     ```bash
     npm install prisma --save-dev
     npx prisma init
     ```
-    This creates a `prisma/` directory with a `schema.prisma` file and a `.env` entry for `DATABASE_URL`. Update the `.env` file’s `DATABASE_URL` to point to your development database. For example, you can use a local SQLite file for simplicity or a PostgreSQL URL if you set one up in Lesson 2. (For SQLite, use `file:dev.db`).
-  - If you don’t have a database from before: you can quickly use SQLite by setting `DATABASE_URL="file:./dev.db"` in the env and ensuring `provider = "sqlite"` in `schema.prisma`. Otherwise, use the Postgres connection string from your Render or local DB (e.g., `postgresql://user:password@host/dbname`).
+    This creates a `prisma/` directory with a `schema.prisma` file and adds a `DATABASE_URL` entry in your `.env file`. 
+    The default value will allow you to work with a local Postgres server that you can run with the command `npx prisma dev`. 
+    You can keep that value (and start the server) while you developer, or use the value from Lesson 2 and work directly on your hosted database.
+
+  - We recommend that you use a local database in development and only connect the cloud hosted when you are debugging production issues. In real life, the production database will never be accessible from your own machine and using the production database during development will break the production app and drive your teammates crazy. Keep in mind that even if you are currently a solo developer working on an app without users, this is not the case in real life. Use `npx prisma dev` in development or any other way of hosting a local db. 
+
+
+
 - **Verify DB Connection**: Run the command:
   ```bash
   npx prisma db pull
   ```
   This will check the connection and pull any existing schema (if your DB is new/empty, it will succeed with no models). If you get an error, double-check your `DATABASE_URL` and that the database exists/reachable.
-- **Prepare Dev Database**: If using a fresh database with no tables, that’s fine – we’ll create tables via Prisma soon. If you had existing tables from previous exercises, consider starting with a clean slate for this lesson (you can always reseed data).
-- **Plan for Seeding Data**: We want some initial data to work with. Plan to create a **seed script** using Prisma or use Prisma’s built-in seeding capabilities. We will seed 2–3 users, a few expenses, and a few transfers for testing.
 
-Create a script `prisma/seed.ts` (or a standalone TypeScript file) where you instantiate a PrismaClient and create initial records with `prisma.user.createMany`, `prisma.expense.createMany`, etc. You can then run `npx prisma db seed` (after configuring the seed path in `package.json` or `schema.prisma`).
+- **Prepare Dev Database**: If using a fresh database with no tables, that’s fine – we’ll create tables via Prisma soon. If you had existing tables from previous exercises, consider starting with a clean slate for this lesson (you can always reseed data).
+  
 
 ---
 
@@ -155,17 +173,17 @@ Our app now requires understanding **who** paid or transferred money to whom. We
   npx prisma studio
   ```
 
-  Check that you have tables for `User`, `Expense`, `Transfer`, and an `_ExpenseToUser` join table.
+  Check that you have Models for `User`, `Expense`, and `Transfer`.
 
 - **Seeding Initial Data**: Now populate the database with some mock data for development:
   - Create a few users, e.g., Alice, Bob, and Charlie. Give them distinct emails and maybe bankAccount values.
   - Create a few expenses:
   - Create a few transfers
-- - **How to seed**: The easiest way is using Prisma Client in a Node script:
+- - **How to seed**: The easiest way is using Prisma Client in a Node script :
 
     ```ts
-    // prisma/seed.ts (if not already created by npx prisma init -- and configured)
-    import { PrismaClient } from '@prisma/client';
+    // prisma/seed.ts
+    import { PrismaClient } from '../src/generated/prisma/client';
     const prisma = new PrismaClient();
     async function main() {
       await prisma.user.createMany({
@@ -223,7 +241,36 @@ Our app now requires understanding **who** paid or transferred money to whom. We
       });
     ```
 
-    This is just an example. You can run this script with `ts-node` or set it up as the Prisma seed (adjust your `package.json` `"prisma": { "seed": "ts-node prisma/seed.ts" }` and run `npx prisma db seed`). After seeding, use Prisma Studio to confirm that the data is in the tables.
+    This is just an example, adapt it as you wish. 
+    You can run this script with `tsx prisma/seed.ts`. If you do not have `tsx` installed, you can install it with `npm install -D tsx`
+
+    In order let prisma run your seed script whenever you reset your data ( `prisma migrate reset`) you can add a prisma configuration file with the script location. We will also use it to explicitely tell it where are the different resources it needs (the schema file, the migration files; etc.)
+
+    Add the file `.prisma/config.ts` at the root of your `backend` folder with the following content.
+
+    ```ts
+      import path from "node:path";
+      import "dotenv/config";
+      import { defineConfig } from "prisma/config";
+
+      export default defineConfig({
+        schema: path.join("prisma", "schema.prisma"),
+        migrations: {
+          path: path.join("prisma", "migrations"),
+          seed: `tsx prisma/seed.ts`,
+        },
+        views: {
+          path: path.join("prisma", "views"),
+        },
+        typedSql: {
+          path: path.join("prisma", "queries"),
+        },
+
+      });
+    ```
+
+     After seeding, use Prisma Studio to confirm that the data is in the tables: `npx prisma studio`
+     Notice how the Exense.participants fields is an array of User. The join table is entirely hidden in this tool.
 
 - At this point, our database state is initialized with some example data. We have successfully managed complex state on the backend: multiple models and relationships that mirror real-world connections between data. Next, we’ll expose this data via new API endpoints.
 
@@ -235,8 +282,36 @@ Our app now requires understanding **who** paid or transferred money to whom. We
 
 Our Express template uses a structure where each feature (e.g., `user`) has its own router, controller, service (or repository/model) files. We will add new feature modules for `expense` and `transfer`, and adjust the existing expense logic from prior lessons to use Prisma.
 
-- **Set Up Expense Module**: In `src/api/`, create a folder for `expense` (if one doesn’t exist from the template). Inside, create:
-  - `expenseRepository.ts`: This will use Prisma Client to interact with the DB, similar to Services from previous lessons.
+- **Set Up Expense Module**: In `src/api/`, create a folder for `expense`. Inside, create:
+  - `expenseRepository.ts`: This will use Prisma Client to interact with the DB, similar to Services from previous lessons. Export the async functions: 
+    - getAllExpenses()
+    - getExpenseById(id: number)
+    - createExpense({description, amount, date, payerId, participantIds}: {
+          description: string;
+          amount: number;
+          date: Date;
+          payerId: number;
+          participantIds: number[];
+      })
+
+  - Pay attention to this last function as it is more complex than it looks. You will need to create an expense associated with the correct participants but you will only receive their ids from the frontend. Prisma has a concept of [**connecting** records](https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries#connect-multiple-records) which will help you do that, here is a snippet illustrating how it works : 
+
+  ```ts
+  const participantIds = [1,10,100]
+  const participantsConnect = participantIds.map((id) => ({ id })); // [{id: 1}, {id: 10}, {id: 100}]
+
+    return prisma.expense.create({
+        data: {
+            description,
+            amount,
+            date,
+            payer: { connect: { id: payerId } },
+            participants: { connect: participantsConnect },
+        }        
+    });
+  ```
+
+
   - `expenseController.ts`: Functions to handle incoming requests and formulate responses (calls the model/repository functions).
   - `expenseRouter.ts`: The Express router defining routes and linking to controller methods.
 
@@ -245,45 +320,40 @@ Our Express template uses a structure where each feature (e.g., `user`) has its 
   - `POST /expenses`: Create a new expense (we had this in lesson 1/2). For now, ensure it handles the new structure (e.g., expects a `payerId` and an array of participant user IDs in the request body).
   - `GET /expenses/:id`: Return detailed info for a single expense by ID.
 
-  - In `expenseController.ts`, define handlers that call repository functions and send appropriate JSON responses (and error handling). For example:
+  - In `expenseController.ts`, define handlers that call repository functions and send appropriate JSON responses. For example:
     ```ts
-    import * as expenseRepository from './expenseRepository';
-    export async function listExpenses(req, res, next) {
-      try {
-        const expenses = await expenseRepository.getAllExpenses();
-        res.json(expenses);
-      } catch (err) {
-        next(err);
-      }
-    }
-    export async function getExpenseDetail(req, res, next) {
-      try {
-        const id = Number(req.params.id);
-        const expense = await expenseRepository.getExpenseById(id);
-        if (!expense) {
-          return res.status(404).json({ error: 'Expense not found' });
+        import * as expenseRepository from './expenseRepository';
+        import type { Request, Response } from "express";
+
+        export async function listExpenses(req: Request, res: Response) {
+            const expenses = await expenseRepository.getAllExpenses();
+            res.json(expenses);
         }
-        res.json(expense);
-      } catch (err) {
-        next(err);
-      }
-    }
-    export async function createExpense(req, res, next) {
-      try {
-        const { description, amount, date, payerId, participants } = req.body;
-        // Assume participants is an array of user IDs
-        const newExp = await expenseRepository.createExpense({
-          description,
-          amount: parseFloat(amount),
-          date: date ? new Date(date) : new Date(),
-          payerId: Number(payerId),
-          participantIds: participants || [], // if omitted, we'll handle default to all users later
-        });
-        res.status(201).json(newExp);
-      } catch (err) {
-        next(err);
-      }
-    }
+
+        export async function getExpenseDetail(req: Request, res: Response) {
+            const id = Number(req.params.id);
+            const expense = await expenseRepository.getExpenseById(id);
+            if (!expense) {
+              return res.status(404).json({ error: 'Expense not found' });
+            }
+            res.json(expense);
+        }
+
+
+        export async function createExpense(req: Request, res: Response) {
+            const { description, amount, date, payerId, participantIds } = req.body;
+
+            const newExpense = await expenseRepository.createExpense({
+              description,
+              amount: parseFloat(amount),
+              date: date ? new Date(date) : new Date(),
+              payerId: Number(payerId),
+              participantIds: participantIds
+            });
+
+            
+            res.status(201).json(newExpense);
+        }
     ```
   - In `expenseRouter.ts`, set up the routes:
 
@@ -291,18 +361,18 @@ Our Express template uses a structure where each feature (e.g., `user`) has its 
     import { Router } from 'express';
     import * as ExpenseController from './expenseController';
     const router = Router();
-    router.get('/expenses', ExpenseController.listExpenses);
-    router.post('/expenses', ExpenseController.createExpense);
-    router.get('/expenses/:id', ExpenseController.getExpenseDetail);
+    router.get('/', ExpenseController.listExpenses);
+    router.post('/', ExpenseController.createExpense);
+    router.get('/:id', ExpenseController.getExpenseDetail);
 
     export default router;
     ```
 
-- **Implement User Routes**: The template already has a basic `userRouter` and `userController` for a sample user endpoint (check `src/api/user`). These are only present for illustrating what is a router, controller, model (which we call repository), and service. You can delete them all and start from scratch, or you can adapt them if you feel more comfortable. But there should be no line of code at the end of the exercice that you do not understand and own; we highly recommend that you delete the whole folder once you understand how the different files articulates.
-  - `GET /users`: return list of all users. (We’ll need this for populating the user dropdown on the frontend.)
+- **Implement User Routes**: The template already has a basic `userRouter` and `userController` for a sample user endpoint (check `src/api/user`). These are only present for illustrating what is a router, controller, model (which we call repository), and service. 
+  
+You can delete them all and start from scratch, or you can adapt them if you feel more comfortable. But there should be no line of code at the end of the exercice that you do not understand and own; we highly recommend that you delete the whole folder once you understand how the different files articulates.
 
-  - Implement these by using Prisma `prisma.user.findMany({})`
-  - Wire up the routes in `userRouter.ts` and mount it in the main server
+  - `GET /users`: return list of all users.
 
 -
 - **Implement Transfer Routes**: Create a new `transfer` module in `src/api/transfer`: You need to list and create transfer, similar to what you did for expenses.
@@ -318,9 +388,9 @@ The main advantage of doing a combined endpoint would be pagination but this is 
   import transferRouter from './api/transfer/transferRouter';
   import userRouter from './api/user/userRouter';
   // ...
-  app.use('/api', expenseRouter);
-  app.use('/api', transferRouter);
-  app.use('/api', userRouter);
+  app.use('/api/expenses', expenseRouter);
+  app.use('/api/transfers', transferRouter);
+  app.use('/api/users', userRouter);
   ```
 
 - **Test the API**: Use a REST client (like VSCode REST Client or Postman) to verify each endpoint:
@@ -330,7 +400,7 @@ The main advantage of doing a combined endpoint would be pagination but this is 
   - (Optionally) GET `/api/transactions` – combined list of both, sorted by date.
   - GET `/api/expenses/{id}` – details of a single expense (make sure it includes participants and payer info).
   - POST `/api/transfers` with a JSON body (e.g., `{ "amount": 5, "sourceId": 1, "targetId": 2 }`) – should create a new transfer.
-  - POST `/api/expenses` with a new expense (e.g., `{ "description": "Coffee", "amount": 3, "payerId": 2, "participants": [1,2] }`) – should create expense with Bob as payer and Bob & Alice as participants.
+  - POST `/api/expenses` with a new expense (e.g., `{ "description": "Coffee", "amount": 3, "payerId": 2, "participantIds": [1,2] }`) – should create expense with Bob as payer and Bob & Alice as participants.
   - If any issues arise, fix them now. The template has CORS enabled for a default origin (`CORS_ORIGIN` in .env file ) – ensure it allows your frontend’s origin.
   - Also ensure error handling middleware in the template will catch and respond with errors appropriately.
 

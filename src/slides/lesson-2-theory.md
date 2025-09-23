@@ -124,7 +124,7 @@ model Expense {
 
 - **Form**: Collects user input and sends it to the server
 - **Elements**: `<form>`, `<input>`, `<select>`, `<button>`, etc.
-- **Submit**: By default, reloads the page and sends data as a POST request
+- **Submit**: Sends the data to server and handle response (usually redisplay or redirect)
 
 ```html
 <form action="/api/expenses" method="post">

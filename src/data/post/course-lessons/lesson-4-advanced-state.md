@@ -1,5 +1,5 @@
 ---
-title: '<WIP> Lesson 4 – Advanced State Management'
+title: 'Lesson 4 – Advanced State Management'
 description: 'Expand the expense-sharing app with multiple users, transfers, and improved data flow, focusing on state management in both backend (Express + Prisma) and frontend (React Router loaders/actions and global state).'
 publishDate: 2025-10-17T00:00:00Z
 excerpt: 'Introduce multi-user support and money transfers to the app, using a robust Express TypeScript backend with Prisma and advanced state handling in React Router.'
@@ -66,7 +66,14 @@ All exercises continue building on our collaborative expense-sharing app. We wil
   ```bash
   npm run start:dev
   ```
-  You can ignore the error about IPV6.
+  If you have an issue about IPV6, change these lines in `src/common/middleware/rateLimiter.ts`
+
+  ```ts
+  import { rateLimit, ipKeyGenerator } from "express-rate-limit";
+  //...
+  keyGenerator: (req: Request) => ipKeyGenerator(req.ip  as string),
+  //...
+  ```
 
   You should see the backend app start, validates that you can hit `http://localhost:3000/health-check` in your browser or your REST client. You can see in your dev console that this template has a lot of security already configured, mostly via the library [helmet](https://helmetjs.github.io/)
 
@@ -282,166 +289,250 @@ Our app now requires understanding **who** paid or transferred money to whom. We
 
 Our Express template uses a structure where each feature (e.g., `user`) has its own router, controller, service (or repository/model) files. We will add new feature modules for `expense` and `transfer`, and adjust the existing expense logic from prior lessons to use Prisma.
 
-- **Set Up Expense Module**: In `src/api/`, create a folder for `expense`. Inside, create:
-  - `expenseRepository.ts`: This will use Prisma Client to interact with the DB, similar to Services from previous lessons. Export the async functions: 
-    - getAllExpenses()
-    - getExpenseById(id: number)
-    - createExpense({description, amount, date, payerId, participantIds}: {
-          description: string;
-          amount: number;
-          date: Date;
-          payerId: number;
-          participantIds: number[];
-      })
+#### **Delete api documentation feature**: 
 
-  - Pay attention to this last function as it is more complex than it looks. You will need to create an expense associated with the correct participants but you will only receive their ids from the frontend. Prisma has a concept of [**connecting** records](https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries#connect-multiple-records) which will help you do that, here is a snippet illustrating how it works : 
+Because of the time constraint, we will not be registering our routes to the openAPI documentation. We will not be validating the request payload according to that documentation neither. In a professional project, these are necessary actions because you want to guarantee to people using your API that the documentation is up to date and enforced. You can try to do it as an additional exercice, taking inspiration from the [template](https://github.com/edwinhern/express-typescript/blob/master/src/api/user/userRouter.ts). 
 
-  ```ts
-  const participantIds = [1,10,100]
-  const participantsConnect = participantIds.map((id) => ({ id })); // [{id: 1}, {id: 10}, {id: 100}]
+You can delete the `api-docs` folder, and adapt the health-check router and server.ts
 
-    return prisma.expense.create({
-        data: {
+#### **Set Up Expense Module**: 
+
+In `src/api/`, create a folder for `expense`. Inside, create:
+  - `expenseRouter.ts`: The Express router defining routes and linking to controller methods. 
+  
+    ```ts
+      import { Router } from 'express';
+      import * as ExpenseController from './expenseController';
+      const router = Router();
+      router.get('/', ExpenseController.listExpenses);
+      router.post('/', ExpenseController.createExpense);
+      router.get('/:id', ExpenseController.getExpenseDetail);
+
+      export default router;
+    ```
+
+  - `expenseController.ts`: Functions to handle incoming requests and formulate responses (calls the model/repository functions). Here is an example. Notice that we do not leverage ServiceResponse nor have a Service object, this is related to our choice of skipping input/output validation and autogeneration of documentation.
+
+    ```ts
+      import type { Request, Response } from "express";
+      import * as expenseRepository from './expenseRepository';
+      import { StatusCodes } from "http-status-codes/build/cjs/status-codes";
+
+      export async function listExpenses(req: Request, res: Response) {
+          const expenses = await expenseRepository.getAllExpenses();
+          res.status(StatusCodes.OK).json(expenses);
+      }
+
+      export async function getExpenseDetail(req: Request, res: Response) {
+          const id = Number(req.params.id);
+          const expense = await expenseRepository.getExpenseById(id);
+          if (!expense) {
+            return res.status(StatusCodes.NOT_FOUND).json({ error: 'Expense not found' });
+          }
+          res.status(StatusCodes.OK).json(expense);
+      }
+
+
+      export async function createExpense(req: Request, res: Response) {
+          const { description, amount, date, payerId, participantIds } = req.body;
+
+          const newExpense = await expenseRepository.createExpense({
+            description,
+            amount: parseFloat(amount),
+            date: date ? new Date(date) : new Date(),
+            payerId: Number(payerId),
+            participantIds: participantIds
+          });
+          res.status(StatusCodes.CREATED).json(newExpense);
+      }
+    ```
+  
+
+
+  - `expenseRepository.ts`: This will use Prisma Client to interact with the DB, similar to Services from previous lessons. Pay attention to the create function as it is more complex than it looks. You will need to create an expense associated with the correct participants but you will only receive their ids from the frontend. Prisma has a concept of [**connecting** records](https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries#connect-multiple-records) which will help you do that. Here is an example of the Repository: 
+
+    ```ts
+      import { PrismaClient } from '../../generated/prisma';
+
+      const prisma = new PrismaClient();
+
+      export async function getAllExpenses() {
+        return prisma.expense.findMany({
+          include: {
+            payer: true,
+            participants: true,
+          },
+        });
+      }
+
+      export async function getExpenseById(id: number) {
+        return prisma.expense.findUnique({
+          where: { id },
+          include: {
+            payer: true,
+            participants: true,
+          },
+        });
+      }
+
+      export async function createExpense({
+        description,
+        amount,
+        date,
+        payerId,
+        participantIds,
+      }: {
+        description: string;
+        amount: number;
+        date: Date;
+        payerId: number;
+        participantIds: number[];
+      }) {
+
+        return prisma.expense.create({
+          data: {
             description,
             amount,
             date,
             payer: { connect: { id: payerId } },
-            participants: { connect: participantsConnect },
-        }        
-    });
-  ```
-
-
-  - `expenseController.ts`: Functions to handle incoming requests and formulate responses (calls the model/repository functions).
-  - `expenseRouter.ts`: The Express router defining routes and linking to controller methods.
-
-- **Implement Expense Routes**: We need to cover:
-  - `GET /expenses`: Return list of all expenses (with related data).
-  - `POST /expenses`: Create a new expense (we had this in lesson 1/2). For now, ensure it handles the new structure (e.g., expects a `payerId` and an array of participant user IDs in the request body).
-  - `GET /expenses/:id`: Return detailed info for a single expense by ID.
-
-  - In `expenseController.ts`, define handlers that call repository functions and send appropriate JSON responses. For example:
-    ```ts
-        import * as expenseRepository from './expenseRepository';
-        import type { Request, Response } from "express";
-
-        export async function listExpenses(req: Request, res: Response) {
-            const expenses = await expenseRepository.getAllExpenses();
-            res.json(expenses);
-        }
-
-        export async function getExpenseDetail(req: Request, res: Response) {
-            const id = Number(req.params.id);
-            const expense = await expenseRepository.getExpenseById(id);
-            if (!expense) {
-              return res.status(404).json({ error: 'Expense not found' });
-            }
-            res.json(expense);
-        }
-
-
-        export async function createExpense(req: Request, res: Response) {
-            const { description, amount, date, payerId, participantIds } = req.body;
-
-            const newExpense = await expenseRepository.createExpense({
-              description,
-              amount: parseFloat(amount),
-              date: date ? new Date(date) : new Date(),
-              payerId: Number(payerId),
-              participantIds: participantIds
-            });
-
-            
-            res.status(201).json(newExpense);
-        }
-    ```
-  - In `expenseRouter.ts`, set up the routes:
-
-    ```ts
-    import { Router } from 'express';
-    import * as ExpenseController from './expenseController';
-    const router = Router();
-    router.get('/', ExpenseController.listExpenses);
-    router.post('/', ExpenseController.createExpense);
-    router.get('/:id', ExpenseController.getExpenseDetail);
-
-    export default router;
+            // { connect: [{id: 1}, {id: 123}, {id: 99}]}
+            participants: { connect: participantIds.map((id) => ({ id })) },
+          },
+        });
+      }
     ```
 
-- **Implement User Routes**: The template already has a basic `userRouter` and `userController` for a sample user endpoint (check `src/api/user`). These are only present for illustrating what is a router, controller, model (which we call repository), and service. 
+ - `expenseRequests.http`: This will help you test the the routes with your REST Client.
   
-You can delete them all and start from scratch, or you can adapt them if you feel more comfortable. But there should be no line of code at the end of the exercice that you do not understand and own; we highly recommend that you delete the whole folder once you understand how the different files articulates.
+    ```http
+      @hostname = localhost:3000
+
+      ### Get all expenses
+      GET http://{{hostname}}/api/expenses
+      Content-Type: application/json
+
+      ### Get expense by ID
+      GET http://{{hostname}}/api/expenses/1
+      Content-Type: application/json
+
+      ### Create new expense
+      POST http://{{hostname}}/api/expenses
+      Content-Type: application/json
+
+      {
+        "description": "Office Supplies",
+        "amount": 45.99,
+        "payerId": 1,
+        "participantIds": [1, 2]
+      }
+
+      ### Create new expense (Error, wrong participant ID)
+      POST http://{{hostname}}/api/expenses
+      Content-Type: application/json
+
+      {
+        "description": "Office Supplies",
+        "amount": 45.99,
+        "payerId": 1,
+        "participantIds": [1, 99]
+      }
+    
+    ```
+
+
+
+#### **Implement User Routes**: 
+
+The template already has a basic `userRouter` and `userController` for a sample user endpoint (check `src/api/user`). These are only present for illustrating what is a router, controller, model (which we call repository), and service. It also shows how to register the api endpoint and generate documentation for it, and how to validate and coerce input. We will not be using those features of the template because of the time constraint, but you should definitely follow a similar idea in a professional setting (documenting endpoint and validating input)
+  
+You can delete the `src/api/user` directory and start from scratch, or you can adapt it if you feel more comfortable. But there should be no line of code at the end of the exercice that you do not understand and own; we highly recommend that you delete the whole folder once you understand how the different files articulates.
+
+Following a similar approach than the one used for expense, implement the following route
 
   - `GET /users`: return list of all users.
 
--
-- **Implement Transfer Routes**: Create a new `transfer` module in `src/api/transfer`: You need to list and create transfer, similar to what you did for expenses.
 
-- **Combined Transactions Endpoint**: If you want, you can create an endpoint for getting all transactions (expenses and transfers). Otherwise you'll send two requestes from the frontend and combine these in the frontend.
+#### **Implement Transfer Routes**: 
 
-The main advantage of doing a combined endpoint would be pagination but this is out of scope for this lesson.
+Create a new `transfer` module in `src/api/transfer`: You need to list and create transfer, similar to what you did for expenses.
 
-- **Integrate Routers in App**: Make sure to mount these new routers in your main `src/server.ts`.
+#### **Combined Transactions Endpoint**: 
 
-  ```ts
-  import expenseRouter from './api/expense/expenseRouter';
-  import transferRouter from './api/transfer/transferRouter';
-  import userRouter from './api/user/userRouter';
-  // ...
-  app.use('/api/expenses', expenseRouter);
-  app.use('/api/transfers', transferRouter);
-  app.use('/api/users', userRouter);
-  ```
+Create an endpoint for getting all transactions (expenses and transfers). Otherwise you'll send two requests from the frontend and combine these in the frontend.
 
-- **Test the API**: Use a REST client (like VSCode REST Client or Postman) to verify each endpoint:
+The main advantage of doing a combined endpoint is pagination but this is out of scope for this lesson.
+
+Because Transaction is not a prisma model, you need another way of ensuring its type. Use zod for this. You can take inspiration from the [template](https://github.com/edwinhern/express-typescript/blob/master/src/api/user/userModel.ts)
+
+Your frontend will likely want to know whether a specific transaction is an expense or a transfer, do not forget to add a `kind` field for that case.  This is similar to [discriminated unions in typescript](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#discriminated-unions)
+
+
+You will also need to transform Expense and Transfer into Transaction, the easiest approach for this is to write functions like `fromExpense` and `fromTransfer` directly into your `TransactionModel.ts` module. These functions will expect a parameter which include relations, but when you import a type from Prisma, you will NOT have any relations included. Fortunately, you can easily ask Prisma for a type including relations using `Prisma.XXXXGetPayload< ... >`, more info [here](https://medium.com/@jkc5186/understanding-typescript-types-with-prisma-e0e41a7d98f3).
+
+Here is an example: 
+
+```ts
+type TransferWithSourceAndTarget = Prisma.TransferGetPayload<{
+    include: {
+        source: true,
+        target: true,
+    }
+}>;
+```
+
+
+- **Test the API**: Use a REST client and your different .http files  to verify each endpoint:
   - GET `/api/users` – should list your seeded users.
   - GET `/api/expenses` – should list expenses with their payer and participants (verify that the data structure is as expected, e.g., participants is an array of user objects).
   - GET `/api/transfers` – list of transfers with source and target user info.
-  - (Optionally) GET `/api/transactions` – combined list of both, sorted by date.
+  - GET `/api/transactions` – combined list of both, sorted by date.
   - GET `/api/expenses/{id}` – details of a single expense (make sure it includes participants and payer info).
   - POST `/api/transfers` with a JSON body (e.g., `{ "amount": 5, "sourceId": 1, "targetId": 2 }`) – should create a new transfer.
   - POST `/api/expenses` with a new expense (e.g., `{ "description": "Coffee", "amount": 3, "payerId": 2, "participantIds": [1,2] }`) – should create expense with Bob as payer and Bob & Alice as participants.
-  - If any issues arise, fix them now. The template has CORS enabled for a default origin (`CORS_ORIGIN` in .env file ) – ensure it allows your frontend’s origin.
+
   - Also ensure error handling middleware in the template will catch and respond with errors appropriately.
 
-- With the backend API ready, we can focus on the frontend changes. Our state management on the backend is now more complex (multiple tables, relationships), but Prisma simplifies retrieving related data, and our organized structure makes it easier to maintain. Keep your server running as you proceed to frontend tasks.
 
 ---
 
 ### 4. Better Frontend Routing
 
-**Goal**: Refactor the React frontend to use React Router’s data API (loaders and actions) for fetching data and handling form submissions. Also adopt a structured routing setup (with a layout route and nested routes) as recommended by React Router docs.
+**Goal**: Refactor the React frontend to use React Router’s loader API for fetching data. Also adopt a structured routing setup (with a layout route and nested routes) as recommended by React Router docs.
 
-Until now, our frontend likely used explicit `fetch` calls inside components (e.g., in `useEffect`) to get data, and `useNavigate` for programmatic navigation. 
+We want to separate the code responsible for communicating with the API in its own module, out of react.
+We’ll also introduce a **layout page** to manage common UI (like the NavBar and user selection) and share data (like the current user or language) across routes.
 
-- **Loaders** to fetch data _before_ rendering a route, providing data via `useLoaderData`.
-- **Actions** to handle form submissions declaratively via `<Form>` components.
-- A central route configuration instead of manually managing navigation state or using a context for pages.
-
-We’ll also introduce a **layout page** to manage common UI (like the NavBar and user selection) and share data (like the user list) across routes.
+Some components will now be related to other pieces of code: loader functions, types and interface, constants, etc. These components will be stored in a directory of the component name, and the directory will be named after the Component. The directory will have an `index.ts` file for allowing easy import. The various files will never be imported directly, only the directory represent the module. Having different files will allow us to benefit from a better DX: autorefresh in browser, side by side files in editor, etc.
 
 **Step-by-step:**
 
+#### **Starting point**: 
 
-- **Create a Router Configuration**: In your `frontend/src/main.tsx` (or wherever you render `<App/>`), set up a React Router provider. For example:
+We assume you have completed last week mandatory exercices. If not, you can use [this solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-3-routing-style/frontend)
+
+#### **Create a Router Configuration**: 
+
+In your `frontend/src/main.tsx` (or wherever you render `<App/>`), set up a React Router provider like this: 
 
   ```tsx
+  import ReactDOM from 'react-dom/client';
   import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-  import Layout { loader as layoutLoader } from './pages/Layout';
-  import Home from './pages/Home';
+
+  import Layout, { loader as layoutLoader } from './pages/Layout';
+  import Welcome from './pages/Welcome';
   import Transactions, { loader as transactionsLoader } from './pages/Transactions';
-  import ExpenseDetail, { loader as expenseDetailLoader } from './pages/ExpenseDetail';
-  import TransferForm, { action as transferAction } from './pages/TransferForm';
-  import MyTransactions { loader as myTransactionsLoader } from './pages/MyTransactions';
+  import ExpenseDetail, { loader as expenseDetailLoader } from './pages/ExpenseDetails';
+  import AddTransfer, { loader as AddTransferLoader } from './pages/AddTransfer';
+
 
   const router = createBrowserRouter([
     {
       Component: Layout,
       loader: layoutLoader,
-      id: "layout"
+      id: "layout",
 
       children: [
-        { index: true, Component: Home },
+        { index: true, Component: Welcome },
         {
           path: 'transactions',
           Component: Transactions,
@@ -454,54 +545,124 @@ We’ll also introduce a **layout page** to manage common UI (like the NavBar an
         },
         {
           path: 'transfers/new',
-          Component: TransferForm,
-          action: transferAction,
-        },
-        {
-          path: 'my-transactions',
-          Component: MyTransactions,
-          loader: myTransactionsLoader,
-        },
+          Component: AddTransfer,
+          loader: AddTransferLoader,
+        }
       ],
     },
   ]);
 
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <RouterProvider router={router} />
-    </React.StrictMode>
-  );
+
+  const root = document.getElementById('root');
+  if (root) {
+    ReactDOM.createRoot(root).render(<RouterProvider router={router} />);
+  } else {
+    throw new Error('Root element not found');
+  }
   ```
 
   Let’s break down what we did:
-  - We created a root route for `'/'` with a `Layout` component and an `id: 'layout'`. We gave it a loader that fetches the list of users from our backend (`/api/users`). This means when the app (or any nested route) loads, we will have `useLoaderData()` available in the Layout (and child components can also access it via `useRouteLoaderData('layout')` if needed).
+  - We created a root route for `'/'` with a `Layout` component and an `id: 'layout'`. We gave it a loader that will fetch the list of users from our backend (`/api/users`). This means when the app (or any nested route) loads, we will have `useLoaderData()` available in the Layout (and child components can also access it via `useRouteLoaderData('layout')` if needed).
   - We define child routes:
-    - The default index route `'/'` which renders a `Home` component (a welcome or summary page).
+    - The default index route `'/'` which renders a `Welcome` component.
     - `/transactions` route to show the combined list of expenses and transfers. It uses `transactionsLoader` that we will define in `Transactions.tsx` to fetch data from `/api/transactions`.
     - `/expenses/:id` route to show an expense detail page, with its own loader to fetch `/api/expenses/{id}`.
-    - `/transfers/new` route to show a form for creating a transfer. This uses an **action** (`transferAction`) to handle the form submission.
-    - `/my-transactions` route for the current user’s personal transactions. We might not need a separate loader here if we reuse the data from `/transactions` and filter it on the client side, or we could call a specialized endpoint. We’ll decide when implementing it (likely filtering the already loaded transactions or calling `/api/transactions` again).
-    - Notice how we are now using `Component`  property of the [Route Object](https://reactrouter.com/start/data/route-object) and not `element`, this simple changes means that it is now React-Router which instantiates the page component, at the time and with the props that it now controls.
+    - `/transfers/new` route to show a form for creating a transfer. 
 
-- **Layout and NavBar**: In `Layout.tsx`, create a layout component that renders the NavBar and an `<Outlet />` for child pages:
+    - Notice how we are now using `Component`  property of the [Route Object](https://reactrouter.com/start/data/route-object) and not `element`, this simple changes means that it is now React-Router which instantiates the page component, at the time and with the props that it now controls. This allows the loader to be run **before** the page component.
+  
+Most of the imports do not exist yet, and therefore it won't work. Let's comment out all the children and start with the Layout component.
+
+
+#### **Layout**: 
+
+In `pages/Layout/loader.ts`, create a loader function which will be called by react router, let's also export an interface describing exactly what will be available from the loader. Here is the code, notice that it is a `.ts` and not a `.tsx` file. This is NOT a react file.
+
+```ts
+import ApiClient, { type User } from "@/lib/api";
+
+export interface LoaderData {
+    users: User[];
+}
+
+export async function loader() {
+    const users = await ApiClient.getUsers();
+    return { users };
+}
+```
+
+In `lib/api.js`, add the required code for calling the API and returning a result. Use this file for exporting the different types received by the API or needed as payload.
+
+You will  slowly grow this file every time you need to call one of the endpoint but here is an idea of how it should be organized. Notice that this file is under `lib` directory and is not a React file neither. We want to keep our code correctly organized.
+
+```ts
+const host = import.meta.env.VITE_API_URL;
+
+const sendApiRequest = async (method: string = 'GET', path: string, body?: unknown) => {
+  // copy from previous exercices, notice that this is NOT exported
+};
+
+// We will use the object returned by the API in several components, this API module is the best place for declaring them
+export interface Transaction {
+    //...
+}
+
+export interface User {
+  // ...
+}
+
+export interface Expense {
+  //...
+}
+
+export interface Transfer {
+  //...
+}
+
+interface NewTransferPayload {
+  // ;..
+}
+
+
+const getTransactions: () => Promise<Transaction[]> = () => sendApiRequest('GET', 'transactions') as Promise<Transaction[]>;
+const getUsers: () => Promise<User[]> = () => sendApiRequest('GET', 'users') as Promise<User[]>;
+const getExpenseById: (id: number) => Promise<Expense> = (id) => sendApiRequest('GET', `expenses/${id}`) as Promise<Expense>;
+const createTransfer: (payload: NewTransferPayload) => Promise<Transfer> = (payload) => sendApiRequest('POST', 'transfers', payload) as Promise<Transfer>;
+
+export const ApiClient = {
+  getUsers,
+  getTransactions,
+  getExpenseById,
+  createTransfer,
+};
+
+export default ApiClient;
+
+```
+
+
+In `pages/Layout/Component.tsx`, create a layout component that renders the NavBar and an `<Outlet />` for child pages.
+
+The layout will be responsible for holding the current user in its state. For now, we do not have any authentication mechanism so we can simply pick any user from a select box.
+
+Start from the code below and add the missing part about fetching the list of users from the API by implementing the file `src/lib/api.ts`. 
 
   ```tsx
-  import { Outlet, useLoaderData, useNavigate } from 'react-router-dom';
+  import { NavLink, Outlet, useLoaderData } from 'react-router-dom';
   import { useState } from 'react';
+  import type { User } from '@/lib/api';
+  import type { LoaderData } from './loader';
 
-  export async function loader()  {
-        // ...
-        return { users };
-  }
+
 
   export default function Layout() {
-    const { users } = useLoaderData();
-    const navigate = useNavigate();
-    const [currentUser, setCurrentUser] = useState<null | number>(null);
+    const { users } = useLoaderData<LoaderData>();
+    const [currentUser, setCurrentUser] = useState<null | User>(null);
 
-    const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const userId = e.target.value === 'none' ? null : Number(e.target.value);
-      setCurrentUser(userId);
+    const handleUserChange = (e) => {
+      const id = e.target.value;
+      const newCurrentUser = users.find(user => user.id === Number(id)) ?? null;
+      setCurrentUser(newCurrentUser);
     };
 
     const outletContext = {
@@ -510,84 +671,93 @@ We’ll also introduce a **layout page** to manage common UI (like the NavBar an
 
     return (
       <div>
-        {/* NavBar */}
         <nav className="bg-teal-800 text-white p-4 flex justify-between items-center">
           <div className="text-xl font-bold">💸 Expenso</div>
           <div>
-            <a href="/transactions" className="mr-4">
+            <NavLink to="/transactions" className="mr-4">
               All Transactions
-            </a>
-            <a href="/transfers/new" className="mr-4">
+            </NavLink>
+            <NavLink to="/transfers/new" className="mr-4">
               New Transfer
-            </a>
-            <a href="/my-transactions" className={currentUser ? 'mr-4' : 'mr-4 text-gray-400 pointer-events-none'}>
-              My Transactions
-            </a>
-            {/* User Switcher */}
+            </NavLink>
+
             <select
-              onChange={handleUserChange}
-              value={currentUser ?? 'none'}
+              value={currentUser?.id ?? 'none'}
               className="bg-white text-black rounded px-2"
+              onChange={handleUserChange}
             >
               <option value="none">— No User —</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
+              {users.map((u: User) => (
+                <option key={u.id} value={u.id} >
                   {u.name}
                 </option>
               ))}
             </select>
           </div>
         </nav>
-        {/* Page content */}
+
         <main className="p-6">
-          <Outlet context={outletContext}/>
+          <Outlet context={outletContext} />
         </main>
       </div>
     );
   }
-
-  type ContextType = { currentUser: User | null };
- 
-  export function useCurrentUser() {
-    const { currentUser } =  useOutletContext<ContextType>();
-    return currentUser;
-  }
   ```
 
   Here we:
-  - Use `useLoaderData` to get the list of users loaded by the root loader (the user list for the dropdown).
-  - Manage a piece of state `currentUser` in Layout to track which user is selected (if any). We initialize it as `null` meaning "no user".
-  - Render navigation links: “All Transactions”, “New Transfer”, “My Transactions”. We disable (grey out) the "My Transactions" link if no user is selected (so users understand they must choose someone).
-  - Render a `<select>` dropdown listing all users plus an option for "No User". Changing it updates `currentUser` state.
+  - Use `useLoaderData` to get the list of users loaded by the loader (the user list for the dropdown). The exported interface makes it easy for the two modules to evolve the loader if needed.
+  - Manage a piece of state `currentUser` in Layout to track which user is selected (if any). We initialize it as `null` meaning "no user". We need to pay attention when comparing string with numbers.
+  - Render navigation links: “All Transactions”, “New Transfer”. We use NavLink instead of <a> because we do not want full page refresh; otherwise we would lose the state (current user)
+  - Render a `<select>` dropdown listing all users plus an option for "No User". Changing it updates `currentUser` state. It's a controlled component.
   - We provide `Outlet` for displaying the children, and provide the current user as context. This is using the similar technique of React Context seen in previous lesson but with a direct integration in react router because it is so common for a Layout component to provide a context, we even provide a direct hook for getting the currentUser with a very explicit name. See https://reactrouter.com/api/hooks/useOutletContext 
 
 
-- **Transactions List Page**: In `Transactions.tsx`, implement the loader and component to display all transactions:
+In `pages/Layout/hooks.ts`, export a custom hook for easily getting the currentUser from the context. This is mostly to illustrate how a component can expose custom hooks to other components but it is a great example of encapsulation. There is a high chance that other components will want to have access to the current user and by exposing a custom hook, we allow them to not care about technical details like usage of a Context or they key inside the context. This, in turn, will enable us to make easy refactorings later.
+
+```ts
+import type { User } from "@/lib/api";
+import { useOutletContext } from "react-router";
+
+export function useCurrentUser() {
+  const { currentUser } =  useOutletContext<{ currentUser: User | null }>();
+  return currentUser;
+}
+```
+
+Finally, in `pages/Layout/index.ts`, we export the different values for allowing other modules to only import from `pages/Layout` without caring that we split code in multiple files.
+
+```ts
+export { default } from './Component';
+export { useCurrentUser } from './hooks';
+export { loader } from './loader';
+```
+
+#### **Transactions List Page**: 
+  
+In `pages/Transactions/loader.ts`, implement the loader for fetching the transactions, very similar to Layout. 
+Add the required code in the api module for calling the function and exporting the Transaction type.
+
+In `pages/Transactions/Component.tsx`, implement the component to display all transactions.
 
   ```tsx
-  import { useLoaderData, Link } from 'react-router-dom';
+import { useLoaderData } from 'react-router-dom';
+import ExpenseTransactionItem from '@/components/ExpenseTransactionItem';
+import TransferTransactionItem from '@/components/TransferTransactionItem';
+import type { LoaderData } from './loader';
 
-  interface Transaction {
-    //...
-  }
-
-  // Loader function to fetch combined transactions
-  export async function loader() {
-    // load data from api
-    return data as Transaction[];
-  }
 
   export default function Transactions() {
-    const transactions = useLoaderData() as Transaction[];
+    const { transactions } = useLoaderData<LoaderData>();
     return (
       <section>
-        // ...
+        <ul>
           {transactions.map((tx) => (
-            <li key={`${tx.type}-${tx.id}`} ...>
-              // Conditionally render an ExpenseTransactionItem or a TransferTransactionItem.
-              // they must be defined in their own file, in the components/ subdir
-              // these are NOT pages and therefore do not have loaders.
-              // The component for rendering expense must have a NavLink
+            <li key={`${tx.id}`} >
+                {tx.kind === 'expense' ? (
+                  <ExpenseTransactionItem transaction={tx} />
+                ) : (
+                  <TransferTransactionItem transaction={tx} />
+                )}
             </li>
           ))}
         </ul>
@@ -596,160 +766,71 @@ We’ll also introduce a **layout page** to manage common UI (like the NavBar an
   }
   ```
 
-  What’s happening:
-  - The loader fetches `/api/transactions` and returns the array of transactions. We imagine each item having a field for easily differentiating expenses and transfers
-  - The component uses `useLoaderData()` to get that array and then displays each transaction in a list item.
-  - For each item, we check the type:
-    - If it's an `expense`, we display its description, who paid (payer name), amount, and how many participants shared it. If `participants.length > 1`, we show “for X people”; if it equals 1 (meaning only payer themselves), we say “for themselves”.
+  - For each item, check the type:
+    - If it's an `expense`,  we show a sentence like “Alice paid $45.99 for 2 people on 23/09/2025 : Office Supplies”
     - If it's a `transfer`, we show a sentence like “Alice transferred €50 to Bob on 01/10/2025.”
+  - For Expense, add a link which will navigate to the expense details page. Be sure to use the id of the **expense** if it is different from the id of the **transaction**.
+
+In `pages/Transactions/index.ts`, export the component and the loader
+
+#### **Expense Detail Page**: 
+
+In `pages/ExpenseDetails/loader.ts`, we will fetch the specific expense according to the id of the route. The loader function receives the param object (as well as the default context and the request object, [see documentation](https://api.reactrouter.com/v7/interfaces/react_router.LoaderFunctionArgs#params)). You can get the id from that object.
 
 
-- **Expense Detail Page**: In `ExpenseDetail.tsx`, we will fetch and display detailed info for one expense:
 
-  ```tsx
-  import { useLoaderData } from 'react-router-dom';
-
-  interface Expense {
-      //...
-  }
-
-  export async function loader({ params }: { params: any }) {
-    const expenseId = params.id;
-    // get from API
-    return expense as Expense;
-  }
-
-  export default function ExpenseDetail() {
-    const expense = useLoaderData() as Expense;
-    return (
-      <section>
-        <h2 className="text-2xl font-bold mb-4">Expense Details</h2>
-        // ...
-      </section>
-    );
-  }
-  ```
-
-  Explanation:
-  - The loader uses the `id` param from the route and fetches that expense. We expect our backend to include the related payer and participant details.
-  - We display all the key info, including:
-    - Payer’s name, email, and bank account (if available).
-    - List of participants, each with name, email, bank (if any).
-  - We also compute and display each participant’s share of the expense (just total divided by number of participants). This helps illustrate who owes what for this expense.
-
-- **Transfer Form Page**: In `TransferForm.tsx`, create a form for adding a new transfer:
-
-  ```tsx
-  import { useState } from 'react';
-  import { Form, useActionData, useNavigation } from 'react-router-dom';
-  import { useCurrentUser } from 'src/pages/Layout';
-
-  interface TransferFormData {
-    amount: number;
-    sourceId: number;
-    targetId: number;
-  }
-  interface ActionResponse {
-    error?: string;
-    success?: boolean;
-  }
+In `pages/ExpenseDetails/Component.tsx`, write the component for displaying the detail of an Expense, including:
+  - Payer’s name, email, and bank account (if available).
+  - List of participants, each with name, email, bank (if any).
+  - Each participant’s share of the expense (just total divided by number of participants). This helps illustrate who owes what for this expense.
 
 
-  export async function action({ request }: { request: Request }) {
-    const formData = await request.formData();
-    const amount = formData.get('amount');
-    const sourceId = formData.get('sourceId');
-    const targetId = formData.get('targetId');
-   
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/transfers`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: parseFloat(amount.toString()),
-        sourceId: Number(sourceId),
-        targetId: Number(targetId),
-      }),
-    });
-    if (!res.ok) {
-      return { error: 'Failed to create transfer.' };
-    }
-    return { success: true };
-  }
+In `pages/ExpenseDetails/index.ts`, export the component and the loader
 
-  export default function TransferForm() {
-    const currentUser  = useCurrentUser();
-    const actionData = useActionData() as ActionResponse;
-    const navigation = useNavigation();
-  
-    const isSubmitting = navigation.state === 'submitting';
+#### **Transfer Form Page**: 
 
-    return (
-      <section>
-        <h2 className="text-2xl font-bold mb-4">New Transfer</h2>
-        // adapt the form with what we have seen last lesson about react hook form
-        <Form method="post" className="max-w-sm space-y-4"  >
-          {actionData?.error && <p className="text-red-600">{actionData.error}</p>}
-          {actionData?.success && <p className="text-green-600">Transfer recorded successfully!</p>}
-          
-          {/* Populate options from users list */}
-          {/* You can either load the user list in loader, or try to pass it from the list received in the layout */}
-
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Add Transfer'}
-          </button>
-        </Form>
-      </section>
-    );
-  }
-  ```
-
-  Let’s unpack this:
-  - We use `<Form method="post">` from react-router-dom. This will automatically trigger our `action` on the route when submitted.
-  - The `action` function (above the component) reads form data and calls the backend POST `/api/transfers`. If something is missing or invalid (like source == target), we return an `{ error: ... }` object. If successful, we return `{ success: true }`. These return values become `actionData` accessible via `useActionData()` in the component. Notice that we do not redo form validation here, this was already done by react-hook-form before this function was called.
-  - In the component:
-    - We use `useCurrentUser` to get `currentUser` from Layout. 
-    - We use `useNavigation()` to get the navigation state; this lets us disable the submit button and show "Submitting..." text while the form is in flight.
-    - We display any `actionData.error` or success message if present.
-    - The options for the select dropdowns: to populate them, we need the list of users. We have it in the root loader (`users` data). We have two ways:
-      1. Use `useRouteLoaderData('layout')` to get the users from the root route loader.
-      2. Or pass the users list through context as well. We already pass currentUser; we could pass the whole users array in context too.
-      3. Or we fetch the list of users again (this might be needed if there is a different logic than: all users are possible participants)
+In `pages/AddTransfer/loader.ts`, we will fetch the list of users, same as we did in `Layout/loader.ts`. We could reuse the list received in Layout (and pass it via the OutletContext, as we did for the current user) but this would only bring a very small boost of performance while coupling very strongly two components who should stay decoupled. Decoupling these components is more important from a Software Architecture perspective because these two components will very likely evolve for different reasons, they are not related to the same domain.
 
 
-    - When the action returns success, we show a success message. You might also want to redirect the user or reset the form. For example, on success, you could navigate to `/transactions` or `/my-transactions`. However, since we didn't explicitly call `redirect()` in the action, the page will not navigate by itself. Perhaps as an improvement, if `actionData?.success` is true, you could use `useNavigate` to redirect after a short delay or on the next render. We keep it simple: show a message and the user can manually go back or use nav links.
-
-- **Expense Form Page**: In `ExpenseForm.tsx`, create a form for adding a new expense. This is very similar to the previous page.
-
-- **My Transactions Page**: In `MyTransactions.tsx`, display the transactions relevant to the currently selected user (from context):
+ In `pages/AddTransfer/Component.tsx`, create a form for adding a new transfer, and leverage react hook form, as we did in Lesson 2.
+ Upon success, **navigate()** to the transactions page.
+ Upon error, set an error on **root**, it will be cleared with every submission ( [documentation](https://react-hook-form.com/docs/useform/seterror) )
 
 
-This page is very similar to previous ones. It does not have an action but it has a loader.
-Try to compute the balance for current user, but do not spend too much time on it. This is an interesting problem but out of the scope of this course.
-If there is no current user, use the loader to navigate to Home page.
+You will need to use the custom hook `useCurrentUser()` which we created on `pages/Layout` module (and more specifically on `pages/Layout/hook.ts` file) for setting the default value of the source to the current user.
+
+You will require the `formState` from the `useForm` hook and more specifically the `errors` and `isSubmitting` states. The `isSubmitting` state is needed for disabling the button once you've clicked on it.
+
+You will require the `useNavigation` hook for navigating to `/transactions` upon success.
+
+> **Important**: We are deliberately NOT using the `action` feature of react router and instead choosing to go entirely with react hook form. This is a design decision  which should be discussed in a real project because each option has pros and cons. Do not try to mix the two features, avoid `action` from react router for now.
 
 
-- **Recommended Folder/Module Structure**: Notice how we structured route components and co-located their loaders/actions. This follows React Router’s recommended approach of keeping route concerns together. 
-  
-  - We also used an `id` on the layout route to identify and access its loader data from children (via `useRouteLoaderData('layout')`). This is a common convention to share data like the user list to many parts of the app (NavBar, forms, etc.) without passing props down long chains.
-  - We passed the current user via context to demonstrate global state sharing (any child can `useOutletContext` to get it). This is simpler than using a separate context provider since React Router Outlet provides this pattern out of the box.
+
+#### **Expense Form Page**
+
+Adapt your AddExpense form from previous week. Follow the same guidelines as the form for Transfer we just did.
+
+
+
+#### Test
 
 - After implementing these changes, **test the frontend** thoroughly:
   - The app should start at the home or transactions page. The NavBar should show "No User" by default and the "My Transactions" link should be disabled.
   - The All Transactions page should list all expenses and transfers from the backend.
-  - Selecting a user from the dropdown should navigate to My Transactions. There, you should see only those transactions involving that user, and the computed balance.
-  - Try selecting each user and verifying the balance calculation makes sense (e.g., if Alice paid more than she owed, the balance should show she’s owed money).
   - The New Transfer form should allow creating a transfer. If you select a source and target and submit, check:
-    - The form should show a success message (or error if something was wrong).
-    - The backend should indeed have a new transfer record (check via API or Prisma Studio).
-    - If you then go to All Transactions, you might need to refresh or re-navigate to see it (depending on caching). A full page refresh will definitely fetch fresh data. In a real app, we’d improve this by revalidating loaders after actions (React Router can do this automatically for loaders on the same page, but since our form route is separate, we manually handle it).
-  - Expense Detail page: from All Transactions, click a "details" link on an expense. It should load the detail route and display all info. Try an expense where more than one participant exists to see the list and per-person share. Use the browser's back button or nav links to return.
+    - The form show an error under the field if validation fails.
+    - The form display a generic message if backend fails
+    - The form redirects to transactions if the form succeeded, you can see your new record on top.
+  - Expense Detail page: from All Transactions, click a "details" link on an expense. It should load the detail route and display all info. Try an expense where more than one participant exists to see the list and per-person share. 
+  - The browser's back button is working properly. Refresh as well (but loses current user)
 
 
 ---
 
 ## Optional Enhancements
 
-If you have additional time or for homework, consider tackling these enhancements to further improve robustness and user experience:
+Consider tackling these enhancements to further improve robustness and user experience:
 
 ### A. Form Validation with Zod
 
@@ -793,9 +874,9 @@ Our balance calculation logic in My Transactions is rudimentary and assumes equa
 
 - We migrated our backend to a **TypeScript Express template** for better structure, and integrated **Prisma** to manage complex state with a relational database. This introduced true relationships between data (users, expenses, transfers) instead of using simple JSON storage.
 - We learned how to define **Prisma models** with relations (one-to-many for payer expenses, many-to-many for expense participants, and self-relations for transfers between users) and used **Prisma Migrate** to evolve the database schema safely.
-- On the frontend, we refactored to use **React Router loaders and actions**, moving data fetching logic out of components and into the routing layer. This makes our data flow more declarative and tied to routes, improving maintainability and performance (data is loaded before rendering).
+- On the frontend, we refactored to use **React Router loaders**, moving data fetching logic out of components and into the routing layer. This makes our data flow more declarative and tied to routes, improving maintainability and performance (data is loaded before rendering).
 - We utilized a **Layout route with Outlet context** to manage global state (current user selection) and to share common data (user list) across pages. This is a clean way to handle state that many components need without prop drilling.
-- We implemented new UI pages: a combined **Transactions list**, a **Transfer form**, a **My Transactions** (personal view) page, and an **Expense detail** page. Each demonstrates different aspects of state management: aggregated data, form submission with side effects, filtered views based on context, and detailed views with related records.
+- We implemented new UI pages: a combined **Transactions list**, a **Transfer form**, and an **Expense detail** page. Each demonstrates different aspects of state management: aggregated data, form submission with side effects, and detailed views with related records.
 
 - The app now supports a realistic scenario of multiple users sharing expenses and settling up, showcasing how **backend state** (database) and **frontend state** (React) interact in a complex app. This lays a strong foundation for any full-stack application you'll build going forward, as you can confidently model data and manage state across the stack.
 

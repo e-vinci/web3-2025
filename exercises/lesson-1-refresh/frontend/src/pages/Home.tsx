@@ -5,7 +5,7 @@ import ExpenseSorter from '../components/ExpenseSorter';
 import type { Expense } from '../types/Expense';
 
 export default function Home() {
-  const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => (a, b) => 0);
+  const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => () => 0);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -22,7 +22,6 @@ model Expense {
   amount      Float
 }
 
-// Faulty model: amount should be Float, but is string
 model TopUp {
   id     Int    @id @default(autoincrement())
   user   String

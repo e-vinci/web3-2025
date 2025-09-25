@@ -1,6 +1,6 @@
 export interface TopUpInput {
   user: string;
-  amount: string; // Faulty: should be number, but matches backend bad practice
+  amount: string;
 }
 
 export interface TopUp extends TopUpInput {

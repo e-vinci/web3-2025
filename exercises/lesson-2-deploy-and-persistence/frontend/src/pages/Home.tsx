@@ -45,7 +45,6 @@ export default function Home() {
     }
   };
 
-  // Fetch topups from backend (bad: no error handling)
   const fetchTopUps = async () => {
     const data = await sendApiRequestandHandleError('GET', 'topup/list');
     setTopups(data);
@@ -55,7 +54,7 @@ export default function Home() {
     fetchExpenses();
     fetchTopUps();
   }, []);
-  // Add TopUp (bad: no validation, no error handling, inconsistent optimistic update)
+
   const handleAddTopUp = async (newTopUpForm: TopUpInput) => {
     const newTopUpOptimistic = { id: 'optimistic', date: new Date().toISOString(), ...newTopUpForm } as TopUp;
     setTopups([newTopUpOptimistic, ...topups]);

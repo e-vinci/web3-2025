@@ -83,7 +83,7 @@ app.use(
 - Specify the root directory (backend)
 - As a buid command we want `npm install` and as run command `npm run start`
 
-Confirm, once done check the url under `api/expense` - the API should be working. Note the url, we'll need it in a minute.
+Confirm, once done check the url under `api/expenses` - the API should be working. Note the url, we'll need it in a minute.
 
 **Frontend**
 

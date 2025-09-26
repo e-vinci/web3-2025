@@ -58,8 +58,7 @@ export default function Home() {
   const handleAddTopUp = async (newTopUpForm: TopUpInput) => {
     const newTopUpOptimistic = { id: 'optimistic', date: new Date().toISOString(), ...newTopUpForm } as TopUp;
     setTopups([newTopUpOptimistic, ...topups]);
-    const addedTopUp = await sendApiRequestandHandleError('POST', 'topup/add', newTopUpForm);
-    setTopups([addedTopUp, ...topups]);
+    await sendApiRequestandHandleError('POST', 'topup/add', newTopUpForm);
   };
 
   const handleAddExpense = async (newExpenseForm: ExpenseInput) => {

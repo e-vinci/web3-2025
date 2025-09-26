@@ -92,7 +92,7 @@ Confirm, once done check the url under `api/expense` - the API should be working
 - name it "expenso-frontend"
 - Specify the correct branch
 - Specify the root directory (frontend)
-- As a buid command we want `npm run build` and as publish directoy `dist` (you can figure that out by running the commands locally)
+- As a buid command we want `npm install && npm run build` and as publish directoy `dist` (you can figure that out by running the commands locally)
 
 Once built, the frontend is "just" standard html & js - so it is indeed a "static website".
 

@@ -24,8 +24,21 @@ function resetExpenses() {
   return JSON.parse(initData);
 }
 
+function deleteExpense(id) {
+  const expenses = getAllExpenses();
+  const index = expenses.findIndex((e) => e.id === id);
+  if (index !== -1) {
+    expenses.splice(index, 1);
+    fs.writeFileSync(EXPENSES_FILE_PATH, JSON.stringify(expenses, null, 2));
+    return true;
+  } else {
+    return false;
+  }
+}
+
 module.exports = {
   getAllExpenses,
   addExpense,
   resetExpenses,
+  deleteExpense,
 };

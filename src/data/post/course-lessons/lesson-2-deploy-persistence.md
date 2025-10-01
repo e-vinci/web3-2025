@@ -182,7 +182,7 @@ Tips: You can use `npx prisma studio` for viewing your current db data. This is 
 Aside from synchronizing with the database, the schema is also used by Prisma to generate client code:
 
 ```bash
-npx prisma generate
+npx prisma generate --no-engine
 ```
 
 You should see a new `/generated` folder - as this is generated code, we should never update it manually - see it as a library, even if it's in the repository. This is the "client" code as in code that allows you to interact with the database using JavaScript.

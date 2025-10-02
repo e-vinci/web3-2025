@@ -92,7 +92,7 @@ Confirm, once done check the url under `api/expenses` - the API should be workin
 - name it "expenso-frontend"
 - Specify the correct branch
 - Specify the root directory (frontend)
-- As a buid command we want `npm install && npm run build` and as publish directoy `dist` (you can figure that out by running the commands locally)
+- As a build command we want `npm install && npm run build` and as publish directoy `dist` (you can figure that out by running the commands locally)
 
 Once built, the frontend is "just" standard html & js - so it is indeed a "static website".
 
@@ -106,7 +106,7 @@ Go under the Environment tab on render, add a variable `VITE_API_URL` and put th
 
 **Goal**: Replace our JSON files with a proper database managed using the Prisma ORM. We'll also add a Postgresql database to our infrastructure
 
-Remember this thing about having to restart the server with each change? Let' fix it before going further
+Remember this thing about having to restart the server with each change? Let's fix it before going further
 
 - install nodemon with `npm i -g nodemon`  , `-g` means "global" ie that this will be installed at your user level, not in the project's `node_modules` folder
 - start your server with `nodemon` instead of `node`. Add a `dev` script in `package.json`. We do not want to change the start script because it is used in production where nodemon is not installed. 
@@ -129,19 +129,21 @@ npm install prisma --save-dev
 npx prisma init
 ```
 
-This last command has two noticeable effect : It has created the file `prisma/schema.prisma` where we will do most of our work, and it has added a line in `.env` for `DATABASE_URL`.
+This last command has two noticeable effects : It has created the file `prisma/schema.prisma` where we will do most of our work, and it has added a line in `.env` for `DATABASE_URL`.
 
 The default `DATABASE_URL` will work with a local version of postgres which you can start with the command: `npx prisma dev`. 
 
 Try it now, and then run the command `npx prisma db pull` which should tell you the db is empty.
 
-- Create a new free postgres database on render and get the external url once done.
+> Using `npx prisma dev` for running a local database in development is the easiest approach but it relies on [pglite](https://pglite.dev/) and autodownloading from prisma. A more reliable approach is to use a proper PG database, either the one hosted by the school for which you have received access, or you can install postgresql locally quite easily, which is what most engineer do. A third option is using [docker](https://hub.docker.com/_/postgres) 
+
+- Create a new free postgres database on Render and get the external url once done.
 
 - Add a `DATABASE_URL` environment variable in your **backend** service in render. Now you will use your local database when developping locally, and the production database in production. 
 
 - Notice how the frontend environments knows the API URL and the backend knows the Database URL. The frontend DOES NOT know the Database URL.
 
-- Confirm you can easily connect to both DB using any DB tool (if you don't have any, install the [vscode postgres extension](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-pgsql)). You can press `t` in the terminal where you ran `npx prisma dev` for getting the connection string.
+- Confirm you can easily connect to the Render DB using any DB tool (if you don't have any, install the [vscode postgres extension](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-pgsql)).
 
 > From the trenches: We always want the know that the connection is working properly before doing any work. This means that if we get an error message while connecting to the DB via the app it's related to the app - as we know the DB is working. Generally: try to solve problems part by part to avoid situation where an error can have multiple causes.
 
@@ -175,7 +177,7 @@ We should normally mostly "push" (ie: the model file should be the source of tru
 
 Connect to the db and check the Expense table.
 
-Tips: You can use `npx prisma studio` for viewing your current db data. This is a good addition to a psql client as it will also validates your configuration and schema.
+> Tips: You can use `npx prisma studio` for viewing your current db data. This is a good addition to a psql client as it will also validates your configuration and schema.
 
 ### 4. Data and queries
 
@@ -187,7 +189,7 @@ npx prisma generate --no-engine
 
 You should see a new `/generated` folder - as this is generated code, we should never update it manually - see it as a library, even if it's in the repository. This is the "client" code as in code that allows you to interact with the database using JavaScript.
 
-We're going to test it using a simple `db-read.js` file:
+We're going to test it using a simple `db-read.js` file to ensure our prisma client has been properly generated.
 
 ```javascript
 const { PrismaClient } = require('./generated/prisma');
@@ -243,7 +245,7 @@ So let's go:
 - Replace the `addExpense()` by a call to `create()`
 - Check that the whole cycle is working as expected (from the screen to the database and back)
 
-> Warning: most of prisma's methods are asynchronous - make sure you return actual results, not promises.
+> Warning: most of prisma's methods are asynchronous - make sure you return actual results, or await for them.
 
 Looks like a good time to push and deploy.
 Check that everything works fine on render.
@@ -252,7 +254,7 @@ You may encounter these two issues :
 
 - if you have a cors error, remember to allow your backend to serve request from your frontend in `app.js`.
 
-- If it complains about `generated/prisma` not being present, it's because it is in the `.gitignore`. This is on purpose and you need to update your render setting to use the following build command: `npm install && npx prisma generate --no-engine`. You can make a new "build" script in your `package.json` for keeping things easy.
+- If it complains about `generated/prisma` not being present, it's because it is in the `.gitignore`. This is on purpose and you need to update your render setting to use the following build command: `npm install && npx prisma generate --no-engine`. Make a new "build" script in your `package.json` for keeping things easy.
 
 Update your build command on render to `npm run build`.
 Update your start command for updating your DB schema as needed: `npx prisma db push && npm start`. We should use pre-start command for this (and rollback the deploy if it fails) but this feature is only available to paid plans.

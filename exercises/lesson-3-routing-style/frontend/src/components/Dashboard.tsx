@@ -44,9 +44,7 @@ export default function Dashboard({ onClose }: DashboardProps) {
     }
 
     return (
-        // Mistake: Bypassing layout, using fixed positioning instead of proper routing
         <div className="fixed inset-0 bg-white z-50 overflow-auto">
-            {/* Mistake: Custom navigation instead of using the app's NavBar */}
             <div className="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md">
                 <h1 className="text-2xl font-bold">📊 Expense Dashboard</h1>
                 <button
@@ -61,7 +59,6 @@ export default function Dashboard({ onClose }: DashboardProps) {
                 <div className="max-w-6xl mx-auto">
                     <h2 className="text-3xl font-bold mb-8 text-gray-800">Expense Analytics</h2>
 
-                    {/* Mistake: Custom Tailwind cards instead of Shad components */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         {/* Total Expenses Card */}
                         <div className="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-6 rounded-lg shadow-lg border-l-4 border-purple-300">

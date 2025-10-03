@@ -4,10 +4,8 @@ import { useState } from 'react';
 import Dashboard from '../components/Dashboard';
 
 export default function Welcome() {
-  // Mistake: Using state for navigation instead of router
   const [showDashboard, setShowDashboard] = useState(false);
 
-  // Mistake: Bypassing router with onClick handler
   const handleDashboardClick = () => {
     setShowDashboard(true);
   };
@@ -31,7 +29,6 @@ export default function Welcome() {
           <Button asChild className="bg-green-800 text-white hover:bg-green-700 rounded-full px-6">
             <NavLink to="/add">Add Expense</NavLink>
           </Button>
-          {/* Mistake: Using onClick instead of NavLink/routing */}
           <Button
             onClick={handleDashboardClick}
             className="bg-blue-600 text-white hover:bg-blue-700 rounded-full px-6"
@@ -41,7 +38,6 @@ export default function Welcome() {
         </div>
       </div>
 
-      {/* Mistake: Conditionally rendering dashboard instead of using routes */}
       {showDashboard && <Dashboard onClose={handleCloseDashboard} />}
     </>
   );

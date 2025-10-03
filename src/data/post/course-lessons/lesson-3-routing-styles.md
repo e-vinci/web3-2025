@@ -74,7 +74,7 @@ We need to pass the prop in order to be able to update the current page from our
 In the `Welcome` page, add two buttons to navigate to `List` and `Add`:
 
 ```tsx
-<button onClick={ setCurrentPage("Add")}>View Expense List/>
+<button onClick={ () => setCurrentPage("List")}>View Expense List/>
 ```
 
 > **&#10067; Would it not be better to use something like React Router for this?** Indeed - and we're going to. But doing some things manually can help understand how the librairies are working so it's a good step. We may not always want to add a full library for a simple task we can do in a few lines of code.

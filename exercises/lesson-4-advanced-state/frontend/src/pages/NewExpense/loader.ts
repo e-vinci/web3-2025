@@ -1,4 +1,5 @@
-import ApiClient, { type User } from '@/lib/api';
+import ApiClient from '@/lib/api';
+import type { User } from '@/types/User';
 
 export interface LoaderData {
   users: User[];

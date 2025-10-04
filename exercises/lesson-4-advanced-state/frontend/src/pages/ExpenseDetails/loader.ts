@@ -1,4 +1,5 @@
-import ApiClient, { type Expense } from '@/lib/api';
+import ApiClient from '@/lib/api';
+import type { Expense } from '@/types/Expense';
 import type { LoaderFunctionArgs } from 'react-router';
 
 export interface LoaderData {

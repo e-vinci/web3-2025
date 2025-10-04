@@ -2,7 +2,6 @@ import { NavLink, Outlet, useLoaderData } from 'react-router';
 import { useState } from 'react';
 import type { LoaderData } from './loader';
 import type { User } from '@/types/User';
-import { Toaster } from 'sonner';
 
 export default function Layout() {
   const { users } = useLoaderData<LoaderData>();
@@ -26,9 +25,6 @@ export default function Layout() {
           <NavLink to="/transactions" className="mr-4">
             All Transactions
           </NavLink>
-          <NavLink to="/expenses/new" className="mr-4">
-            New Expense
-          </NavLink>
           <NavLink to="/transfers/new" className="mr-4">
             New Transfer
           </NavLink>
@@ -51,7 +47,6 @@ export default function Layout() {
       <main className="p-6">
         <Outlet context={outletContext} />
       </main>
-      <Toaster />
     </div>
   );
 }

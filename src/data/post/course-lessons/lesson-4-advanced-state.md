@@ -49,22 +49,35 @@ All exercises continue building on our collaborative expense-sharing app. We wil
 
 **Goal**: Set up a new Express backend using a modern TypeScript boilerplate, then integrate Prisma for database access.
 
-- **Clone Template**: In your `backend/` directory (you can create a new folder or replace the old one), clone the Express+TS template repository:
+#### **Clone Template**:
+
+Backup your current backend `directrory` for easily accessing your code, and clone the Express+TS template repository as your new backend directory.
   ```bash
+  mv backend backend.backup
   git clone https://github.com/edwinhern/express-typescript.git backend
   ```
   This boilerplate provides a structured starting point (TypeScript, project architecture, testing, etc.). Navigate into `backend/` and run `npm install` to install dependencies.
-- **Review Structure**: Open the project and briefly examine the structure. You’ll see an organized layout under `src/`: 
+#### **Review Structure**: 
+
+Open the project and briefly examine the structure. You’ll see an organized layout under `src/`: 
   - an `api` folder where we will write features (with subfolders for like `user`, and `healthcheck`)
   - an `api-docs` folder for serving the documentation of our API. We will not spend time maintaining the documentation of our API in the scope of this course, but the template is ready for it.
   - a `common` folder for middleware setup and other conveniences (logging, environment validation with Zod, etc.). 
   
-  Take note of the different files under the `user` feature: Router, Model, Controller, Service, Repository – we will follow this pattern for our new features. Notice as well that each feature has its own automated tests in a `__tests__` directory. These are based on the tool [vitest](https://vitest.dev/), in the scope of this course we will not write tests, but if we did, each feature folder would have their own. tests.
+  Take note of the different files under the `user` feature: Router, Model, Controller, Service, Repository – we will follow this pattern for our new features. 
+  
+> Notice as well that each feature has its own automated tests in a `__tests__` directory. These are based on the tool [vitest](https://vitest.dev/).
+> In the scope of this course we will not write tests, but if we did, each feature folder would have their own. tests.
 
 
-- **Environment Setup**: Copy the provided `.env.template` to a new `.env` file in the backend folder. Fill in any required env vars. Set your `PORT` to `3000` and `CORS_ORIGIN` to `http://localhost:5173` (the url of your frontend) . We will add a database connection URL here later.
-- 
-- **Run the Template**: Try running the server in dev mode to ensure everything is working:
+#### **Environment Setup**: 
+
+Copy the provided `.env.template` to a new `.env` file in the backend folder. Fill in any required env vars. Set your `PORT` to `3000` and `CORS_ORIGIN` to `http://localhost:5173` (the url of your frontend) . We will add a database connection URL here later.
+
+
+#### **Run the Template**: 
+
+Try running the server in dev mode to ensure everything is working:
   ```bash
   npm run start:dev
   ```
@@ -79,27 +92,26 @@ All exercises continue building on our collaborative expense-sharing app. We wil
 
   You should see the backend app start, validates that you can hit `http://localhost:3000/health-check` in your browser or your REST client. You can see in your dev console that this template has a lot of security already configured, mostly via the library [helmet](https://helmetjs.github.io/)
 
-- **Add Prisma to the Project**: Stop the server. We will now integrate Prisma into this template.
-  - Install Prisma as a development dependency and initialize it:
-    ```bash
-    npm install prisma --save-dev
-    npx prisma init
-    ```
-    This creates a `prisma/` directory with a `schema.prisma` file and adds a `DATABASE_URL` entry in your `.env file`. 
-    The default value will allow you to work with a local Postgres server that you can run with the command `npx prisma dev`. 
-    You can keep that value (and start the server) while you developer, or use the value from Lesson 2 and work directly on your hosted database.
+#### **Add Prisma to the Project**: 
 
-  - We recommend that you use a local database in development and only connect the cloud hosted when you are debugging production issues. In real life, the production database will never be accessible from your own machine and using the production database during development will break the production app and drive your teammates crazy. Keep in mind that even if you are currently a solo developer working on an app without users, this is not the case in real life. Use `npx prisma dev` in development or any other way of hosting a local db. 
+Stop the server. We will now integrate Prisma into this template.
 
+Install Prisma as a development dependency:
 
+```bash
+npm install prisma --save-dev
+```
 
-- **Verify DB Connection**: Run the command:
-  ```bash
-  npx prisma db pull
-  ```
-  This will check the connection and pull any existing schema (if your DB is new/empty, it will succeed with no models). If you get an error, double-check your `DATABASE_URL` and that the database exists/reachable.
+Copy your `prisma/schema.prisma` file from your `backend.backup` directory, and add `DATABASE_URL` to your .env file with the same value from your backend directory.
+Copy the files we used for checking the connection to database and proper prisma configuration as well: `db-read.js` and `db-populate.js`
 
-- **Prepare Dev Database**: If using a fresh database with no tables, that’s fine – we’ll create tables via Prisma soon. If you had existing tables from previous exercises, consider starting with a clean slate for this lesson (you can always reseed data).
+Generate your prisma client code: `npx prisma generate` and run `node db-read.js` for validating that your prisma is working correctly.
+
+> Note: Last week we had issues related to the option `--no-engine` of `prisma generate`. This option skips installing some prisma modules because they are not needed when running a prisma-flavoured database, like the one we get when running `npx prisma dev`. But these engines ARE necessary when using a normal database, like the one we use in production. The differences between the two are out of scope of this course, and we recommend using always `npx prisma generate` and accept the warning locally.
+
+You should always use a local database in development and only connect the cloud hosted when you are debugging production issues. In real life, the production database will never be accessible from your own machine and using the production database during development will break the production app and drive your teammates crazy. 
+
+Keep in mind that even if you are currently a solo developer working on an app without users, this is not the case in real life. 
   
 
 ---
@@ -110,7 +122,35 @@ All exercises continue building on our collaborative expense-sharing app. We wil
 
 Our app now requires understanding **who** paid or transferred money to whom. We will introduce a `User` model and link it to expenses and transfers. We’ll also modify the existing `Expense` model to reference users instead of using plain strings.
 
-- **Define `User` Model**: Open `prisma/schema.prisma`. Under the `datasource` and `generator` blocks, define a new model for users:
+#### Initial migration
+
+In the previous lesson, we had to call `npx prisma db push` on render before starting the app. This was necessary to ensure the database was indeed in the expected state described in the schema file. This is a very simple and dangerous way to keep a database "in sync" with the schema, what we actually want to do is running migration(s) we have carefully prepared for controlling how the database evolves. 
+
+In order to run with migrations, we need a second database in development, it's called the "shadow database" and it's a temporary database which purpose is protecting the dev database from dangerous change. More info [here](https://www.prisma.io/docs/orm/prisma-migrate/understanding-prisma-migrate/shadow-database). If you use `npx prisma dev` for starting your database, you get that shadow database automatically. If you use a more conventional setup, you will need to add a new connection string to your `.env` file: `SHADOW_DATABASE_URL="postgres://<...>"`.
+
+First of all, we want to have an initial migration describing the current db state. We already have a table in the database and we need a migration describing this. Having this initial migration will allow us in the future to start from an empty database and simply run all migrations to reach the current state.
+
+We will follow the process described in the [prisma documentation](https://www.prisma.io/docs/orm/prisma-migrate/getting-started#create-a-baseline-migration)
+
+```bash
+mkdir -p prisma/migrations/0_init
+npx prisma migrate diff \
+  --from-empty \
+  --to-schema-datamodel prisma/schema.prisma \
+  --script > prisma/migrations/0_init/migration.sql
+```
+
+You can look at the file `prisma/migrations/0_init/migration.sql` and see that it simply contains a `CREATE TABLE` for the table we used las week. This is what `npx prisma db push` did when we executed it with the schema from last week.
+
+Mark this migration as resolved :
+
+```bash
+npx prisma migrate resolve --applied 0_init
+```
+
+#### **Define `User` Model**: 
+
+Open `prisma/schema.prisma`. Under the `datasource` and `generator` blocks, define a new model for users:
 
   ```prisma
   model User {
@@ -128,7 +168,9 @@ Our app now requires understanding **who** paid or transferred money to whom. We
   We mark email unique to simulate a real system constraint.
   Notice how we named all relation field, this is usually not necessary but we use a very dense data model with multiple relations between each model, and therefore we need to name our relations for letting Prisma know which FK relates to which relation.
 
-- **Update `Expense` Model**: Modify the `Expense` model (you may have one from Lesson 2; if not, create it):
+#### **Update `Expense` Model**: 
+
+Modify the `Expense` model:
 
   ```prisma
   model Expense {
@@ -146,7 +188,9 @@ Our app now requires understanding **who** paid or transferred money to whom. We
   - `payer` is now a **relation** to the User model (with a foreign key `payerId`). This replaces the old `payer` string field.
   - `participants` is a many-to-many relation to `User`. This will implicitly create a join table between `Expense` and `User` behind the scenes. Look at the [documentation](https://www.prisma.io/docs/orm/prisma-schema/data-model/relations/many-to-many-relations#implicit-many-to-many-relations) for understanding how join tables can be ignored by the backend and mapped to collections.
 
-- **Define `Transfer` Model**: Add a new model for transfers:
+#### **Define `Transfer` Model**: 
+
+Add a new model for transfers:
 
   ```prisma
   model Transfer {
@@ -165,123 +209,160 @@ Our app now requires understanding **who** paid or transferred money to whom. We
   - `target` is the user who received the money.
     We include a `date` here as well for consistency (when the transfer happened) and a positive `amount` (you may want to enforce positivity with validation logic, but not via Prisma schema directly).
 
-- **Create a Migration**: Now that the models are defined, we will use Prisma Migrate to apply these changes:
-  ```bash
-  npx prisma migrate dev --name add-users-and-transfers
-  ```
-  This command will:
-  - Generate a SQL migration file (under `prisma/migrations/`) reflecting the changes (new tables for User and Transfer, updated Expense table with new columns and join table for participants).
-  - Apply the migration to your database. If all goes well, your database now has three tables (plus an implicit join table for Expense <-> User many-to-many).
-  - Update the Prisma Client to be in sync with the new schema (this happens automatically on migrate; alternatively you could run `npx prisma generate`).
+#### **Create a Migration**: 
 
-> **Note:** In the previous lesson, we saw how the db client code is not versioned, most notably because it requires its own value of the DATABASE_URL. We had to add a step in the CI for generating the database client : `npx prisma generate`. Now we will need to add a new step after generating the client but before starting the app: executing the migrations. The command for executing migrations is `prisma migrate deploy`
+Now that the models are defined, we will use Prisma Migrate to apply these changes:
 
-- **Verify the Schema in DB**: Use Prisma Studio or a database client to inspect the tables:
 
-  ```bash
-  npx prisma studio
-  ```
+```bash
+npx prisma migrate dev --name add-users-and-transfers
+```
 
-  Check that you have Models for `User`, `Expense`, and `Transfer`.
+This should do the following, but it will fail:
+- Generate a SQL migration file (under `prisma/migrations/`) reflecting the changes (new tables for User and Transfer, updated Expense table with new columns and join table for participants).
+- Apply the migration to your database. If all goes well, your database now has three tables (plus an implicit join table for Expense <-> User many-to-many).
+- Update the Prisma Client to be in sync with the new schema (this happens automatically on migrate; alternatively you could run `npx prisma generate`).
 
-- **Seeding Initial Data**: Now populate the database with some mock data for development:
-  - Create a few users, e.g., Alice, Bob, and Charlie. Give them distinct emails and maybe bankAccount values.
-  - Create a few expenses:
-  - Create a few transfers
-- - **How to seed**: The easiest way is using Prisma Client in a Node script :
+The command failed because there is already data in the database and it cannot enforce a default value for required column Expense.payerId.
+This is exactly why we want to have control over migrations, we need to do something smarter for evolving the database while preserving data.
 
-    ```ts
-    // prisma/seed.ts
-    import { PrismaClient } from '../src/generated/prisma/client';
-    const prisma = new PrismaClient();
-    async function main() {
-      await prisma.user.createMany({
-        data: [
-          { name: 'Alice', email: 'alice@example.com', bankAccount: 'BE00 1111 1111 1111' },
-          { name: 'Bob', email: 'bob@example.com', bankAccount: 'BE00 2222 2222 2222' },
-          { name: 'Charlie', email: 'charlie@example.com', bankAccount: null },
-        ],
-      });
-      // Create an expense: Alice pays 100 shared with Bob and Charlie
-      const alice = await prisma.user.findFirst({ where: { email: 'alice@example.com' } });
-      const bob = await prisma.user.findFirst({ where: { email: 'bob@example.com' } });
-      const charlie = await prisma.user.findFirst({ where: { email: 'charlie@example.com' } });
-      if (alice && bob && charlie) {
-        const expense1 = await prisma.expense.create({
-          data: {
-            description: 'Dinner at La Trattoria',
-            amount: 100.0,
-            date: new Date(),
-            payerId: alice.id,
-            participants: { connect: [{ id: bob.id }, { id: charlie.id }, { id: alice.id }] },
-          },
-        });
-        const expense2 = await prisma.expense.create({
-          data: {
-            description: 'Taxi from airport',
-            amount: 40.0,
-            date: new Date(),
-            payerId: bob.id,
-            participants: { connect: [{ id: alice.id }, { id: bob.id }] },
-          },
-        });
-        await prisma.transfer.create({
-          data: {
-            amount: 50.0,
-            date: new Date(),
-            sourceId: alice.id,
-            targetId: bob.id,
-          },
-        });
-        await prisma.transfer.create({
-          data: {
-            amount: 20.0,
-            date: new Date(),
-            sourceId: charlie.id,
-            targetId: alice.id,
-          },
-        });
-      }
-    }
-    main()
-      .catch((e) => console.error(e))
-      .finally(async () => {
-        await prisma.$disconnect();
-      });
-    ```
+Let's instead create the migration and customize it before applying it. There is documentation about this process [here](https://www.prisma.io/docs/orm/prisma-migrate/workflows/customizing-migrations)
 
-    This is just an example, adapt it as you wish. 
-    You can run this script with `tsx prisma/seed.ts`. If you do not have `tsx` installed, you can install it with `npm install -D tsx`
+```bash
+npx prisma migrate dev --name add-users-and-transfers --create-only
+```
 
-    In order let prisma run your seed script whenever you reset your data ( `prisma migrate reset`) you can add a prisma configuration file with the script location. We will also use it to explicitely tell it where are the different resources it needs (the schema file, the migration files; etc.)
+Now open the file `prisma/migrations/<timestamp>_add_users_and_transfers/migration.sql` and adapt it for creating the required data and sequencing the changes in a relevant order.
 
-    Add the file `.prisma/config.ts` at the root of your `backend` folder with the following content.
+Since the point of this course is not SQL, here is a working code, read it and observe how we generate data, how we make a column temporarily nullabe then non-nullable, how we add a foreign key only when data is available, etc.
 
-    ```ts
-      import path from "node:path";
-      import "dotenv/config";
-      import { defineConfig } from "prisma/config";
+```sql
+/*
+  Warnings:
 
-      export default defineConfig({
-        schema: path.join("prisma", "schema.prisma"),
-        migrations: {
-          path: path.join("prisma", "migrations"),
-          seed: `tsx prisma/seed.ts`,
-        },
-        views: {
-          path: path.join("prisma", "views"),
-        },
-        typedSql: {
-          path: path.join("prisma", "queries"),
-        },
+  - You are about to drop the column `payer` on the `Expense` table. All the data in the column will be lost.
+  - Added the required column `payerId` to the `Expense` table without a default value. This is not possible if the table is not empty.
 
-      });
-    ```
+*/
+-- CreateTable
+CREATE TABLE "User" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "bankAccount" TEXT,
 
-     After seeding, use Prisma Studio to confirm that the data is in the tables: `npx prisma studio`
-     Notice how the Exense.participants fields is an array of User. The join table is entirely hidden in this tool.
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
 
-- At this point, our database state is initialized with some example data. We have successfully managed complex state on the backend: multiple models and relationships that mirror real-world connections between data. Next, we’ll expose this data via new API endpoints.
+-- CreateTable
+CREATE TABLE "Transfer" (
+    "id" SERIAL NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "sourceId" INTEGER NOT NULL,
+    "targetId" INTEGER NOT NULL,
+
+    CONSTRAINT "Transfer_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "_ParticipantExpenses" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL,
+
+    CONSTRAINT "_ParticipantExpenses_AB_pkey" PRIMARY KEY ("A","B")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "_ParticipantExpenses_B_index" ON "_ParticipantExpenses"("B");
+
+-- Insert User records from existing Expense.payer data
+INSERT INTO "User" ("name", "email")
+SELECT DISTINCT 
+    "payer" as "name",
+    LOWER(REGEXP_REPLACE("payer", '[^a-zA-Z0-9]', '.', 'g')) || '@expenso.dev' as "email"
+FROM "Expense"
+WHERE "payer" IS NOT NULL;
+
+-- Add payerId column as nullable first
+ALTER TABLE "Expense" ADD COLUMN "payerId" INTEGER;
+
+-- Update payerId with corresponding User IDs
+UPDATE "Expense" 
+SET "payerId" = "User"."id"
+FROM "User"
+WHERE "User"."email" = LOWER(REGEXP_REPLACE("Expense"."payer", '[^a-zA-Z0-9]', '.', 'g')) || '@expenso.dev';
+
+-- Make payerId NOT NULL after setting values
+ALTER TABLE "Expense" ALTER COLUMN "payerId" SET NOT NULL;
+
+-- Drop the old payer column
+ALTER TABLE "Expense" DROP COLUMN "payer";
+
+-- AddForeignKey
+ALTER TABLE "Expense" ADD CONSTRAINT "Expense_payerId_fkey" FOREIGN KEY ("payerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Transfer" ADD CONSTRAINT "Transfer_sourceId_fkey" FOREIGN KEY ("sourceId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Transfer" ADD CONSTRAINT "Transfer_targetId_fkey" FOREIGN KEY ("targetId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_ParticipantExpenses" ADD CONSTRAINT "_ParticipantExpenses_A_fkey" FOREIGN KEY ("A") REFERENCES "Expense"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_ParticipantExpenses" ADD CONSTRAINT "_ParticipantExpenses_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+```
+
+Now run the migration 
+
+```bash
+npx prisma migrate dev
+
+```
+
+this will try to run all the missing migration, and this time it will succeed.
+
+#### **Verify the Schema in DB**: Use Prisma Studio or a database client to inspect the tables:
+
+```bash
+npx prisma studio
+```
+
+Check that you have Models for `User`, `Expense`, and `Transfer`. 
+Look how you migration properly created the User records and connected them to the Expense records.
+
+
+#### **Run the migration on production**
+
+Now we will need to add a new step after generating the client but before starting the app: executing the migrations. 
+The command for executing migrations is `npx prisma migrate deploy`
+
+Notice how it is a different command than the one we ran in development, this is because this command :
+
+- Does not look for drift in the database or changes in the Prisma schema
+- Does not reset the database or generate artifacts
+- Does not rely on a shadow database
+
+
+
+#### **Seeding Initial Data**: 
+
+Usually we want to have some initial data when working in development, this is the purpose of the script `db-populate.js`. We may also need initial data for our app to work correctly, like a list of countries, or a list of currencies, this is called "seed" data. 
+
+Prisma has a tool for inserting seed data any time you reset your database, and you can read more about it [here](https://www.prisma.io/docs/orm/prisma-migrate/workflows/seeding). For our project, we will simply keep and adapt our `db-populate.js` script, it's a simpler alternative, even if less powerful. Making this kind of choice - choosing to stop at what is good enough and will be easy to improve later - is a very important skill for software engineers, because we always work under time constraints. 
+
+Adapt your script `db-populate.js` for creating a few users, expenses, and transactions.
+
+
+#### **Delete your backup backend directory**
+
+We won't need it anymore and it will make it harder for you to navigate your files.
 
 ---
 
@@ -295,7 +376,9 @@ Our Express template uses a structure where each feature (e.g., `user`) has its 
 
 Because of the time constraint, we will not be registering our routes to the openAPI documentation. We will not be validating the request payload according to that documentation neither. In a professional project, these are necessary actions because you want to guarantee to people using your API that the documentation is up to date and enforced. You can try to do it as an additional exercice, taking inspiration from the [template](https://github.com/edwinhern/express-typescript/blob/master/src/api/user/userRouter.ts). 
 
-You can delete the `api-docs` folder, and adapt the health-check router and server.ts
+You can delete the `api-docs` folder, and adapt all routers to not use the documentation registry anymore. You can also delete the swagger route from server.ts
+
+Confirm that everything is till working by opening your health check page.
 
 #### **Set Up Expense Module**: 
 
@@ -351,10 +434,14 @@ In `src/api/`, create a folder for `expense`. Inside, create:
   
 
 
-  - `expenseRepository.ts`: This will use Prisma Client to interact with the DB, similar to Services from previous lessons. Pay attention to the create function as it is more complex than it looks. You will need to create an expense associated with the correct participants but you will only receive their ids from the frontend. Prisma has a concept of [**connecting** records](https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries#connect-multiple-records) which will help you do that. Here is an example of the Repository: 
+  - `expenseRepository.ts`: This will use Prisma Client to interact with the DB, similar to Services from previous lessons. Pay attention to the create function as it is more complex than it looks. You will need to create an expense associated with the correct participants but you will only receive their ids from the frontend. Prisma has a concept of [**connecting** records](https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries#connect-multiple-records) which will help you do that. 
+  
+  Notice as well how we do not await for prisma response, we return a Promise, and therefore our functions are async.
+  
+  Here is an example of the Repository: 
 
     ```ts
-      import { PrismaClient } from '../../generated/prisma';
+      import { PrismaClient } from '../../../generated/prisma';
 
       const prisma = new PrismaClient();
 
@@ -403,55 +490,62 @@ In `src/api/`, create a folder for `expense`. Inside, create:
         });
       }
     ```
-
- - `expenseRequests.http`: This will help you test the the routes with your REST Client.
-  
-    ```http
-      @hostname = localhost:3000
-
-      ### Get all expenses
-      GET http://{{hostname}}/api/expenses
-      Content-Type: application/json
-
-      ### Get expense by ID
-      GET http://{{hostname}}/api/expenses/1
-      Content-Type: application/json
-
-      ### Create new expense
-      POST http://{{hostname}}/api/expenses
-      Content-Type: application/json
-
-      {
-        "description": "Office Supplies",
-        "amount": 45.99,
-        "payerId": 1,
-        "participantIds": [1, 2]
-      }
-
-      ### Create new expense (Error, wrong participant ID)
-      POST http://{{hostname}}/api/expenses
-      Content-Type: application/json
-
-      {
-        "description": "Office Supplies",
-        "amount": 45.99,
-        "payerId": 1,
-        "participantIds": [1, 99]
-      }
+  - Add the router to your server : 
     
-    ```
+    ```server.ts
+    //...
+    app.use("/api/expenses", expenseRouter);
+ 
 
+ - Add the file `src/api/expense/expenseRequests.http`: This will help you test the the routes with your REST Client.
+  
+  ```http
+  @hostname = localhost:3000
+
+  ### Get all expenses
+  GET http://{{hostname}}/api/expenses
+  Content-Type: application/json
+
+  ### Get expense by ID
+  GET http://{{hostname}}/api/expenses/1
+  Content-Type: application/json
+
+  ### Create new expense
+  POST http://{{hostname}}/api/expenses
+  Content-Type: application/json
+
+  {
+    "description": "Office Supplies",
+    "amount": 45.99,
+    "payerId": 1,
+    "participantIds": [1, 2]
+  }
+
+  ### Create new expense (Error, wrong participant ID)
+  POST http://{{hostname}}/api/expenses
+  Content-Type: application/json
+
+  {
+    "description": "Office Supplies",
+    "amount": 45.99,
+    "payerId": 1,
+    "participantIds": [1, 99]
+  }
+  ```
+
+Check your requests are working correctly
 
 
 #### **Implement User Routes**: 
 
-The template already has a basic `userRouter` and `userController` for a sample user endpoint (check `src/api/user`). These are only present for illustrating what is a router, controller, model (which we call repository), and service. It also shows how to register the api endpoint and generate documentation for it, and how to validate and coerce input. We will not be using those features of the template because of the time constraint, but you should definitely follow a similar idea in a professional setting (documenting endpoint and validating input)
+The template already has a basic `userRouter` and `userController` for a sample user endpoint (check `src/api/user`). These are only present for illustrating what is a router, controller, model (which we call repository), and service.
   
-You can delete the `src/api/user` directory and start from scratch, or you can adapt it if you feel more comfortable. But there should be no line of code at the end of the exercice that you do not understand and own; we highly recommend that you delete the whole folder once you understand how the different files articulates.
+Delete the `src/api/user` directory and start a new one from scratch.
+You can adapt it if you feel more comfortable, but there should be no line of code at the end of the exercice that you do not understand and own; we highly recommend that you delete the whole folder once you understand how the different files articulates.
 
 Following a similar approach than the one used for expense, implement the following route
 
-  - `GET /users`: return list of all users.
+  - `GET /api/users`: return list of all users.
 
 
 #### **Implement Transfer Routes**: 
@@ -462,28 +556,115 @@ Create a new `transfer` module in `src/api/transfer`: You need to list and creat
 
 Create an endpoint for getting all transactions (expenses and transfers). Otherwise you'll send two requests from the frontend and combine these in the frontend.
 
-The main advantage of doing a combined endpoint is pagination but this is out of scope for this lesson.
+  - `GET /api/transactions`: return list of all transactions.
 
-Because Transaction is not a prisma model, you need another way of ensuring its type. Use zod for this. You can take inspiration from the [template](https://github.com/edwinhern/express-typescript/blob/master/src/api/user/userModel.ts)
+> The main advantage of doing a combined endpoint is pagination but this is out of scope for this lesson.
+
+Because `Transaction` is not a prisma model, you need another way of ensuring its type. Use zod for this. You can take inspiration from the [template](https://github.com/edwinhern/express-typescript/blob/master/src/api/user/userModel.ts)
 
 Your frontend will likely want to know whether a specific transaction is an expense or a transfer, do not forget to add a `kind` field for that case.  This is similar to [discriminated unions in typescript](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#discriminated-unions)
 
 
-You will also need to transform Expense and Transfer into Transaction, the easiest approach for this is to write functions like `fromExpense` and `fromTransfer` directly into your `TransactionModel.ts` module. These functions will expect a parameter which include relations, but when you import a type from Prisma, you will NOT have any relations included. Fortunately, you can easily ask Prisma for a type including relations using `Prisma.XXXXGetPayload< ... >`, more info [here](https://medium.com/@jkc5186/understanding-typescript-types-with-prisma-e0e41a7d98f3).
+You will also need to easily make a Transaction object from an Expense or a Transfer, the easiest approach for this is to write functions like `fromExpense` and `fromTransfer` directly into your `TransactionModel.ts` module. 
+These functions will expect a parameter which include relations, but when you import a type from Prisma, you will NOT have any relations included. 
+Fortunately, you can easily ask Prisma for a type including relations using `Prisma.XXXXGetPayload< ... >`, more info [here](https://medium.com/@jkc5186/understanding-typescript-types-with-prisma-e0e41a7d98f3).
 
-Here is an example: 
+Here is the code you can use for `transactionModel.ts` :
 
 ```ts
-type TransferWithSourceAndTarget = Prisma.TransferGetPayload<{
-    include: {
-        source: true,
-        target: true,
-    }
+import { Prisma } from '@/generated/prisma';
+import { z } from 'zod';
+
+type ExpenseWithPayerAndParticipants = Prisma.ExpenseGetPayload<{
+  include: {
+    payer: true;
+    participants: true;
+  };
 }>;
+type TransferWithSourceAndTarget = Prisma.TransferGetPayload<{
+  include: {
+    source: true;
+    target: true;
+  };
+}>;
+
+export type Transaction = z.infer<typeof TransactionSchema>;
+
+export const TransactionSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  amount: z.number(),
+  date: z.date(),
+  kind: z.enum(['expense', 'transfer']),
+  payer: z.any(),
+  participants: z.array(z.any()),
+});
+
+export const TransactionArraySchema = z.array(TransactionSchema);
+
+export const fromExpense = (expense: ExpenseWithPayerAndParticipants): Transaction => {
+  return TransactionSchema.parse({
+    id: `expense-${expense.id}`,
+    description: expense.description,
+    amount: expense.amount,
+    date: expense.date,
+    kind: 'expense',
+    payer: expense.payer,
+    participants: expense.participants,
+  });
+};
+
+export const fromTransfer = (transfer: TransferWithSourceAndTarget): Transaction => {
+  return TransactionSchema.parse({
+    id: `transfer-${transfer.id}`,
+    description: 'Transfer',
+    amount: transfer.amount,
+    date: transfer.date,
+    kind: 'transfer',
+    payer: transfer.source,
+    participants: [transfer.target],
+  });
+};
+
+```
+
+Here is the code for transactionRepository, fill the missing lines:
+
+```ts
+import { PrismaClient } from "../../../generated/prisma";
+import { Transaction, fromExpense, fromTransfer } from "./transactionModel";
+
+const prisma = new PrismaClient();
+
+export async function getAllTransactions() : Promise<TransactionModel.Transaction[]> {
+  const expensesPromise = ....
+  const transfersPromise = ...
+
+  const [expenses, transfers] = await Promise.all([
+    expensesPromise,
+    transfersPromise,
+  ]);
+
+  const normalizedExpenses = expenses.map((expense) =>
+    TransactionModel.fromExpense(expense)
+  );
+  const normalizedTransfers = transfers.map((transfer) =>
+    TransactionModel.fromTransfer(transfer)
+  );
+
+  return [...normalizedExpenses, ...normalizedTransfers].sort(
+    (a, b) => b.date.getTime() - a.date.getTime()
+  );
+}
+
+
 ```
 
 
-- **Test the API**: Use a REST client and your different .http files  to verify each endpoint:
+#### **Test the API**: 
+
+Use a REST client and your different .http files  to verify each endpoint:
+
   - GET `/api/users` – should list your seeded users.
   - GET `/api/expenses` – should list expenses with their payer and participants (verify that the data structure is as expected, e.g., participants is an array of user objects).
   - GET `/api/transfers` – list of transfers with source and target user info.
@@ -492,8 +673,7 @@ type TransferWithSourceAndTarget = Prisma.TransferGetPayload<{
   - POST `/api/transfers` with a JSON body (e.g., `{ "amount": 5, "sourceId": 1, "targetId": 2 }`) – should create a new transfer.
   - POST `/api/expenses` with a new expense (e.g., `{ "description": "Coffee", "amount": 3, "payerId": 2, "participantIds": [1,2] }`) – should create expense with Bob as payer and Bob & Alice as participants.
 
-  - Also ensure error handling middleware in the template will catch and respond with errors appropriately.
-
+Also ensure error handling middleware in the template will catch and respond with errors appropriately.
 
 ---
 
@@ -514,20 +694,17 @@ We assume you have completed last week mandatory exercices. If not, you can use 
 
 #### **Create a Router Configuration**: 
 
-In your `frontend/src/main.tsx` (or wherever you render `<App/>`), set up a React Router provider like this: 
+In your `frontend/src/App.tsx` adapt your router like this: 
 
-  ```tsx
-  import ReactDOM from 'react-dom/client';
-  import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+```tsx
+import { createBrowserRouter, RouterProvider } from 'react-router';
+import Layout, { loader as layoutLoader } from './pages/Layout';
+import Welcome from './pages/Welcome';
+// import Transactions, { loader as transactionsLoader } from './pages/Transactions';
+// import ExpenseDetail, { loader as expenseDetailLoader } from './pages/ExpenseDetails';
+// import NewTransfer, { loader as NewTransferLoader } from './pages/NewTransfer';
 
-  import Layout, { loader as layoutLoader } from './pages/Layout';
-  import Welcome from './pages/Welcome';
-  import Transactions, { loader as transactionsLoader } from './pages/Transactions';
-  import ExpenseDetail, { loader as expenseDetailLoader } from './pages/ExpenseDetails';
-  import AddTransfer, { loader as AddTransferLoader } from './pages/AddTransfer';
-
-
-  const router = createBrowserRouter([
+const router = createBrowserRouter([
     {
       Component: Layout,
       loader: layoutLoader,
@@ -535,53 +712,53 @@ In your `frontend/src/main.tsx` (or wherever you render `<App/>`), set up a Reac
 
       children: [
         { index: true, Component: Welcome },
-        {
-          path: 'transactions',
-          Component: Transactions,
-          loader: transactionsLoader,
-        },
-        {
-          path: 'expenses/:id',
-          Component: ExpenseDetail,
-          loader: expenseDetailLoader,
-        },
-        {
-          path: 'transfers/new',
-          Component: AddTransfer,
-          loader: AddTransferLoader,
-        }
+        // {
+        //   path: 'transactions',
+        //   Component: Transactions,
+        //   loader: transactionsLoader,
+        // },
+        // {
+        //   path: 'expenses/:id',
+        //   Component: ExpenseDetail,
+        //   loader: expenseDetailLoader,
+        // },
+        // {
+        //   path: 'transfers/new',
+        //   Component: NewTransfer,
+        //   loader: NewTransferLoader,
+        // }
       ],
     },
   ]);
 
 
-  const root = document.getElementById('root');
-  if (root) {
-    ReactDOM.createRoot(root).render(<RouterProvider router={router} />);
-  } else {
-    throw new Error('Root element not found');
-  }
-  ```
+function App() {
+  return (
+    <RouterProvider router={router} />
+  );
 
-  Let’s break down what we did:
-  - We created a root route for `'/'` with a `Layout` component and an `id: 'layout'`. We gave it a loader that will fetch the list of users from our backend (`/api/users`). This means when the app (or any nested route) loads, we will have `useLoaderData()` available in the Layout (and child components can also access it via `useRouteLoaderData('layout')` if needed).
-  - We define child routes:
-    - The default index route `'/'` which renders a `Welcome` component.
-    - `/transactions` route to show the combined list of expenses and transfers. It uses `transactionsLoader` that we will define in `Transactions.tsx` to fetch data from `/api/transactions`.
-    - `/expenses/:id` route to show an expense detail page, with its own loader to fetch `/api/expenses/{id}`.
-    - `/transfers/new` route to show a form for creating a transfer. 
+}
 
-    - Notice how we are now using `Component`  property of the [Route Object](https://reactrouter.com/start/data/route-object) and not `element`, this simple changes means that it is now React-Router which instantiates the page component, at the time and with the props that it now controls. This allows the loader to be run **before** the page component.
-  
-Most of the imports do not exist yet, and therefore it won't work. Let's comment out all the children and start with the Layout component.
+export default App;
+```
+
+Let’s break down what we did:
+  - We extracted the creation of the router out of the component, this way we only call it once, not every time the component is rendered.
+  - We removed the page context provider. React router comes with an integrated context provider which we will leverage instead.
+  - We removed the code responsible for communicating with the api. We will move that code to its own file. We want to keep the react and non-react code separated.
+  - We introduce a concept of `loader` for the Layout (and other future page), the absence of loader module makes our compiler complains, we will fix this soon.
+  - We are now using `Component`  property of the [Route Object](https://reactrouter.com/start/data/route-object) and not `element`, this simple changes means that it is now React-Router which instantiates the page component, at the time and with the props that it now controls. This allows the loader to be run **before** the page component.
 
 
 #### **Layout**: 
 
+Let's fix this broken import and restore our context provider
+
 In `pages/Layout/loader.ts`, create a loader function which will be called by react router, let's also export an interface describing exactly what will be available from the loader. Here is the code, notice that it is a `.ts` and not a `.tsx` file. This is NOT a react file.
 
 ```ts
-import ApiClient, { type User } from "@/lib/api";
+import ApiClient from "@/lib/api";
+import type { User } from "@/types/User";
 
 export interface LoaderData {
     users: User[];
@@ -593,43 +770,51 @@ export async function loader() {
 }
 ```
 
-In `lib/api.js`, add the required code for calling the API and returning a result. Use this file for exporting the different types received by the API or needed as payload.
+In `lib/api.ts`, add the required code for calling the API and returning a result.
+The code will rely on types defined in the `types/` directory. There will be a bit of repetition here between backend and frontend because both need to agree about what a type means.
 
-You will  slowly grow this file every time you need to call one of the endpoint but here is an idea of how it should be organized. Notice that this file is under `lib` directory and is not a React file neither. We want to keep our code correctly organized.
+The code itself is nothing new, so we give it to you. But notice how this code is now entirely separated from react and any react concept.
+
+Add the types definition yourself, or get them from the [solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-4-advanced-state/frontend/src/types)
 
 ```ts
-const host = import.meta.env.VITE_API_URL;
+import type { Expense } from "@/types/Expense";
+import type { Transaction } from "@/types/Transaction";
+import type { NewTransferPayload, Transfer } from "@/types/Transfer";
+import type { User } from "@/types/User";
 
-const sendApiRequest = async (method: string = 'GET', path: string, body?: unknown) => {
-  // copy from previous exercices, notice that this is NOT exported
+const API_HOST = import.meta.env.VITE_API_URL;
+
+const sendApiRequest = async (
+  method: string = "GET",
+  path: string,
+  body?: unknown
+) => {
+  try {
+    const response = await fetch(`${API_HOST}/api/${path}`, {
+      method: method,
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : null,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("API request failed:", error);
+  }
 };
 
-// We will use the object returned by the API in several components, this API module is the best place for declaring them
-export interface Transaction {
-    //...
-}
-
-export interface User {
-  // ...
-}
-
-export interface Expense {
-  //...
-}
-
-export interface Transfer {
-  //...
-}
-
-interface NewTransferPayload {
-  // ;..
-}
-
-
-const getTransactions: () => Promise<Transaction[]> = () => sendApiRequest('GET', 'transactions') as Promise<Transaction[]>;
-const getUsers: () => Promise<User[]> = () => sendApiRequest('GET', 'users') as Promise<User[]>;
-const getExpenseById: (id: number) => Promise<Expense> = (id) => sendApiRequest('GET', `expenses/${id}`) as Promise<Expense>;
-const createTransfer: (payload: NewTransferPayload) => Promise<Transfer> = (payload) => sendApiRequest('POST', 'transfers', payload) as Promise<Transfer>;
+const getTransactions: () => Promise<Transaction[]> = () =>
+  sendApiRequest("GET", "transactions") as Promise<Transaction[]>;
+const getUsers: () => Promise<User[]> = () =>
+  sendApiRequest("GET", "users") as Promise<User[]>;
+const getExpenseById: (id: number) => Promise<Expense> = (id) =>
+  sendApiRequest("GET", `expenses/${id}`) as Promise<Expense>;
+const createTransfer: (payload: NewTransferPayload) => Promise<Transfer> = (
+  payload
+) => sendApiRequest("POST", "transfers", payload) as Promise<Transfer>;
 
 export const ApiClient = {
   getUsers,
@@ -639,23 +824,20 @@ export const ApiClient = {
 };
 
 export default ApiClient;
-
 ```
 
 
-In `pages/Layout/Component.tsx`, create a layout component that renders the NavBar and an `<Outlet />` for child pages.
+Move `pages/Layout.tsx` to  `pages/Layout/Component.tsx`. 
 
 The layout will be responsible for holding the current user in its state. For now, we do not have any authentication mechanism so we can simply pick any user from a select box.
 
-Start from the code below and add the missing part about fetching the list of users from the API by implementing the file `src/lib/api.ts`. 
+Use the following code: 
 
   ```tsx
-  import { NavLink, Outlet, useLoaderData } from 'react-router-dom';
+  import { NavLink, Outlet, useLoaderData } from 'react-router';
   import { useState } from 'react';
   import type { User } from '@/lib/api';
   import type { LoaderData } from './loader';
-
-
 
   export default function Layout() {
     const { users } = useLoaderData<LoaderData>();
@@ -709,40 +891,35 @@ Start from the code below and add the missing part about fetching the list of us
   Here we:
   - Use `useLoaderData` to get the list of users loaded by the loader (the user list for the dropdown). The exported interface makes it easy for the two modules to evolve the loader if needed.
   - Manage a piece of state `currentUser` in Layout to track which user is selected (if any). We initialize it as `null` meaning "no user". We need to pay attention when comparing string with numbers.
-  - Render navigation links: “All Transactions”, “New Transfer”. We use NavLink instead of <a> because we do not want full page refresh; otherwise we would lose the state (current user)
+  - Render navigation links: “All Transactions”, “New Transfer”. We use NavLink instead of `<a>` because we do not want full page refresh; otherwise we would lose the state (current user)
   - Render a `<select>` dropdown listing all users plus an option for "No User". Changing it updates `currentUser` state. It's a controlled component.
   - We provide `Outlet` for displaying the children, and provide the current user as context. This is using the similar technique of React Context seen in previous lesson but with a direct integration in react router because it is so common for a Layout component to provide a context, we even provide a direct hook for getting the currentUser with a very explicit name. See https://reactrouter.com/api/hooks/useOutletContext 
 
-
-In `pages/Layout/hooks.ts`, export a custom hook for easily getting the currentUser from the context. This is mostly to illustrate how a component can expose custom hooks to other components but it is a great example of encapsulation. There is a high chance that other components will want to have access to the current user and by exposing a custom hook, we allow them to not care about technical details like usage of a Context or they key inside the context. This, in turn, will enable us to make easy refactorings later.
-
-```ts
-import type { User } from "@/lib/api";
-import { useOutletContext } from "react-router";
-
-export function useCurrentUser() {
-  const { currentUser } =  useOutletContext<{ currentUser: User | null }>();
-  return currentUser;
-}
-```
 
 Finally, in `pages/Layout/index.ts`, we export the different values for allowing other modules to only import from `pages/Layout` without caring that we split code in multiple files.
 
 ```ts
 export { default } from './Component';
-export { useCurrentUser } from './hooks';
 export { loader } from './loader';
 ```
 
+We should now be able to run our frontend again.
+
 #### **Transactions List Page**: 
+
+Let's create the following files :
+ - `pages/Transactions/loader.ts`
+ - `pages/Transactions/Component.tsx`
+ - `pages/Transactions/index.ts`
   
 In `pages/Transactions/loader.ts`, implement the loader for fetching the transactions, very similar to Layout. 
-Add the required code in the api module for calling the function and exporting the Transaction type.
 
-In `pages/Transactions/Component.tsx`, implement the component to display all transactions.
+Use or add the required code in the api module for communicating with API and amend types definition if required.
+
+In `pages/Transactions/Component.tsx`, implement the component to display all transactions and use the discriminated union kind for deciding which component to render.
 
   ```tsx
-import { useLoaderData } from 'react-router-dom';
+import { useLoaderData } from 'react-router';
 import ExpenseTransactionItem from '@/components/ExpenseTransactionItem';
 import TransferTransactionItem from '@/components/TransferTransactionItem';
 import type { LoaderData } from './loader';
@@ -775,10 +952,18 @@ import type { LoaderData } from './loader';
 
 In `pages/Transactions/index.ts`, export the component and the loader
 
+Use Shadcn and Tailwind to improve the UI.
+
 #### **Expense Detail Page**: 
 
-In `pages/ExpenseDetails/loader.ts`, we will fetch the specific expense according to the id of the route. The loader function receives the param object (as well as the default context and the request object, [see documentation](https://api.reactrouter.com/v7/interfaces/react_router.LoaderFunctionArgs#params)). You can get the id from that object.
+Clicking the link for the detail of an expense would currently not lead anywhere, let's fix that!
 
+Let's create the following files :
+ - `pages/ExpenseDetails/loader.ts`
+ - `pages/ExpenseDetails/Component.tsx`
+ - `pages/ExpenseDetails/index.ts`
+
+In `pages/ExpenseDetails/loader.ts`, we will fetch the specific expense according to the id of the route. The loader function receives the param object (as well as the default context and the request object, [see documentation](https://api.reactrouter.com/v7/interfaces/react_router.LoaderFunctionArgs#params)). You can get the id from that object.
 
 
 In `pages/ExpenseDetails/Component.tsx`, write the component for displaying the detail of an Expense, including:
@@ -791,19 +976,40 @@ In `pages/ExpenseDetails/index.ts`, export the component and the loader
 
 #### **Transfer Form Page**: 
 
-In `pages/AddTransfer/loader.ts`, we will fetch the list of users, same as we did in `Layout/loader.ts`. We could reuse the list received in Layout (and pass it via the OutletContext, as we did for the current user) but this would only bring a very small boost of performance while coupling very strongly two components who should stay decoupled. Decoupling these components is more important from a Software Architecture perspective because these two components will very likely evolve for different reasons, they are not related to the same domain.
+In `pages/NewTransfer/loader.ts`, we will fetch the list of users, same as we did in `Layout/loader.ts`. 
+
+We could reuse the list received in Layout (and pass it via the OutletContext, as we did for the current user) but this would only bring a very small boost of performance while coupling very strongly two components who should stay decoupled. Decoupling these components is more important from a Software Architecture perspective because these two components will very likely evolve for different reasons, they are not related to the same domain.
 
 
- In `pages/AddTransfer/Component.tsx`, create a form for adding a new transfer, and leverage react hook form, as we did in Lesson 2.
- Upon success, **navigate()** to the transactions page.
- Upon error, set an error on **root**, it will be cleared with every submission ( [documentation](https://react-hook-form.com/docs/useform/seterror) )
+In `pages/NewTransfer/Component.tsx`, create a form for adding a new transfer, and leverage react hook form as well as ShadCN, as we did in Lesson 2.
+Upon success, **navigate()** to the transactions page.
+Upon error, set an error on **root**, it will be cleared with every submission ( [documentation](https://react-hook-form.com/docs/useform/seterror) )
 
 
-You will need to use the custom hook `useCurrentUser()` which we created on `pages/Layout` module (and more specifically on `pages/Layout/hook.ts` file) for setting the default value of the source to the current user.
+You will need to know who is the current user for preselecting a choice in the form. Use the hook `useOutletContext()` ([documentation](https://reactrouter.com/api/hooks/useOutletContext)).
+In order to make the current user very easy to retrieve, you can make a custom hook colocated with the Layout : `pages/Layout/hooks.ts`
 
-You will require the `formState` from the `useForm` hook and more specifically the `errors` and `isSubmitting` states. The `isSubmitting` state is needed for disabling the button once you've clicked on it.
+```ts
+import type { User } from '@/types/User';
+import { useOutletContext } from 'react-router';
 
-You will require the `useNavigation` hook for navigating to `/transactions` upon success.
+export function useCurrentUser() {
+  const { currentUser } = useOutletContext<{ currentUser: User | null }>();
+  return currentUser;
+}
+```
+
+then import/export it in `pages/Layout/index/ts` (remember that we only want to import the full module, not each file).
+And finally you can easily add this to any component which needs it (like the form we are writing) :
+
+```ts
+import { useCurrentUser } from '../Layout';
+//...
+const currentUser = useCurrentUser
+```
+
+Disable the button of the form while it is submitting.
+You will require the `useNavigation` hook for navigating to `/transactions` upon success. ([documentation](https://reactrouter.com/api/hooks/useNavigation#usenavigation))
 
 > **Important**: We are deliberately NOT using the `action` feature of react router and instead choosing to go entirely with react hook form. This is a design decision  which should be discussed in a real project because each option has pros and cons. Do not try to mix the two features, avoid `action` from react router for now.
 
@@ -811,14 +1017,16 @@ You will require the `useNavigation` hook for navigating to `/transactions` upon
 
 #### **Expense Form Page**
 
-Adapt your AddExpense form from previous week. Follow the same guidelines as the form for Transfer we just did.
+Adapt your AddExpense form from previous week and make it a page in `pages/NewExpense`. 
+Add a link to it in the Navbar.
+Follow the same guidelines as the form for Transfer we just did.
 
 
 
 #### Test
 
 - After implementing these changes, **test the frontend** thoroughly:
-  - The app should start at the home or transactions page. The NavBar should show "No User" by default and the "My Transactions" link should be disabled.
+  - The app should start at the home or transactions page. The NavBar should show "No User" by default.
   - The All Transactions page should list all expenses and transfers from the backend.
   - The New Transfer form should allow creating a transfer. If you select a source and target and submit, check:
     - The form show an error under the field if validation fails.

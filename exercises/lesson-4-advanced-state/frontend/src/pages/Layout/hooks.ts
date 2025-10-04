@@ -1,4 +1,4 @@
-import type { User } from '@/lib/api';
+import type { User } from '@/types/User';
 import { useOutletContext } from 'react-router';
 
 export function useCurrentUser() {

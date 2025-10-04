@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router';
-import { Button } from '@/components/ui/button';
 
-export default function Welcome() {
+const Welcome = () => {
   return (
     <div className="text-center">
       <h1 className="text-5xl">Welcome to the Expense Tracker</h1>
@@ -10,13 +9,15 @@ export default function Welcome() {
         magna aliqua.
       </div>
       <div className="flex flex-row gap-4 justify-center">
-        <Button asChild className="bg-green-800 text-white hover:bg-green-700 rounded-full px-6">
+        <button className="bg-green-800 text-white hover:bg-green-700 rounded-full px-6">
           <NavLink to="/list">View Expenses</NavLink>
-        </Button>
-        <Button asChild className="bg-green-800 text-white hover:bg-green-700 rounded-full px-6">
+        </button>
+        <button className="bg-green-800 text-white hover:bg-green-700 rounded-full px-6">
           <NavLink to="/add">Add Expense</NavLink>
-        </Button>
+        </button>
       </div>
     </div>
   );
-}
+};
+
+export default Welcome;

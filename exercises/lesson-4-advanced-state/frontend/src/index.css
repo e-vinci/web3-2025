@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
@@ -42,7 +43,9 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 1.25rem; /* Large rounded corners - increased from 0.625rem */
+  --default-font-family: 'Montserrat';
+  /* Custom colors */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

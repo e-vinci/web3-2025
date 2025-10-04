@@ -1,7 +1,13 @@
-const host = import.meta.env.VITE_API_URL;
+import type { Expense, NewExpensePayload } from '@/types/Expense';
+import type { Transaction } from '@/types/Transaction';
+import type { NewTransferPayload, Transfer } from '@/types/Transfer';
+import type { User } from '@/types/User';
+
+const API_HOST = import.meta.env.VITE_API_URL;
+
 const sendApiRequest = async (method: string = 'GET', path: string, body?: unknown) => {
   try {
-    const response = await fetch(`${host}/api/${path}`, {
+    const response = await fetch(`${API_HOST}/api/${path}`, {
       method: method,
       headers: body ? { 'Content-Type': 'application/json' } : {},
       body: body ? JSON.stringify(body) : null,
@@ -16,65 +22,22 @@ const sendApiRequest = async (method: string = 'GET', path: string, body?: unkno
   }
 };
 
-export interface Transaction {
-  id: string;
-  kind: 'expense' | 'transfer';
-  description: string;
-  amount: number;
-  date: string;
-  payer: {
-    id: number;
-    name: string;
-  };
-  participants: {
-    id: number;
-    name: string;
-  }[];
-}
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  bankAccount: string | null;
-}
-
-export interface Expense {
-  id: number;
-  description: string;
-  amount: number;
-  date: string;
-  payer: User;
-  participants: User[];
-}
-
-export interface Transfer {
-  id: number;
-  amount: number;
-  date: string;
-  source: User;
-  target: User;
-}
-
 const getTransactions: () => Promise<Transaction[]> = () =>
   sendApiRequest('GET', 'transactions') as Promise<Transaction[]>;
 const getUsers: () => Promise<User[]> = () => sendApiRequest('GET', 'users') as Promise<User[]>;
-const getExpenseById: (id: number) => Promise<Expense | null> = (id) => sendApiRequest('GET', `expenses/${id}`);
-
-interface NewTransferPayload {
-  amount: number;
-  date?: string;
-  sourceId: number;
-  targetId: number;
-}
+const getExpenseById: (id: number) => Promise<Expense> = (id) =>
+  sendApiRequest('GET', `expenses/${id}`) as Promise<Expense>;
 const createTransfer: (payload: NewTransferPayload) => Promise<Transfer> = (payload) =>
-  sendApiRequest('POST', 'transfers', payload);
+  sendApiRequest('POST', 'transfers', payload) as Promise<Transfer>;
+const createExpense: (payload: NewExpensePayload) => Promise<Expense> = (payload) =>
+  sendApiRequest('POST', 'expenses', payload) as Promise<Expense>;
 
 export const ApiClient = {
   getUsers,
   getTransactions,
   getExpenseById,
   createTransfer,
+  createExpense,
 };
 
 export default ApiClient;

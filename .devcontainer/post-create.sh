@@ -14,6 +14,9 @@ git config pull.rebase false
 # Configure git hooks
 npm run prepare
 
+
+sudo apt update
+
 pushd /tmp 
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb 
 sudo dpkg -i google-chrome-stable_current_amd64.deb 

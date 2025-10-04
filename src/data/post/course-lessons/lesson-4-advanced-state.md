@@ -23,9 +23,11 @@ category: 'course-lesson'
 
 Now that our application has basic features and a polished interface, we will take a big step forward by introducing **multiple users** and **money transfers** to our expense-sharing app. 
 On the backend, we'll migrate to a more robust Express + TypeScript template and design a relational database schema using Prisma for users, expenses, and transfers. 
-On the frontend, we'll leverage React Router’s Data APIs (loaders and actions) and global state (context) to handle more complex interactions like selecting a current user and loading combined data.
+On the frontend, we'll leverage React Router’s Data APIs loaders and global state (context) to handle more complex interactions.
 
-By the end of this lesson, our app will support multiple users who can owe or pay each other. We’ll have a unified **Transactions** list (combining expenses and direct transfers), the ability to record transfers of money, and a personal view for a selected user to see their own balance. This will involve significant changes: updating our API endpoints, enhancing our Prisma models with relationships, and refactoring the React app to use React Router’s recommended patterns for data loading and mutations.
+By the end of this lesson, our app will support multiple users who can owe or pay each other. We’ll have a unified **Transactions** list (combining expenses and direct transfers), the ability to record transfers of money. 
+
+This will involve significant changes: updating our API endpoints, enhancing our Prisma models with relationships, and refactoring the React app to use React Router’s recommended patterns for data loading and mutations.
 
 > **Note:** We’re moving our backend from the simple Express generator setup to a more scalable template that uses TypeScript and best practices (including better project structure, error handling, and testing).
 

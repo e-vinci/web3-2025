@@ -48,7 +48,7 @@ export const headerData = {
         },
         {
           text: 'Aside 1: When things go wrong',
-          href: 'https://moodle.vinci.be/course/view.php?id=494',
+          href: 'https://github.com/e-vinci/web3-2025/raw/refs/heads/main/src/slides/it-does-not-work.pptx',
         },
         // {
         //   text: 'Lesson 5: Authorization and error management',

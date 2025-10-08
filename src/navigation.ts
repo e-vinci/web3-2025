@@ -47,6 +47,10 @@ export const headerData = {
           href: getPermalink('course-lessons/lesson-4-advanced-state', 'post'),
         },
         {
+          text: 'Lesson 5: GraphQL',
+          href: getPermalink('course-lessons/lesson-5-graphql', 'post'),
+        },
+        {
           text: 'Aside 1: When things go wrong',
           href: 'https://github.com/e-vinci/web3-2025/raw/refs/heads/main/src/slides/it-does-not-work.pptx',
         },

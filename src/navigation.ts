@@ -46,6 +46,10 @@ export const headerData = {
           text: 'Lesson 4: Advanced state',
           href: getPermalink('course-lessons/lesson-4-advanced-state', 'post'),
         },
+        {
+          text: 'Aside 1: When things go wrong',
+          href: 'https://github.com/e-vinci/web3-2025/raw/refs/heads/main/src/slides/it-does-not-work.pptx',
+        },
         // {
         //   text: 'Lesson 5: Authorization and error management',
         //   href: getPermalink('course-lessons/lesson-5-authorization-error-management', 'post'),

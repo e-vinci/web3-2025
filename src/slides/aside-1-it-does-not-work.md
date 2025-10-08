@@ -26,7 +26,7 @@ We generally identify an error by looking at the application and not seeing what
 
 ### Solving a bug is generally easy...
 
-... the hard part is *finding* it
+... the hard part is _finding_ it
 
 ---
 
@@ -44,7 +44,7 @@ Web is wonderful - we have a default system showing us errors, built in the brow
 
 We have to have the architecture in mind:
 
-- The front end is sending http request & getting responses from the backend 
+- The front end is sending http request & getting responses from the backend
 - The backend send SQL queries (possibly via an ORM) and get record sets back from the database
 
 ---
@@ -83,10 +83,11 @@ Open prisma studio (if using it) or any database client (can be directly from VS
 Can you connect to the database ? Are the tables that you expect there ?
 
 Can you make a query ?
- 
+
 ---
 
 > J'ai un super pouvoir - je sais lire des logs
+>
 > - Un collègue
 
 ---
@@ -103,7 +104,7 @@ If the response looks good (you see the expenses JSON), the problem is in the fr
 
 If you don't understand what's happening, add console.log at key points to see where the error occurs.
 
---- 
+---
 
 ### Back end
 
@@ -121,7 +122,7 @@ Solving a bug is generally easy once you can look at 10 lines of code (vs 500). 
 
 We're here to help you during the lesson - but you can't call one of us with just "it does not work" - we're not going with you in your internship nor in your future job.
 
-- What did you try ? 
+- What did you try ?
 - What's on the console ? µ
 - Which part of the software is not behaving the way you expect ?
 

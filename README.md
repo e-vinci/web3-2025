@@ -97,10 +97,10 @@ The course lessons are :
 - Lesson 1 : Refresh
 - Lesson 2 : Deploy and persistence (Prisma, Postgresql, Render)
 - Lesson 3 : Navigation ( Router, Tanstack query, Component lib)
-- Lesson 4 : Advanced State (GraphQL)
-- Lesson 5 : When things go wrong ( Auth, UAM, Error management, Validation)
-- Lesson 6 : Async ( Long running tasks, Websockets, Pubsub)
-- Lesson 7 : Performance Monitoring
+- Lesson 4 : Advanced State
+- Lesson 5 : GraphQL
+- Lesson 6 : Unhappy path ( Auth, UAM, Error management, Validation)
+- Lesson 7 : Async ( Long running tasks, Websockets, Pubsub)
 
 ## Development Setup
 

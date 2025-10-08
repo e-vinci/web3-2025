@@ -57,6 +57,16 @@ Backup your current backend `directrory` for easily accessing your code, and clo
   git clone https://github.com/edwinhern/express-typescript.git backend
   ```
   This boilerplate provides a structured starting point (TypeScript, project architecture, testing, etc.). Navigate into `backend/` and run `npm install` to install dependencies.
+
+#### **Delete .git folder**:
+
+When you cloned the template repository, you created a local `.git` subfolder in your `backend` folder. This will confuse github, as it will interpret your backend directory as a git submodule. Delete that file.
+
+```bash
+rm -rf backend/.git
+```
+
+
 #### **Review Structure**: 
 
 Open the project and briefly examine the structure. You’ll see an organized layout under `src/`: 

@@ -430,80 +430,209 @@ Notice that we made the choice of defining the code for the mutation directly in
 This choice is driven by the nature of graphQL to specify what results we want. Here we get id and description of the created expense even tough we do nothing with it. This is only useful for helping debugging. We should have asked nothing back since we are redirecting.
 
 
-### WIP 7. Organize the code correctly
+### 7. Organize the code correctly
 
 **Goal:** Organize the code in order to allow easier maintenance. Colocate code related to same concepts. Leverage Pothos for building the graphQL API from multiple modules.
 
-Idea : 
-- split code related to expense, user, transaction in their own folder under a normalized name : <topic>/graphql-builder.ts or something similar
-- Follow guidelines of https://pothos-graphql.dev/docs/guide/app-layout 
--  Do not try to make it too complicated, the point is mostly code organisation, not Pothos advanced techniques
+Everything we have done until now is working but it won't be easy to maintain. There are many type definitions spread across the app and any change would force us to change code in multiple places. This will eventually lead to errors.
 
-References : 
-- https://pothos-graphql.dev/docs/plugins/prisma
-- https://pothos-graphql.dev/docs/guide/app-layout
+Additionally, having 20 or more tables and at least as many queries and mutations would make our schema very hard to maintain.
 
+Let's reorganize our code and integrate our graphQL schema with our prisma definition when possible.
+
+**Steps:**
+
+1. Let's install **pothos** a library for building our graphQL schema bit by bit, and its prisma integration plugin.
+
+```bash
+
+```
+npm install --save @pothos/core @pothos/plugin-prisma
 ---
+
+> Note: Pothos also has a plugin for doing validation, typically with zod, have a look at it : https://pothos-graphql.dev/docs/plugins/validation
+
+2. Let's split our `graphql/middleware.ts` file in 3 files :
+   - graphql/server.ts : is the file responsible for starting the server and exposing the middleware to express, it requires the schema from
+   - grapqh/schema.ts : is the file responsible for exporting the schema, it will do so by getting the builder and all the augmentation functions
+   - graphql/builder.ts : will initiate the builder and setup the scalar types which can then be used by any augmentation functions
+
+  We will then have augmentation functions in each of the `src/api/topic/` folders.
+
+Here is the code you will need for this split (it's mostly boilerplate)
+
+```ts
+//server.ts
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@as-integrations/express5";
+import schema from "./schema";
+
+const server = new ApolloServer({schema: schema});
+await server.start();
+
+const graphqlMiddleware = expressMiddleware(server);
+
+export default graphqlMiddleware;
+```
+
+```ts
+//schema.ts
+import builder from "./builder";
+// import augmentExpenseSchema from "../api/expense/augmentGraphqlSchema";
+// import augmentUserSchema from "../api/user/augmentGraphqlSchema";
+
+// augmentExpenseSchema(builder);
+// augmentUserSchema(builder);
+
+const schema = builder.toSchema();
+export default schema;
+```
+
+```ts
+//builder.ts
+import SchemaBuilder from "@pothos/core";
+import PrismaPlugin from "@pothos/plugin-prisma";
+import type PrismaTypes from "../../generated/pothos-prisma-types";
+import { PrismaClient } from "../../generated/prisma";
+import { GraphQLScalarType } from "graphql";
+import { resolvers }  from "graphql-scalars";
+
+const prisma = new PrismaClient();
+
+const shouldImportScalar = (name: string) =>
+  ["Date", "DateTime"].includes(name);
+
+const allScalarTypes = Object.values(resolvers);
+const filteredScalar = allScalarTypes.filter( (type) => shouldImportScalar(type.name) );
+const scalarRegistry: Record<string, GraphQLScalarType> = {};
+filteredScalar.forEach((scalar) => {
+  scalarRegistry[scalar.name] = scalar;
+});
+
+type ScalarsMap = {
+  [K in keyof typeof scalarRegistry]: { Input: unknown; Output: unknown };
+};
+
+const builder = new SchemaBuilder<{
+  PrismaTypes: PrismaTypes;
+  Scalars: ScalarsMap;
+}>({
+  plugins: [PrismaPlugin],
+  prisma: {
+    client: prisma,
+  },
+});
+
+Object.entries(scalarRegistry).forEach(([name, resolver]) =>
+  builder.addScalarType(name, resolver)
+);
+
+export default builder;
+```
+This last file has a bit of more advanced code but the point is simply to easily get the scalars from graphql-scalars. Try to understand what has been done but it's okay if you don't feel like you could have written this by yourself.  The documentation proposes a much simpler way but this one allows for easier extension.
+
+Notice how some lines are commented out in `schema.ts`. This is because the actual augmentation will happen in files stored under the `src/api/topic/` folder.
+
+3. Let's augment our schema with everything related to expenses:
+   
+create the file `backend/src/api/expense/augmentGraphqlSchema.ts`
+
+```ts
+import SchemaBuilder from "../../graphql/builder";
+import * as expenseRepository from "./expenseRepository";
+
+const augmentSchema = (builder : typeof SchemaBuilder) => {
+  //...
+}
+
+
+export default augmentSchema;
+
+```
+
+3. Declare a new type for Expense and map it to Expense objects received from Figma
+
+```ts
+    const ExpenseRef = builder.prismaObject('Expense', {
+        fields: (t) => ({
+            id: t.exposeID('id'),
+            description: t.exposeString('description'),
+            amount: t.exposeFloat('amount'),
+            date: t.expose('date', { type: 'Date' }),
+            payer: t.relation('payer'),
+            participants: t.relation('participants')
+        }),
+    });
+```
+
+With pothos, we can declare the type of our graphQL object and how it relates to our javascript object. Currently they are very similar, but we could add fields which exist on graphQL but not on the prisma object.
+
+```ts
+    const ExpenseRef = builder.prismaObject('Expense', {
+        fields: (t) => ({
+            //...
+            isForSelf: t.boolean({
+              resolve: (businessObject) => {
+                return [businessObject.payerId] == businessObject.participants.map(p => p.id )
+              },
+            }),
+        }),
+    });
+```
+
+`businessObject` is the object we want to manipulate in the backend, currently it is the object we get from prisma. This object usually has some specific fields and methods that we do not want to expose. Pothos enables us to easily manipulate both. Pothos calls the business objects "backing models" : https://pothos-graphql.dev/docs/guide/schema-builder
+
+
+4. Add the query for easily getting an expense by id.
+
+```ts
+    builder.queryType({
+        fields: (t) => ({
+            expense: t.field({
+                type: ExpenseRef,
+                args: { 
+                    id: t.arg.int({ required: true })
+                },
+                resolve: async (_root, args, _ctx, _info) => {
+                    return expenseRepository.getExpenseById(args.id as number)
+                }
+            }),
+        }),
+    });
+``` 
+
+5. Add the mutation for easily creating an expense.
+
+```ts
+    builder.mutationType({
+        fields: (t) => ({
+            createExpense: t.field({
+                type: ExpenseRef,
+                args: {
+                    description: t.arg.string({ required: true }),
+                    amount: t.arg.float({ required: true }),
+                    date: t.arg({ type: 'Date', required: true }),
+                    payerId: t.arg.int({ required: true }),
+                    participantIds: t.arg({type: ['Int'], required: true }),
+                },
+                resolve: async (_parent, args, _context, _info) => {
+                    const { description , amount, date, payerId, participantIds } = args;
+                    return expenseRepository.createExpense({ description, amount, date, payerId, participantIds })
+                }
+            }),
+        }),
+    });
+```
+
+6. Create the file `backend/src/api/user/augmentGraphqlSchema.ts`, follow the same logic for exposing the `User` type
+
+7. Check with ruru that everything is still working properly.
+
+You're done ! You now have a full blown application with both a REST api a GraphQL API and organized in a way which allows for clean maintenance and growth.
 
 ### (Bonus) Add Cursor-Based Pagination to Transactions
 
 **Goal:** Replace the REST-based transaction list with a paginated GraphQL query loading 10 items at a time.
-
-**Steps:**
-
-1. Update schema:
-   ```graphql
-   type TransactionConnection {
-     edges: [Expense!]!
-     cursor: String!
-     hasMore: Boolean!
-   }
-
-   extend type Query {
-     transactions(after: String, limit: Int = 10): TransactionConnection!
-   }
-   ```
-2. Resolver example (simplified):
-   ```ts
-   Query: {
-     transactions: async (_p, { after, limit }, { prisma }) => {
-       const cursor = after ? { id: Number(after) } : undefined;
-       const expenses = await prisma.expense.findMany({
-         take: limit + 1,
-         skip: cursor ? 1 : 0,
-         cursor,
-         orderBy: { id: 'desc' },
-         include: { payer: true, participants: true }
-       });
-
-       const hasMore = expenses.length > limit;
-       const items = hasMore ? expenses.slice(0, -1) : expenses;
-
-       return {
-         edges: items,
-         cursor: items.at(-1)?.id.toString(),
-         hasMore,
-       };
-     }
-   }
-   ```
-3. In the frontend, use Apollo’s `fetchMore()` to load additional pages when clicking **“Load More”**.
-4. Display the new transactions below the existing ones.
-
-> 🔗 **Reference:** [Apollo Client – Pagination Guide](https://www.apollographql.com/docs/react/pagination/core-api/)
-
----
-
-## Final Discussion: REST vs GraphQL
-
-Reflect on the following:
-
-- When is GraphQL more efficient than REST?
-- How does GraphQL reduce overfetching?
-- What are the trade-offs in complexity and caching?
-- Which parts of your app benefit most from GraphQL?
-
-> 💬 **Prompt:** “Would you use GraphQL for the whole project, or a hybrid with REST? Why?”
 
 ---
 

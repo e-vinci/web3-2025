@@ -1100,5 +1100,10 @@ Our balance calculation logic in My Transactions is rudimentary and assumes equa
 
 - The app now supports a realistic scenario of multiple users sharing expenses and settling up, showcasing how **backend state** (database) and **frontend state** (React) interact in a complex app. This lays a strong foundation for any full-stack application you'll build going forward, as you can confidently model data and manage state across the stack.
 
+# The PR
+
+We've just added categories to the expenses - this will help to see who's *always* paying for the restarants.
+
+Available [here](https://github.com/e-vinci/web3-2025/pull/12)
 
 ---

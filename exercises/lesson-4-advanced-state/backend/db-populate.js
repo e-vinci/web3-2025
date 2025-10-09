@@ -1,3 +1,6 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 const { PrismaClient } = require('./generated/prisma');
 
 const prisma = new PrismaClient();
@@ -9,6 +12,21 @@ async function main() {
   await prisma.user.deleteMany();
 
   console.log('Cleared existing data.');
+
+  // Add category column to expense table
+  await prisma.$executeRawUnsafe(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Expense' AND column_name = 'category'
+      ) THEN
+        ALTER TABLE "Expense" ADD COLUMN "category" TEXT;
+      END IF;
+    END $$;
+  `);
+
+  console.log('Added category column to Expense table.');
 
   // Create users first
   const users = await prisma.user.createMany({
@@ -41,6 +59,7 @@ async function main() {
       id: 1,
       description: 'Coffee',
       amount: 3.5,
+      category: 'Food',
       payerId: 1, // Alice pays
       participants: {
         connect: [{ id: 1 }, { id: 2 }], // Alice and Bob participate
@@ -53,6 +72,7 @@ async function main() {
       id: 2,
       description: 'Groceries',
       amount: 45.0,
+      category: 'Food',
       payerId: 2, // Bob pays
       participants: {
         connect: [{ id: 1 }, { id: 2 }, { id: 3 }], // All three participate
@@ -65,6 +85,7 @@ async function main() {
       id: 3,
       description: 'Internet Bill',
       amount: 60.0,
+      category: 'Bills',
       payerId: 3, // Charlie pays
       participants: {
         connect: [{ id: 2 }, { id: 3 }], // Bob and Charlie participate

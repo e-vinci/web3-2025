@@ -8,4 +8,5 @@ export interface Transaction {
   description?: string;
   payer: User;
   participants: User[]; // Only for transfers
+  category?: string;
 }

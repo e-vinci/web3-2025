@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import type { LoaderData } from './loader';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const expenseSchema = z.object({
   description: z.string().min(1, 'Description is required'),
@@ -20,6 +20,7 @@ const expenseSchema = z.object({
   amount: z.coerce.number<number>().min(0.01, 'Amount must be greater than 0'),
   date: z.string().optional(),
   participantIds: z.array(z.string()).min(1, 'At least one participant is required'),
+  category: z.string().optional(),
 });
 
 type ExpenseFormData = z.infer<typeof expenseSchema>;
@@ -28,6 +29,20 @@ export default function ExpenseForm() {
   const currentUser = useCurrentUser();
   const { users } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/categories');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const form = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
@@ -37,6 +52,7 @@ export default function ExpenseForm() {
       amount: 0,
       date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
       participantIds: [],
+      category: '',
     },
   });
 
@@ -48,6 +64,7 @@ export default function ExpenseForm() {
         date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
         payerId: Number(data.payerId),
         participantIds: data.participantIds.map((id) => Number(id)),
+        category: data.category,
       });
       toast('Expense has been created.');
       return navigate('/transactions');
@@ -128,6 +145,32 @@ export default function ExpenseForm() {
                         <Input type="date" className="pl-9" {...field} />
                       </div>
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Category Selection */}
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-foreground">Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

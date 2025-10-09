@@ -16,7 +16,9 @@ const sendApiRequest = async (method: string = 'GET', path: string, body?: unkno
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    let data = await response.json();
+    console.log(`API ${method} ${path} response:`, data);
+    return data;
   } catch (error) {
     console.error('API request failed:', error);
   }

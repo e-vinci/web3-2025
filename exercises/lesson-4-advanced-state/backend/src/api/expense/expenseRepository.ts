@@ -27,18 +27,21 @@ export async function createExpense({
   date,
   payerId,
   participantIds,
+  category,
 }: {
   description: string;
   amount: number;
   date: Date;
   payerId: number;
   participantIds: number[];
+  category?: string;
 }) {
   return prisma.expense.create({
     data: {
       description,
       amount,
       date,
+      category,
       payer: { connect: { id: payerId } },
       // { connect: [{id: 1}, {id: 123}, {id: 99}]}
       participants: { connect: participantIds.map((id) => ({ id })) },

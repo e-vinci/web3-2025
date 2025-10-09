@@ -30,6 +30,7 @@ model Expense {
   description  String
   amount       Float
   date         DateTime @default(now())
+  category     String?
   payer        User     @relation("PayerExpenses", fields: [payerId], references: [id])
   payerId      Int
   participants User[]   @relation("ParticipantExpenses")

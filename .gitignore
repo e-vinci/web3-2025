@@ -11,6 +11,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Shhhhhht
+.claude
+
+# I'm not giving the solutions
+MISTAKES.md
 
 # environment variables
 .env

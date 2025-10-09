@@ -285,57 +285,100 @@ Look how easy it was to get the bank account only for the payer and not for the 
 Adding a field to a type definition in backend makes it **available** for the frontend, but it will only be sent on demand.
 ---
 
-
-------------------------------------------------------
-Resume review here
-------------------------------------------------------
-
-### 3. Add Mutation to Create a New Expense
+### 5. Add Mutation to Create a New Expense
 
 **Goal:** Allow creating expenses via GraphQL.
 
 **Steps:**
 
-1. Extend schema:
+1. Extend your graphQL schema ( typeDefs), add the `createExpense` mutation:
    ```graphql
-   type Mutation {
-     createExpense(
-       description: String!,
-       amount: Float!,
-       date: String!,
-       payerId: ID!,
-       participantIds: [ID!]!
-     ): Expense!
+    type Mutation {
+      createExpense(
+        description: String!,
+        amount: Float!,
+        date: String!,
+        payerId: Int!,
+        participantIds: [Int!]!
+      ): Expense!
    }
    ```
-2. Add resolver:
+
+2. Add a resolver for your Mutation:
    ```ts
-   Mutation: {
-     createExpense: async (_p, args, { prisma }) => {
-       const { description, amount, date, payerId, participantIds } = args;
-       return prisma.expense.create({
-         data: {
-           description,
-           amount: parseFloat(amount),
-           date: new Date(date),
-           payer: { connect: { id: Number(payerId) } },
-           participants: { connect: participantIds.map((id) => ({ id: Number(id) })) }
-         }
-       });
-     }
-   }
+  const resolvers = {
+    //...
+    Mutation: {
+      createExpense: async (_parent: any, args: any, _context: any) => {
+        const { description, amount, date, payerId, participantIds } = args;
+        const parsedDate = new Date(date);
+        return expenseRepository.createExpense({ description, amount, date: parsedDate, payerId, participantIds })
+      }
+    },
+  };
    ```
-3. Test mutation in Apollo Sandbox:
+3. Test mutation in ruru
    ```graphql
    mutation {
-     createExpense(description: "Lunch", amount: 42.5, date: "2025-10-08", payerId: "1", participantIds: ["1", "2"]) {
+     createExpense(description: "Lunch", amount: 42.5, date: "2025-10-08", payerId: 1, participantIds: [1, 2]) {
        id
        description
-       payer { name }
-       participants { name }
      }
    }
    ```
+
+   Notice that we cannot ask the payer or participants because our current implementation of `expenseRepository.createExpense` only return the bare expense without any relations. 
+
+4. Let's avoid parding dates every time we need them.
+
+GraphQL is missing many useful scalar types. It's quite easy to create new ones ([see documentation](https://www.apollographql.com/docs/apollo-server/schema/custom-scalars)) but let's be honest, there are some usual ones which we will almost always need : Date, DateTime, Duration, EmailAddress, URL, JSON, UUID, ...
+
+Let's get them from the [graphql-scalars library](https://the-guild.dev/graphql/scalars/docs)
+
+```bash
+npm install graphql-scalars
+```
+
+Add the type definitions and resolvers to our server :
+
+```ts
+import { typeDefs as scalarTypeDefs,  resolvers as scalarResolvers } from 'graphql-scalars';
+//...
+const typeDefs = `#graphql
+    ${scalarTypeDefs}
+    //...
+}
+//...
+const resolvers = {
+  ...scalarResolvers,
+  //...
+}
+```
+
+Now we can directly get the date as a DateTime object : 
+
+```
+    type Mutation {
+      createExpense(
+        description: String!,
+        amount: Float!,
+        date: DateTime!, # <--- This is from graphql-scalars
+        payerId: Int!,
+        participantIds: [Int!]!
+      ): Expense!
+```
+
+and
+
+```ts
+createExpense: async (_parent: any, args: any, _context: any) => {
+  const { description, amount, date, payerId, participantIds } = args;
+  return expenseRepository.createExpense({ description, amount, date, payerId, participantIds }) // date is already a DateTime object
+}
+
+```
+
+The full list of all the scalars you can now use is here : https://the-guild.dev/graphql/scalars/docs 
 
 ---
 
@@ -345,94 +388,251 @@ Resume review here
 
 **Steps:**
 
-1. Import `apolloClient` and use a mutation similar to:
-   ```ts
-   const CREATE_EXPENSE = gql`
-     mutation CreateExpense($description: String!, $amount: Float!, $date: String!, $payerId: ID!, $participantIds: [ID!]!) {
-       createExpense(description: $description, amount: $amount, date: $date, payerId: $payerId, participantIds: $participantIds) {
-         id
-         description
-       }
-     }
-   `;
-   ```
-2. Call the mutation inside the submit handler.
+1. Adapt `frontend/src/pages/NewExpense/Component.tsx`, import the client and define the mutation you are going to call.
+
+```ts
+import { gql } from '@apollo/client';
+import graphqlClient from '@/lib/graphql-client';
+//...
+const CREATE_EXPENSE_GQL = gql`
+  mutation CreateExpense($description: String!, $amount: Float!, $date: DateTime!, $payerId: Int!, $participantIds: [Int!]!) {
+    createExpense(description: $description, amount: $amount, date: $date, payerId: $payerId, participantIds: $participantIds) {
+      id
+      description
+    }
+  }
+`;
+//...
+```
+
+2. Call the mutation inside the submit handler instead of the previous call to apiClient.
+   
+```tsx
+ try {
+      await graphqlClient.mutate({
+        mutation: CREATE_EXPENSE_GQL,
+        variables: {
+          description: data.description,
+          amount: data.amount,
+          date: data.date ? new Date(data.date) : new Date(),
+          payerId: Number(data.payerId),
+          participantIds: data.participantIds.map(id => Number(id)),
+        },
+      });
+      toast('Expense has been created.');
+      return navigate('/transactions');
+    } catch (error) {
+    //...
+```
+
+Notice that we made the choice of defining the code for the mutation directly in the component, we did not create a specific function `graphqlClient.createExpense(...)` like we did for the REST API.
+
+This choice is driven by the nature of graphQL to specify what results we want. Here we get id and description of the created expense even tough we do nothing with it. This is only useful for helping debugging. We should have asked nothing back since we are redirecting.
 
 
 ### 7. Organize the code correctly
 
 **Goal:** Organize the code in order to allow easier maintenance. Colocate code related to same concepts. Leverage Pothos for building the graphQL API from multiple modules.
 
-Idea : 
-- split code related to expense, user, transaction in their own folder under a normalized name : <topic>/graphql-builder.ts or something similar
-- Follow guidelines of https://pothos-graphql.dev/docs/guide/app-layout 
--  Do not try to make it too complicated, the point is mostly code organisation, not Pothos advanced techniques
+Everything we have done until now is working but it won't be easy to maintain. There are many type definitions spread across the app and any change would force us to change code in multiple places. This will eventually lead to errors.
 
-References : 
-- https://pothos-graphql.dev/docs/plugins/prisma
-- https://pothos-graphql.dev/docs/guide/app-layout
+Additionally, having 20 or more tables and at least as many queries and mutations would make our schema very hard to maintain.
 
+Let's reorganize our code and integrate our graphQL schema with our prisma definition when possible.
+
+**Steps:**
+
+1. Let's install **pothos** a library for building our graphQL schema bit by bit, and its prisma integration plugin.
+
+```bash
+
+```
+npm install --save @pothos/core @pothos/plugin-prisma
 ---
+
+> Note: Pothos also has a plugin for doing validation, typically with zod, have a look at it : https://pothos-graphql.dev/docs/plugins/validation
+
+2. Let's split our `graphql/middleware.ts` file in 3 files :
+   - graphql/server.ts : is the file responsible for starting the server and exposing the middleware to express, it requires the schema from
+   - grapqh/schema.ts : is the file responsible for exporting the schema, it will do so by getting the builder and all the augmentation functions
+   - graphql/builder.ts : will initiate the builder and setup the scalar types which can then be used by any augmentation functions
+
+  We will then have augmentation functions in each of the `src/api/topic/` folders.
+
+Here is the code you will need for this split (it's mostly boilerplate)
+
+```ts
+//server.ts
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@as-integrations/express5";
+import schema from "./schema";
+
+const server = new ApolloServer({schema: schema});
+await server.start();
+
+const graphqlMiddleware = expressMiddleware(server);
+
+export default graphqlMiddleware;
+```
+
+```ts
+//schema.ts
+import builder from "./builder";
+// import augmentExpenseSchema from "../api/expense/augmentGraphqlSchema";
+// import augmentUserSchema from "../api/user/augmentGraphqlSchema";
+
+// augmentExpenseSchema(builder);
+// augmentUserSchema(builder);
+
+const schema = builder.toSchema();
+export default schema;
+```
+
+```ts
+//builder.ts
+import SchemaBuilder from "@pothos/core";
+import PrismaPlugin from "@pothos/plugin-prisma";
+import type PrismaTypes from "../../generated/pothos-prisma-types";
+import { PrismaClient } from "../../generated/prisma";
+import { GraphQLScalarType } from "graphql";
+import { resolvers }  from "graphql-scalars";
+
+const prisma = new PrismaClient();
+
+const shouldImportScalar = (name: string) =>
+  ["Date", "DateTime"].includes(name);
+
+const allScalarTypes = Object.values(resolvers);
+const filteredScalar = allScalarTypes.filter( (type) => shouldImportScalar(type.name) );
+const scalarRegistry: Record<string, GraphQLScalarType> = {};
+filteredScalar.forEach((scalar) => {
+  scalarRegistry[scalar.name] = scalar;
+});
+
+type ScalarsMap = {
+  [K in keyof typeof scalarRegistry]: { Input: unknown; Output: unknown };
+};
+
+const builder = new SchemaBuilder<{
+  PrismaTypes: PrismaTypes;
+  Scalars: ScalarsMap;
+}>({
+  plugins: [PrismaPlugin],
+  prisma: {
+    client: prisma,
+  },
+});
+
+Object.entries(scalarRegistry).forEach(([name, resolver]) =>
+  builder.addScalarType(name, resolver)
+);
+
+export default builder;
+```
+This last file has a bit of more advanced code but the point is simply to easily get the scalars from graphql-scalars. Try to understand what has been done but it's okay if you don't feel like you could have written this by yourself.  The documentation proposes a much simpler way but this one allows for easier extension.
+
+Notice how some lines are commented out in `schema.ts`. This is because the actual augmentation will happen in files stored under the `src/api/topic/` folder.
+
+3. Let's augment our schema with everything related to expenses:
+   
+create the file `backend/src/api/expense/augmentGraphqlSchema.ts`
+
+```ts
+import SchemaBuilder from "../../graphql/builder";
+import * as expenseRepository from "./expenseRepository";
+
+const augmentSchema = (builder : typeof SchemaBuilder) => {
+  //...
+}
+
+
+export default augmentSchema;
+
+```
+
+3. Declare a new type for Expense and map it to Expense objects received from Figma
+
+```ts
+    const ExpenseRef = builder.prismaObject('Expense', {
+        fields: (t) => ({
+            id: t.exposeID('id'),
+            description: t.exposeString('description'),
+            amount: t.exposeFloat('amount'),
+            date: t.expose('date', { type: 'Date' }),
+            payer: t.relation('payer'),
+            participants: t.relation('participants')
+        }),
+    });
+```
+
+With pothos, we can declare the type of our graphQL object and how it relates to our javascript object. Currently they are very similar, but we could add fields which exist on graphQL but not on the prisma object.
+
+```ts
+    const ExpenseRef = builder.prismaObject('Expense', {
+        fields: (t) => ({
+            //...
+            isForSelf: t.boolean({
+              resolve: (businessObject) => {
+                return [businessObject.payerId] == businessObject.participants.map(p => p.id )
+              },
+            }),
+        }),
+    });
+```
+
+`businessObject` is the object we want to manipulate in the backend, currently it is the object we get from prisma. This object usually has some specific fields and methods that we do not want to expose. Pothos enables us to easily manipulate both. Pothos calls the business objects "backing models" : https://pothos-graphql.dev/docs/guide/schema-builder
+
+
+4. Add the query for easily getting an expense by id.
+
+```ts
+    builder.queryType({
+        fields: (t) => ({
+            expense: t.field({
+                type: ExpenseRef,
+                args: { 
+                    id: t.arg.int({ required: true })
+                },
+                resolve: async (_root, args, _ctx, _info) => {
+                    return expenseRepository.getExpenseById(args.id as number)
+                }
+            }),
+        }),
+    });
+``` 
+
+5. Add the mutation for easily creating an expense.
+
+```ts
+    builder.mutationType({
+        fields: (t) => ({
+            createExpense: t.field({
+                type: ExpenseRef,
+                args: {
+                    description: t.arg.string({ required: true }),
+                    amount: t.arg.float({ required: true }),
+                    date: t.arg({ type: 'Date', required: true }),
+                    payerId: t.arg.int({ required: true }),
+                    participantIds: t.arg({type: ['Int'], required: true }),
+                },
+                resolve: async (_parent, args, _context, _info) => {
+                    const { description , amount, date, payerId, participantIds } = args;
+                    return expenseRepository.createExpense({ description, amount, date, payerId, participantIds })
+                }
+            }),
+        }),
+    });
+```
+
+6. Create the file `backend/src/api/user/augmentGraphqlSchema.ts`, follow the same logic for exposing the `User` type
+
+7. Check with ruru that everything is still working properly.
+
+You're done ! You now have a full blown application with both a REST api a GraphQL API and organized in a way which allows for clean maintenance and growth.
 
 ### (Bonus) Add Cursor-Based Pagination to Transactions
 
 **Goal:** Replace the REST-based transaction list with a paginated GraphQL query loading 10 items at a time.
-
-**Steps:**
-
-1. Update schema:
-   ```graphql
-   type TransactionConnection {
-     edges: [Expense!]!
-     cursor: String!
-     hasMore: Boolean!
-   }
-
-   extend type Query {
-     transactions(after: String, limit: Int = 10): TransactionConnection!
-   }
-   ```
-2. Resolver example (simplified):
-   ```ts
-   Query: {
-     transactions: async (_p, { after, limit }, { prisma }) => {
-       const cursor = after ? { id: Number(after) } : undefined;
-       const expenses = await prisma.expense.findMany({
-         take: limit + 1,
-         skip: cursor ? 1 : 0,
-         cursor,
-         orderBy: { id: 'desc' },
-         include: { payer: true, participants: true }
-       });
-
-       const hasMore = expenses.length > limit;
-       const items = hasMore ? expenses.slice(0, -1) : expenses;
-
-       return {
-         edges: items,
-         cursor: items.at(-1)?.id.toString(),
-         hasMore,
-       };
-     }
-   }
-   ```
-3. In the frontend, use Apollo’s `fetchMore()` to load additional pages when clicking **“Load More”**.
-4. Display the new transactions below the existing ones.
-
-> 🔗 **Reference:** [Apollo Client – Pagination Guide](https://www.apollographql.com/docs/react/pagination/core-api/)
-
----
-
-## Final Discussion: REST vs GraphQL
-
-Reflect on the following:
-
-- When is GraphQL more efficient than REST?
-- How does GraphQL reduce overfetching?
-- What are the trade-offs in complexity and caching?
-- Which parts of your app benefit most from GraphQL?
-
-> 💬 **Prompt:** “Would you use GraphQL for the whole project, or a hybrid with REST? Why?”
 
 ---
 

@@ -285,57 +285,100 @@ Look how easy it was to get the bank account only for the payer and not for the 
 Adding a field to a type definition in backend makes it **available** for the frontend, but it will only be sent on demand.
 ---
 
-
-------------------------------------------------------
-Resume review here
-------------------------------------------------------
-
-### 3. Add Mutation to Create a New Expense
+### 5. Add Mutation to Create a New Expense
 
 **Goal:** Allow creating expenses via GraphQL.
 
 **Steps:**
 
-1. Extend schema:
+1. Extend your graphQL schema ( typeDefs), add the `createExpense` mutation:
    ```graphql
-   type Mutation {
-     createExpense(
-       description: String!,
-       amount: Float!,
-       date: String!,
-       payerId: ID!,
-       participantIds: [ID!]!
-     ): Expense!
+    type Mutation {
+      createExpense(
+        description: String!,
+        amount: Float!,
+        date: String!,
+        payerId: Int!,
+        participantIds: [Int!]!
+      ): Expense!
    }
    ```
-2. Add resolver:
+
+2. Add a resolver for your Mutation:
    ```ts
-   Mutation: {
-     createExpense: async (_p, args, { prisma }) => {
-       const { description, amount, date, payerId, participantIds } = args;
-       return prisma.expense.create({
-         data: {
-           description,
-           amount: parseFloat(amount),
-           date: new Date(date),
-           payer: { connect: { id: Number(payerId) } },
-           participants: { connect: participantIds.map((id) => ({ id: Number(id) })) }
-         }
-       });
-     }
-   }
+  const resolvers = {
+    //...
+    Mutation: {
+      createExpense: async (_parent: any, args: any, _context: any) => {
+        const { description, amount, date, payerId, participantIds } = args;
+        const parsedDate = new Date(date);
+        return expenseRepository.createExpense({ description, amount, date: parsedDate, payerId, participantIds })
+      }
+    },
+  };
    ```
-3. Test mutation in Apollo Sandbox:
+3. Test mutation in ruru
    ```graphql
    mutation {
-     createExpense(description: "Lunch", amount: 42.5, date: "2025-10-08", payerId: "1", participantIds: ["1", "2"]) {
+     createExpense(description: "Lunch", amount: 42.5, date: "2025-10-08", payerId: 1, participantIds: [1, 2]) {
        id
        description
-       payer { name }
-       participants { name }
      }
    }
    ```
+
+   Notice that we cannot ask the payer or participants because our current implementation of `expenseRepository.createExpense` only return the bare expense without any relations. 
+
+4. Let's avoid parding dates every time we need them.
+
+GraphQL is missing many useful scalar types. It's quite easy to create new ones ([see documentation](https://www.apollographql.com/docs/apollo-server/schema/custom-scalars)) but let's be honest, there are some usual ones which we will almost always need : Date, DateTime, Duration, EmailAddress, URL, JSON, UUID, ...
+
+Let's get them from the [graphql-scalars library](https://the-guild.dev/graphql/scalars/docs)
+
+```bash
+npm install graphql-scalars
+```
+
+Add the type definitions and resolvers to our server :
+
+```ts
+import { typeDefs as scalarTypeDefs,  resolvers as scalarResolvers } from 'graphql-scalars';
+//...
+const typeDefs = `#graphql
+    ${scalarTypeDefs}
+    //...
+}
+//...
+const resolvers = {
+  ...scalarResolvers,
+  //...
+}
+```
+
+Now we can directly get the date as a DateTime object : 
+
+```
+    type Mutation {
+      createExpense(
+        description: String!,
+        amount: Float!,
+        date: DateTime!, # <--- This is from graphql-scalars
+        payerId: Int!,
+        participantIds: [Int!]!
+      ): Expense!
+```
+
+and
+
+```ts
+createExpense: async (_parent: any, args: any, _context: any) => {
+  const { description, amount, date, payerId, participantIds } = args;
+  return expenseRepository.createExpense({ description, amount, date, payerId, participantIds }) // date is already a DateTime object
+}
+
+```
+
+The full list of all the scalars you can now use is here : https://the-guild.dev/graphql/scalars/docs 
 
 ---
 
@@ -345,21 +388,49 @@ Resume review here
 
 **Steps:**
 
-1. Import `apolloClient` and use a mutation similar to:
-   ```ts
-   const CREATE_EXPENSE = gql`
-     mutation CreateExpense($description: String!, $amount: Float!, $date: String!, $payerId: ID!, $participantIds: [ID!]!) {
-       createExpense(description: $description, amount: $amount, date: $date, payerId: $payerId, participantIds: $participantIds) {
-         id
-         description
-       }
-     }
-   `;
-   ```
-2. Call the mutation inside the submit handler.
+1. Adapt `frontend/src/pages/NewExpense/Component.tsx`, import the client and define the mutation you are going to call.
+
+```ts
+import { gql } from '@apollo/client';
+import graphqlClient from '@/lib/graphql-client';
+//...
+const CREATE_EXPENSE_GQL = gql`
+  mutation CreateExpense($description: String!, $amount: Float!, $date: DateTime!, $payerId: Int!, $participantIds: [Int!]!) {
+    createExpense(description: $description, amount: $amount, date: $date, payerId: $payerId, participantIds: $participantIds) {
+      id
+      description
+    }
+  }
+`;
+//...
+```
+
+2. Call the mutation inside the submit handler instead of the previous call to apiClient.
+   
+```tsx
+ try {
+      await graphqlClient.mutate({
+        mutation: CREATE_EXPENSE_GQL,
+        variables: {
+          description: data.description,
+          amount: data.amount,
+          date: data.date ? new Date(data.date) : new Date(),
+          payerId: Number(data.payerId),
+          participantIds: data.participantIds.map(id => Number(id)),
+        },
+      });
+      toast('Expense has been created.');
+      return navigate('/transactions');
+    } catch (error) {
+    //...
+```
+
+Notice that we made the choice of defining the code for the mutation directly in the component, we did not create a specific function `graphqlClient.createExpense(...)` like we did for the REST API.
+
+This choice is driven by the nature of graphQL to specify what results we want. Here we get id and description of the created expense even tough we do nothing with it. This is only useful for helping debugging. We should have asked nothing back since we are redirecting.
 
 
-### 7. Organize the code correctly
+### WIP 7. Organize the code correctly
 
 **Goal:** Organize the code in order to allow easier maintenance. Colocate code related to same concepts. Leverage Pothos for building the graphQL API from multiple modules.
 

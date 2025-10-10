@@ -455,10 +455,10 @@ In `src/api/`, create a folder for `expense`. Inside, create:
 
 
   - `expenseRepository.ts`: This will use Prisma Client to interact with the DB, similar to Services from previous lessons. Pay attention to the create function as it is more complex than it looks. You will need to create an expense associated with the correct participants but you will only receive their ids from the frontend. Prisma has a concept of [**connecting** records](https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries#connect-multiple-records) which will help you do that. 
-  
-  Notice as well how we do not await for prisma response, we return a Promise, and therefore our functions are async.
-  
-  Here is an example of the Repository: 
+
+    Notice as well how we do not await for prisma response, we return a Promise, and therefore our functions are async.
+
+    Here is an example of the Repository: 
 
     ```ts
       import { PrismaClient } from '../../../generated/prisma';
@@ -510,6 +510,7 @@ In `src/api/`, create a folder for `expense`. Inside, create:
         });
       }
     ```
+
   - Add the router to your server : 
     
     ```server.ts

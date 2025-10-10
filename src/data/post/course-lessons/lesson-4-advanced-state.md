@@ -158,6 +158,12 @@ Mark this migration as resolved :
 npx prisma migrate resolve --applied 0_init
 ```
 
+You also need to mark this migration as already applied in production.
+Change your `DATABASE_URL` in your `.env` to the value you use in production and run the above command again. 
+Then restore your `.env` file with your local value.
+
+> **Important** It is not "normal" to manipulate the production database from your local environment, and most of the time this will not even be allowed by the configuration of your database. We are doing it here because we started the project with a prototyping mindset (using prisma db push) and we are now in a more future proof mindset.
+
 #### **Define `User` Model**: 
 
 Open `prisma/schema.prisma`. Under the `datasource` and `generator` blocks, define a new model for users:
@@ -359,6 +365,10 @@ Notice how it is a different command than the one we ran in development, this is
 - Does not reset the database or generate artifacts
 - Does not rely on a shadow database
 
+We also need to change how we build and start the app on Render.
+
+The command for building is : `npm install && npm run build`. This will transpile the code and bundle it in "dist/" directory.
+The command for starting is : `npx prisma migrate deploy && npm run start:prod `. 
 
 
 #### **Seeding Initial Data**: 

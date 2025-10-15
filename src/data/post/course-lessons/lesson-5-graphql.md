@@ -1,5 +1,5 @@
 ---
-title: 'Lesson 5 – GraphQL' 
+title: '<WIP>Lesson 5 – GraphQL' 
 description: 'Integrate GraphQL into your existing expense-sharing application using Apollo Server and Apollo Client, and explore the benefits of flexible data fetching compared to REST.' 
 publishDate: 2025-10-24T00:00:00Z
 excerpt: 'Learn how to set up GraphQL in your fullstack app, write queries and mutations, and compare GraphQL with REST through practical exercises.' 
@@ -41,8 +41,6 @@ You’ll use **Apollo Server** on the backend and **Apollo Client** on the front
 
 ## Exercises
 
-> **Starting Point:** These exercises build upon the code from Lesson 4. You should have a working Express backend with Prisma (User, Expense, Transfer models) and a React frontend with React Router. If you haven't completed Lesson 4, you can use the code in `exercises/lesson-5-graphql/` as your starting point.
-
 ### 1. Add Apollo Server to Your Backend
 
 **Goal:** Add a GraphQL endpoint to your existing Express server while keeping your REST API intact.
@@ -81,7 +79,6 @@ Then load it in your `server.ts` middleware stack. At the beginning of your file
 
 ```ts
 import graphqlMiddleware from "./graphql/middleware";
-import { ruruHTML } from "ruru/server";
 //...
 const app: Express = express();
 
@@ -113,7 +110,7 @@ Now is also a good time for adding [graphQL extension](https://marketplace.visua
 3. Start your backend and open [http://localhost:3000/ruru](http://localhost:3000/ruru). You should see an editor.
 
 
-Important: If you encounter an issue about top level await being unsupported with cjs modules, ensure your `package.json` has the line `"type": "module"`
+Important: If you encounter an issue about top level await being unsupported with cjs modules, ensure your `package.json` has the line `"type": "module","`
    
 4. Test your first query and observe the result
 ```graphql
@@ -242,7 +239,7 @@ import { gql } from "@apollo/client";
 import graphqlClient from "@/lib/graphql-client";
 
 const EXPENSE_QUERY = gql`
-  query ExpenseDetail($id: Int!) {
+  query ExpenseDetail($id: ID!) {
     expense(id: $id) {
       id
       description
@@ -332,7 +329,7 @@ Adding a field to a type definition in backend makes it **available** for the fr
 
    Notice that we cannot ask the payer or participants because our current implementation of `expenseRepository.createExpense` only return the bare expense without any relations. 
 
-4. Let's avoid parsing dates every time we need them.
+4. Let's avoid parding dates every time we need them.
 
 GraphQL is missing many useful scalar types. It's quite easy to create new ones ([see documentation](https://www.apollographql.com/docs/apollo-server/schema/custom-scalars)) but let's be honest, there are some usual ones which we will almost always need : Date, DateTime, Duration, EmailAddress, URL, JSON, UUID, ...
 
@@ -448,55 +445,19 @@ Let's reorganize our code and integrate our graphQL schema with our prisma defin
 1. Let's install **pothos** a library for building our graphQL schema bit by bit, and its prisma integration plugin.
 
 ```bash
+
+```
 npm install --save @pothos/core @pothos/plugin-prisma
-```
+---
 
-2. Generate Pothos types from your Prisma schema. Add this generator to your `prisma/schema.prisma`:
+> Note: Pothos also has a plugin for doing validation, typically with zod, have a look at it : https://pothos-graphql.dev/docs/plugins/validation
 
-```prisma
-generator pothos {
-  provider = "prisma-pothos-types"
-  output   = "../generated/pothos-prisma-types.ts"
-}
-```
+2. Let's split our `graphql/middleware.ts` file in 3 files :
+   - graphql/server.ts : is the file responsible for starting the server and exposing the middleware to express, it requires the schema from
+   - grapqh/schema.ts : is the file responsible for exporting the schema, it will do so by getting the builder and all the augmentation functions
+   - graphql/builder.ts : will initiate the builder and setup the scalar types which can then be used by any augmentation functions
 
-Then run:
-```bash
-npx prisma generate
-```
-
-This creates TypeScript types that Pothos uses to understand your Prisma models.
-
-> **Note:** Pothos also has a plugin for doing validation, typically with zod, have a look at it : https://pothos-graphql.dev/docs/plugins/validation
-
-3. Let's split our `graphql/middleware.ts` file in 3 files and reorganize our GraphQL code structure:
-
-**New File Structure:**
-```
-src/
-├── graphql/
-│   ├── server.ts         # Apollo Server initialization & middleware export
-│   ├── schema.ts         # Schema builder that imports augmentation functions
-│   └── builder.ts        # Pothos builder configuration with scalars
-└── api/
-    ├── expense/
-    │   ├── expenseRepository.ts
-    │   ├── expenseController.ts
-    │   ├── expenseRouter.ts
-    │   └── augmentGraphqlSchema.ts   # ← New: GraphQL types/queries/mutations for expenses
-    └── user/
-        ├── userRepository.ts
-        ├── userController.ts
-        ├── userRouter.ts
-        └── augmentGraphqlSchema.ts   # ← New: GraphQL types for users
-```
-
-**Purpose of each file:**
-   - `graphql/server.ts` : Starts Apollo Server and exports the middleware for Express
-   - `graphql/schema.ts` : Imports the builder and all augmentation functions, then builds the final schema
-   - `graphql/builder.ts` : Initializes Pothos builder with Prisma plugin and custom scalar types
-
-This approach keeps GraphQL schema definitions colocated with the related business logic (repositories, controllers).
+  We will then have augmentation functions in each of the `src/api/topic/` folders.
 
 Here is the code you will need for this split (it's mostly boilerplate)
 
@@ -572,9 +533,9 @@ This last file has a bit of more advanced code but the point is simply to easily
 
 Notice how some lines are commented out in `schema.ts`. This is because the actual augmentation will happen in files stored under the `src/api/topic/` folder.
 
-4. Let's augment our schema with everything related to expenses:
-
-Create the file `backend/src/api/expense/augmentGraphqlSchema.ts`:
+3. Let's augment our schema with everything related to expenses:
+   
+create the file `backend/src/api/expense/augmentGraphqlSchema.ts`
 
 ```ts
 import SchemaBuilder from "../../graphql/builder";
@@ -589,7 +550,7 @@ export default augmentSchema;
 
 ```
 
-5. Declare a new type for Expense and map it to Expense objects received from Prisma
+3. Declare a new type for Expense and map it to Expense objects received from Figma
 
 ```ts
     const ExpenseRef = builder.prismaObject('Expense', {
@@ -622,7 +583,7 @@ With pothos, we can declare the type of our graphQL object and how it relates to
 `businessObject` is the object we want to manipulate in the backend, currently it is the object we get from prisma. This object usually has some specific fields and methods that we do not want to expose. Pothos enables us to easily manipulate both. Pothos calls the business objects "backing models" : https://pothos-graphql.dev/docs/guide/schema-builder
 
 
-6. Add the query for easily getting an expense by id.
+4. Add the query for easily getting an expense by id.
 
 ```ts
     builder.queryType({
@@ -638,9 +599,9 @@ With pothos, we can declare the type of our graphQL object and how it relates to
             }),
         }),
     });
-```
+``` 
 
-7. Add the mutation for easily creating an expense.
+5. Add the mutation for easily creating an expense.
 
 ```ts
     builder.mutationType({
@@ -663,30 +624,9 @@ With pothos, we can declare the type of our graphQL object and how it relates to
     });
 ```
 
-8. Create the file `backend/src/api/user/augmentGraphqlSchema.ts`, follow the same logic for exposing the `User` type.
+6. Create the file `backend/src/api/user/augmentGraphqlSchema.ts`, follow the same logic for exposing the `User` type
 
-9. Update `src/graphql/schema.ts` to import and use the augmentation functions:
-
-```ts
-//schema.ts
-import builder from "./builder";
-import augmentExpenseSchema from "../api/expense/augmentGraphqlSchema";
-import augmentUserSchema from "../api/user/augmentGraphqlSchema";
-
-augmentExpenseSchema(builder);
-augmentUserSchema(builder);
-
-const schema = builder.toSchema();
-export default schema;
-```
-
-10. Update `src/server.ts` to import from the new location:
-
-```ts
-import graphqlMiddleware from "./graphql/server";  // Changed from "./graphql/middleware"
-```
-
-11. Check with ruru that everything is still working properly.
+7. Check with ruru that everything is still working properly.
 
 You're done ! You now have a full blown application with both a REST api a GraphQL API and organized in a way which allows for clean maintenance and growth.
 

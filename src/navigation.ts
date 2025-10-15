@@ -51,17 +51,13 @@ export const headerData = {
           href: getPermalink('course-lessons/lesson-5-graphql', 'post'),
         },
         {
+          text: 'Lesson 6: When things go wrong',
+          href: getPermalink('course-lessons/lesson-6-when-things-go-wrong', 'post'),
+        },
+        {
           text: 'Aside 1: When things go wrong',
           href: 'https://github.com/e-vinci/web3-2025/raw/refs/heads/main/src/slides/it-does-not-work.pptx',
         },
-        // {
-        //   text: 'Lesson 5: Authorization and error management',
-        //   href: getPermalink('course-lessons/lesson-5-authorization-error-management', 'post'),
-        // },
-        // {
-        //   text: 'Lesson 6: Async and long running tasks',
-        //   href: getPermalink('course-lessons/lesson-6-async-long-running-tasks', 'post'),
-        // },
         // {
         //   text: 'Lesson 7: Performance and monitoring',
         //   href: getPermalink('course-lessons/lesson-7-performance-monitoring', 'post'),
@@ -73,7 +69,6 @@ export const headerData = {
       ],
     },
   ],
-  // actions: [{ text: 'Download', href: 'https://github.com/onwidget/astrowind', target: '_blank' }],
 };
 
 export const footerData = {

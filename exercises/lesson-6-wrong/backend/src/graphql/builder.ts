@@ -1,14 +1,14 @@
-import SchemaBuilder from "@pothos/core";
-import PrismaPlugin from "@pothos/plugin-prisma";
-import type PrismaTypes from "../../generated/pothos-prisma-types";
-import { PrismaClient } from "../../generated/prisma";
-import { GraphQLScalarType } from "graphql";
-import { resolvers } from "graphql-scalars";
+import SchemaBuilder from '@pothos/core';
+import PrismaPlugin from '@pothos/plugin-prisma';
+import type PrismaTypes from '../../generated/pothos-prisma-types';
+import { PrismaClient } from '../../generated/prisma';
+import { GraphQLScalarType } from 'graphql';
+import { resolvers } from 'graphql-scalars';
+import { GraphQLContext } from '@/types/GraphQLContext';
 
 const prisma = new PrismaClient();
 
-const shouldImportScalar = (name: string) =>
-  ["Date", "DateTime"].includes(name);
+const shouldImportScalar = (name: string) => ['Date', 'DateTime'].includes(name);
 
 const allScalarTypes = Object.values(resolvers);
 const filteredScalar = allScalarTypes.filter((type) => shouldImportScalar(type.name));
@@ -24,6 +24,7 @@ type ScalarsMap = {
 const builder = new SchemaBuilder<{
   PrismaTypes: PrismaTypes;
   Scalars: ScalarsMap;
+  Context: GraphQLContext;
 }>({
   plugins: [PrismaPlugin],
   prisma: {
@@ -31,8 +32,6 @@ const builder = new SchemaBuilder<{
   },
 });
 
-Object.entries(scalarRegistry).forEach(([name, resolver]) =>
-  builder.addScalarType(name, resolver)
-);
+Object.entries(scalarRegistry).forEach(([name, resolver]) => builder.addScalarType(name, resolver));
 
 export default builder;

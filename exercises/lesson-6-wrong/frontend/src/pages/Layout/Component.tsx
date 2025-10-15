@@ -1,50 +1,55 @@
-import { NavLink, Outlet, useLoaderData } from 'react-router';
-import { useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router';
 import type { LoaderData } from './loader';
 import type { User } from '@/types/User';
 import { Toaster } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 export default function Layout() {
-  const { users } = useLoaderData<LoaderData>();
-  const [currentUser, setCurrentUser] = useState<null | User>(null);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const handleUserChange = (e) => {
-    const id = e.target.value;
-    const newCurrentUser = users.find((user) => user.id === Number(id)) ?? null;
-    setCurrentUser(newCurrentUser);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const outletContext = {
-    currentUser,
+    user,
   };
 
   return (
     <div>
       <nav className="bg-teal-800 text-white p-4 flex justify-between items-center">
         <div className="text-xl font-bold">💸 Expenso</div>
-        <div>
-          <NavLink to="/transactions" className="mr-4">
+        <div className="flex items-center gap-4">
+          <NavLink to="/transactions" className="hover:underline">
             All Transactions
           </NavLink>
-          <NavLink to="/expenses/new" className="mr-4">
+          <NavLink to="/expenses/new" className="hover:underline">
             New Expense
           </NavLink>
-          <NavLink to="/transfers/new" className="mr-4">
+          <NavLink to="/transfers/new" className="hover:underline">
             New Transfer
           </NavLink>
 
-          <select
-            value={currentUser?.id ?? 'none'}
-            className="bg-white text-black rounded px-2"
-            onChange={handleUserChange}
-          >
-            <option value="none">— No User —</option>
-            {users.map((u: User) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm">Welcome, {user?.email}</span>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                className="bg-white text-teal-800 hover:bg-gray-100"
+              >
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <NavLink to="/login" className="hover:underline">
+              Login
+            </NavLink>
+          )}
         </div>
       </nav>
 

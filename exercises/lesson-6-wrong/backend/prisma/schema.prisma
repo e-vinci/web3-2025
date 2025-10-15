@@ -20,14 +20,15 @@ datasource db {
 }
 
 model User {
-  id          Int     @id @default(autoincrement())
-  name        String
-  email       String  @unique
-  bankAccount String? // optional
-  paidExpenses    Expense[] @relation("PayerExpenses")
-  transfersOut Transfer[] @relation("UserTransfersSource")
-  transfersIn  Transfer[] @relation("UserTransfersTarget")
-  participatedExpenses    Expense[] @relation("ParticipantExpenses")
+  id                   Int        @id @default(autoincrement())
+  name                 String
+  email                String     @unique
+  password             String
+  bankAccount          String? // optional
+  paidExpenses         Expense[]  @relation("PayerExpenses")
+  transfersOut         Transfer[] @relation("UserTransfersSource")
+  transfersIn          Transfer[] @relation("UserTransfersTarget")
+  participatedExpenses Expense[]  @relation("ParticipantExpenses")
 }
 
 model Expense {
@@ -41,11 +42,11 @@ model Expense {
 }
 
 model Transfer {
-  id        Int    @id @default(autoincrement())
-  amount    Float
-  date      DateTime @default(now())
-  source    User   @relation("UserTransfersSource", fields: [sourceId], references: [id])
-  sourceId  Int
-  target    User   @relation("UserTransfersTarget", fields: [targetId], references: [id])
-  targetId  Int
+  id       Int      @id @default(autoincrement())
+  amount   Float
+  date     DateTime @default(now())
+  source   User     @relation("UserTransfersSource", fields: [sourceId], references: [id])
+  sourceId Int
+  target   User     @relation("UserTransfersTarget", fields: [targetId], references: [id])
+  targetId Int
 }

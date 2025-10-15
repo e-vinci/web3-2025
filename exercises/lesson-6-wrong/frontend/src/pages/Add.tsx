@@ -77,28 +77,6 @@ const Add = () => {
 
                 <FormField
                   control={form.control}
-                  name="payer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Payer</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a payer" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Alice">Alice</SelectItem>
-                          <SelectItem value="Bob">Bob</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="amount"
                   render={({ field }) => (
                     <FormItem>

@@ -4,11 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { gql } from '@apollo/client';
 import graphqlClient from '@/lib/graphql-client';
-import { useCurrentUser } from '@/pages/Layout';
+import { useAuth } from '@/contexts/AuthContext';
 import { Receipt, EuroIcon, Users, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { LoaderData } from './loader';
@@ -25,7 +24,6 @@ const CREATE_EXPENSE_GQL = gql`
 
 const expenseSchema = z.object({
   description: z.string().min(1, 'Description is required'),
-  payerId: z.string().min(1, 'Payer is required'),
   amount: z.coerce.number<number>().min(0.01, 'Amount must be greater than 0'),
   date: z.string().optional(),
   participantIds: z.array(z.string()).min(1, 'At least one participant is required'),
@@ -34,7 +32,7 @@ const expenseSchema = z.object({
 type ExpenseFormData = z.infer<typeof expenseSchema>;
 
 export default function ExpenseForm() {
-  const currentUser = useCurrentUser();
+  const { user } = useAuth();
   const { users } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
 
@@ -42,7 +40,6 @@ export default function ExpenseForm() {
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       description: '',
-      payerId: currentUser?.id.toString() || '',
       amount: 0,
       date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
       participantIds: [],
@@ -50,6 +47,11 @@ export default function ExpenseForm() {
   });
 
   const onSubmit = async (data: ExpenseFormData) => {
+    if (!user) {
+      toast.error('You must be logged in to create an expense');
+      return;
+    }
+
     try {
       await graphqlClient.mutate({
         mutation: CREATE_EXPENSE_GQL,
@@ -57,7 +59,7 @@ export default function ExpenseForm() {
           description: data.description,
           amount: data.amount,
           date: data.date ? new Date(data.date) : new Date(),
-          payerId: Number(data.payerId),
+          payerId: user.userId, // Use authenticated user's ID
           participantIds: data.participantIds.map(id => Number(id)),
         },
       });
@@ -81,6 +83,14 @@ export default function ExpenseForm() {
 
       <div className="max-w-xl mx-auto">
         <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
+          {/* Info Message */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <p className="text-blue-800 text-sm">
+              You are creating an expense that <strong>you paid for</strong>. Paid by: <strong>{user?.email}</strong>
+            </p>
+          </div>
+
           {/* Error Message */}
           {form.formState.errors.root && (
             <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-2">
@@ -140,35 +150,6 @@ export default function ExpenseForm() {
                         <Input type="date" className="pl-9" {...field} />
                       </div>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Payer Selection */}
-              <FormField
-                control={form.control}
-                name="payerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-foreground">Paid by</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select who paid" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.id.toString()}>
-                            <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-muted-foreground" />
-                              {user.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

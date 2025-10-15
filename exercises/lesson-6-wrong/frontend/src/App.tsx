@@ -7,10 +7,22 @@ import Transactions, { loader as transactionsLoader } from './pages/Transactions
 import ExpenseDetail, { loader as expenseDetailLoader } from './pages/ExpenseDetails';
 import NewTransfer, { loader as NewTransferLoader } from './pages/NewTransfer';
 import NewExpense, { loader as NewExpenseLoader } from './pages/NewExpense';
+import { AuthProvider } from './contexts/AuthContext';
+import Login from './pages/Login/Component';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
   {
-    Component: Layout,
+    path: '/login',
+    Component: Login,
+  },
+  {
+    path: '/',
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     loader: layoutLoader,
     id: 'layout',
 
@@ -42,9 +54,11 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ApolloProvider client={graphqlClient}>
-      <RouterProvider router={router} />
-    </ApolloProvider>
+    <AuthProvider>
+      <ApolloProvider client={graphqlClient}>
+        <RouterProvider router={router} />
+      </ApolloProvider>
+    </AuthProvider>
   );
 }
 

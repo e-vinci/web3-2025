@@ -926,11 +926,97 @@ export default function Login() {
 
 5. Add route for login page in your router configuration.
 
-6. Create a navigation component that shows login/logout buttons based on auth state.
+6. Update your navigation/header component to show login/logout based on authentication state. For example, if you have a navbar with a user selector, replace it with authentication controls:
+
+```tsx
+// Example: src/components/Header.tsx or updating existing navbar
+import { Link, useNavigate } from 'react-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+
+export default function Header() {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <header className="bg-white shadow">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <Link to="/" className="text-xl font-bold">
+          Expenso
+        </Link>
+
+        <nav className="flex items-center gap-4">
+          {isAuthenticated ? (
+            <>
+              <span className="text-gray-700">
+                Welcome, {user?.email}
+              </span>
+              <Button onClick={handleLogout} variant="outline">
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button onClick={() => navigate('/login')}>
+              Login
+            </Button>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+}
+```
+
+7. If your app previously had a user selector dropdown (e.g., to switch between different users during development), remove it and replace it with the authentication controls from step 6. The authenticated user is now determined by the JWT token, not by manual selection:
+
+```tsx
+// BEFORE (development-only user selector):
+<select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)}>
+  <option value="1">Alice</option>
+  <option value="2">Bob</option>
+  <option value="3">Charlie</option>
+</select>
+
+// AFTER (authentication-based):
+{isAuthenticated ? (
+  <>
+    <span>Welcome, {user?.email}</span>
+    <Button onClick={handleLogout}>Logout</Button>
+  </>
+) : (
+  <Button onClick={() => navigate('/login')}>Login</Button>
+)}
+```
+
+When creating expenses, use the authenticated user's ID from the token instead of a manually selected user:
+
+```tsx
+// In NewExpense component, get the authenticated user
+const { user } = useAuth();
+
+// Use user.userId as the payerId instead of a selected value
+const onSubmit = async (data: ExpenseFormData) => {
+  await graphqlClient.mutate({
+    mutation: CREATE_EXPENSE_GQL,
+    variables: {
+      description: data.description,
+      amount: data.amount,
+      date: data.date ? new Date(data.date) : new Date(),
+      payerId: user!.userId, // Use authenticated user's ID
+      participantIds: data.participantIds.map(id => Number(id)),
+    },
+  });
+};
+```
 
 ---
 
-### 7. Configure Authenticated Apollo Client
+### 8. Configure Authenticated Apollo Client
 
 **Goal:** Automatically include JWT token in all GraphQL requests.
 
@@ -996,7 +1082,7 @@ export default client;
 
 ---
 
-### 8. Create Protected Routes
+### 9. Create Protected Routes
 
 **Goal:** Redirect unauthenticated users to login page when accessing protected routes.
 
@@ -1064,7 +1150,7 @@ const router = createBrowserRouter([
 
 ---
 
-### 9. Implement Error Boundaries and Centralized Error Handling
+### 10. Implement Error Boundaries and Centralized Error Handling
 
 **Goal:** Gracefully handle errors in React components and display user-friendly messages.
 
@@ -1253,7 +1339,7 @@ export function useAsyncOperation<T>() {
 
 ---
 
-### 10. Add Input Validation with Zod
+### 11. Add Input Validation with Zod
 
 **Goal:** Validate user inputs on both frontend and backend to prevent bad data and improve error messages.
 

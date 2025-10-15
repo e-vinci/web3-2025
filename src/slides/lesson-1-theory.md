@@ -69,7 +69,6 @@ function Counter() {
 ## TypeScript: Why and Basics
 
 - **Why TypeScript?**
-
   - Adds static typing to JavaScript
   - Catches errors at compile time
   - Improves code completion and refactoring

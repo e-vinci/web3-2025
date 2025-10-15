@@ -10,11 +10,16 @@ import NewExpense, { loader as NewExpenseLoader } from './pages/NewExpense';
 import { AuthProvider } from './contexts/AuthContext';
 import Login from './pages/Login/Component';
 import ProtectedRoute from './components/ProtectedRoute';
+import UserStats from './pages/UserStats';
 
 const router = createBrowserRouter([
   {
     path: '/login',
     Component: Login,
+  },
+  {
+    path: '/stats/:userId',
+    Component: UserStats,
   },
   {
     path: '/',

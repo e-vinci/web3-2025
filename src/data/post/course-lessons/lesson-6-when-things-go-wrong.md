@@ -1533,14 +1533,6 @@ In this lesson, you've transformed your expense-sharing application into a produ
 
 Your application now follows security best practices and provides a professional user experience with proper error handling and validation.
 
-### Next Steps
+# The PR
 
-- Implement password reset functionality
-- Add refresh token rotation
-- Set up rate limiting to prevent brute force attacks
-- Add audit logging for sensitive operations
-- Implement role-based access control (RBAC) for admin features
-- Configure production-ready logging (e.g., Winston, Pino)
-- Set up error monitoring service (e.g., Sentry)
-
-> Your expense-sharing app is now secure and production-ready!
+Adding some statistics - check it [here](https://github.com/e-vinci/web3-2025/pull/14)

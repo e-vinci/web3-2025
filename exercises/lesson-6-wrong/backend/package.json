@@ -8,7 +8,8 @@
     "start:prod": "node dist/index.js",
     "check": "biome check --write",
     "test": "vitest run",
-    "test:cov": "vitest run --coverage"
+    "test:cov": "vitest run --coverage",
+    "prisma:start_db": "npx prisma dev @0.0.0-dev.202509301625"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",

@@ -14,8 +14,20 @@ import type { LoaderData } from './loader';
 import { toast } from 'sonner';
 
 const CREATE_EXPENSE_GQL = gql`
-  mutation CreateExpense($description: String!, $amount: Float!, $date: DateTime!, $payerId: Int!, $participantIds: [Int!]!) {
-    createExpense(description: $description, amount: $amount, date: $date, payerId: $payerId, participantIds: $participantIds) {
+  mutation CreateExpense(
+    $description: String!
+    $amount: Float!
+    $date: DateTime!
+    $payerId: Int!
+    $participantIds: [Int!]!
+  ) {
+    createExpense(
+      description: $description
+      amount: $amount
+      date: $date
+      payerId: $payerId
+      participantIds: $participantIds
+    ) {
       id
       description
     }
@@ -60,7 +72,7 @@ export default function ExpenseForm() {
           amount: data.amount,
           date: data.date ? new Date(data.date) : new Date(),
           payerId: user.userId, // Use authenticated user's ID
-          participantIds: data.participantIds.map(id => Number(id)),
+          participantIds: data.participantIds.map((id) => Number(id)),
         },
       });
       toast('Expense has been created.');

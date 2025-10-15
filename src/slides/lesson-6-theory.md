@@ -18,11 +18,13 @@ backgroundImage: url('https://marp.app/assets/hero-background.svg')
 ## Leaving the Happy Path
 
 Until now, we've focused on the **happy path**:
+
 - ✅ Users can create expenses
 - ✅ Users can view expenses
 - ✅ Data is stored and retrieved
 
 But we're missing critical pieces:
+
 - ❌ **No authentication** - Who is the user?
 - ❌ **No authorization** - What can they access?
 - ❌ **No security headers** - Protection against attacks
@@ -88,6 +90,7 @@ Speaker Notes:
 # JWT Structure Breakdown
 
 ## Header (Base64 encoded)
+
 ```json
 {
   "alg": "HS256",
@@ -96,6 +99,7 @@ Speaker Notes:
 ```
 
 ## Payload (Base64 encoded)
+
 ```json
 {
   "userId": 123,
@@ -107,6 +111,7 @@ Speaker Notes:
 ---
 
 ## Signature
+
 ```
 HMACSHA256(
   base64UrlEncode(header) + "." + base64UrlEncode(payload),
@@ -133,11 +138,7 @@ export function login(email: string, password: string): AuthResponse {
   // Verify credentials...
   const user = await findUser(email);
 
-  const token = jwt.sign(
-    { userId: user.id, email: user.email },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+  const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
 
   return { token, user };
 }
@@ -167,7 +168,7 @@ Speaker Notes:
 // After successful login
 const response = await fetch('/auth/login', {
   method: 'POST',
-  body: JSON.stringify({ email, password })
+  body: JSON.stringify({ email, password }),
 });
 
 const { token } = await response.json();
@@ -184,8 +185,8 @@ localStorage.setItem('auth_token', token);
 // Include in Authorization header
 const response = await fetch('/api/expenses', {
   headers: {
-    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-  }
+    Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+  },
 });
 ```
 
@@ -235,9 +236,7 @@ const graphqlMiddleware = expressMiddleware(server, {
   context: async ({ req }): Promise<GraphQLContext> => {
     // Extract token from Authorization header
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ')
-      ? authHeader.substring(7)
-      : '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
 
     // Verify token and add user to context
     if (token) {
@@ -326,20 +325,22 @@ Speaker Notes:
 ## Prevents: Cross-Site Scripting (XSS) attacks
 
 ```typescript
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],           // Only load from same origin
-      scriptSrc: ["'self'"],            // Only run scripts from same origin
-      styleSrc: ["'self'", "'unsafe-inline'"], // Styles from same origin + inline
-      imgSrc: ["'self'", "data:", "https:"],   // Images from various sources
-      connectSrc: ["'self'"],           // API calls only to same origin
-      fontSrc: ["'self'"],              // Fonts from same origin
-      objectSrc: ["'none'"],            // No plugins (Flash, etc.)
-      frameSrc: ["'none'"],             // No iframes
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"], // Only load from same origin
+        scriptSrc: ["'self'"], // Only run scripts from same origin
+        styleSrc: ["'self'", "'unsafe-inline'"], // Styles from same origin + inline
+        imgSrc: ["'self'", 'data:', 'https:'], // Images from various sources
+        connectSrc: ["'self'"], // API calls only to same origin
+        fontSrc: ["'self'"], // Fonts from same origin
+        objectSrc: ["'none'"], // No plugins (Flash, etc.)
+        frameSrc: ["'none'"], // No iframes
+      },
     },
-  },
-}));
+  })
+);
 ```
 
 **Attack Prevented:** Attacker injects `<script>` tag, but CSP blocks execution
@@ -362,6 +363,7 @@ Speaker Notes:
 ## Why Protected Routes?
 
 **Without protection:**
+
 - User tries to access `/expenses/new`
 - Page loads, makes API call
 - API returns 401 Unauthorized error
@@ -370,6 +372,7 @@ Speaker Notes:
 ---
 
 **With protection:**
+
 - User tries to access `/expenses/new`
 - Route checks authentication
 - Immediately redirects to `/login`
@@ -407,6 +410,7 @@ export default function ProtectedRoute({ children }) {
 ---
 
 **Usage:**
+
 ```typescript
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -436,14 +440,17 @@ Speaker Notes:
 # Protected Routes Benefits
 
 ✅ **Better UX**
+
 - Clear redirect flow
 - No loading spinners for failed auth
 
 ✅ **Performance**
+
 - Don't load components unnecessarily
 - Don't fetch data for unauthenticated users
 
 ✅ **Clarity**
+
 - Easy to see which routes are protected
 - Centralized authentication logic
 
@@ -472,6 +479,7 @@ throw new Error('Permission denied');
 ```
 
 **Issues:**
+
 - No structured information
 - How should frontend handle these?
 - What HTTP status code?
@@ -534,6 +542,7 @@ Speaker Notes:
 # Benefits of Custom Errors
 
 ✅ **Type Safety**
+
 ```typescript
 if (error instanceof AuthenticationError) {
   redirectToLogin();
@@ -541,6 +550,7 @@ if (error instanceof AuthenticationError) {
 ```
 
 ✅ **Consistent Status Codes**
+
 ```typescript
 throw new NotFoundError('Expense not found');
 // Automatically sets statusCode: 404
@@ -549,12 +559,14 @@ throw new NotFoundError('Expense not found');
 ---
 
 ✅ **Better Error Messages**
+
 ```typescript
 throw new ValidationError('Email must be valid');
 // Code: VALIDATION_ERROR, clear to both devs and users
 ```
 
 ✅ **Easier Logging & Monitoring**
+
 ```typescript
 if (error instanceof AppError) {
   logger.warn(error.code, error.message);
@@ -594,7 +606,7 @@ export async function login(email: string, password: string) {
   }
 ```
 
-  // Generate token...
+// Generate token...
 }
 
 ---
@@ -640,7 +652,7 @@ export function formatError(error: GraphQLError): GraphQLFormattedError {
 
 ```
 
---- 
+---
 
 ```typescript
 
@@ -745,9 +757,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="error-container">
           <h1>Something went wrong</h1>
-          <button onClick={() => window.location.reload()}>
-            Refresh Page
-          </button>
+          <button onClick={() => window.location.reload()}>Refresh Page</button>
         </div>
       );
     }
@@ -774,15 +784,15 @@ Speaker Notes:
 
 # Security Layers Summary
 
-| Layer | Purpose | Protection |
-|-------|---------|------------|
-| **JWT** | Authentication | Identifies users securely |
-| **GraphQL Context** | Auth propagation | Makes auth info available to resolvers |
-| **Authorization** | Access control | Ensures users can only access their data |
-| **Helmet** | HTTP headers | Protects against web attacks (XSS, clickjacking, etc.) |
-| **Protected Routes** | UX | Redirects unauthenticated users |
-| **Custom Errors** | Error handling | Consistent, clear error messages |
-| **Input Validation** | Data quality | Prevents bad/malicious data |
+| Layer                | Purpose          | Protection                                             |
+| -------------------- | ---------------- | ------------------------------------------------------ |
+| **JWT**              | Authentication   | Identifies users securely                              |
+| **GraphQL Context**  | Auth propagation | Makes auth info available to resolvers                 |
+| **Authorization**    | Access control   | Ensures users can only access their data               |
+| **Helmet**           | HTTP headers     | Protects against web attacks (XSS, clickjacking, etc.) |
+| **Protected Routes** | UX               | Redirects unauthenticated users                        |
+| **Custom Errors**    | Error handling   | Consistent, clear error messages                       |
+| **Input Validation** | Data quality     | Prevents bad/malicious data                            |
 
 **Defense in depth:** Multiple layers protect your application!
 
@@ -801,22 +811,22 @@ Speaker Notes:
 # Common Security Mistakes
 
 ❌ **Storing passwords in plain text**
-  → Use bcrypt with salt rounds
+→ Use bcrypt with salt rounds
 
 ❌ **Trusting frontend validation only**
-  → Always validate on backend too
+→ Always validate on backend too
 
 ❌ **Not using HTTPS in production**
-  → Tokens and passwords sent in clear text
+→ Tokens and passwords sent in clear text
 
 ❌ **Weak JWT secrets**
-  → Use long, random secrets
+→ Use long, random secrets
 
 ❌ **No token expiration**
-  → Tokens should expire (7 days max)
+→ Tokens should expire (7 days max)
 
 ❌ **Exposing stack traces in production**
-  → Use error formatters
+→ Use error formatters
 
 <!--
 Speaker Notes:
@@ -834,25 +844,25 @@ Speaker Notes:
 # Security Best Practices
 
 ✅ **Hash passwords with bcrypt**
-  → Never store plain text passwords
+→ Never store plain text passwords
 
 ✅ **Validate on both frontend and backend**
-  → Frontend for UX, backend for security
+→ Frontend for UX, backend for security
 
 ✅ **Use environment variables for secrets**
-  → Never commit secrets to git
+→ Never commit secrets to git
 
 ✅ **Implement rate limiting**
-  → Prevent brute force attacks
+→ Prevent brute force attacks
 
 ✅ **Keep dependencies updated**
-  → Security patches in package updates
+→ Security patches in package updates
 
 ✅ **Use HTTPS everywhere**
-  → Encrypt all traffic
+→ Encrypt all traffic
 
 ✅ **Log security events**
-  → Monitor for suspicious activity
+→ Monitor for suspicious activity
 
 <!--
 Speaker Notes:
@@ -890,4 +900,3 @@ Speaker Notes:
 -->
 
 ---
-

@@ -35,9 +35,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
   });
 
   if (!data?.expense || error) {
-    throw new Error(
-      "Error while retrieving expense details from the server: " + error
-    );
+    throw new Error('Error while retrieving expense details from the server: ' + error);
   }
 
   return { expense: data.expense };

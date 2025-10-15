@@ -1,6 +1,6 @@
-import { ApolloServer } from "@apollo/server";
-import { expressMiddleware } from "@as-integrations/express5";
-import * as expenseRepository from "@/api/expense/expenseRepository";
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@as-integrations/express5';
+import * as expenseRepository from '@/api/expense/expenseRepository';
 import { typeDefs as scalarTypeDefs, resolvers as scalarResolvers } from 'graphql-scalars';
 
 const typeDefs = `#graphql
@@ -41,14 +41,14 @@ const typeDefs = `#graphql
 const resolvers = {
   ...scalarResolvers,
   Query: {
-    hello: () => "Hello GraphQL!",
-    expense: async (_parent: any, args: any, _context: any) => expenseRepository.getExpenseById(args.id)
+    hello: () => 'Hello GraphQL!',
+    expense: async (_parent: any, args: any, _context: any) => expenseRepository.getExpenseById(args.id),
   },
   Mutation: {
     createExpense: async (_parent: any, args: any, _context: any) => {
       const { description, amount, date, payerId, participantIds } = args;
-      return expenseRepository.createExpense({ description, amount, date, payerId, participantIds })
-    }
+      return expenseRepository.createExpense({ description, amount, date, payerId, participantIds });
+    },
   },
 };
 

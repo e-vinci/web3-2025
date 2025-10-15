@@ -1,4 +1,4 @@
-import type SchemaBuilder from "../../graphql/builder";
+import type SchemaBuilder from '../../graphql/builder';
 
 const augmentSchema = (builder: typeof SchemaBuilder) => {
   // Define User type
@@ -10,6 +10,6 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
       bankAccount: t.exposeString('bankAccount', { nullable: true }),
     }),
   });
-}
+};
 
 export default augmentSchema;

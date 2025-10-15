@@ -1,4 +1,4 @@
-import { ApolloClient, HttpLink, InMemoryCache, from } from "@apollo/client";
+import { ApolloClient, HttpLink, InMemoryCache, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 
@@ -26,9 +26,7 @@ const authLink = setContext((_, { headers }) => {
 const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, extensions }) => {
-      console.error(
-        `[GraphQL error]: Message: ${message}, Code: ${extensions?.code}`
-      );
+      console.error(`[GraphQL error]: Message: ${message}, Code: ${extensions?.code}`);
 
       // Handle authentication errors
       if (extensions?.code === 'UNAUTHENTICATED') {

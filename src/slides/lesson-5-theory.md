@@ -28,6 +28,7 @@ Speaker Notes:
 **Scenario:** Display expense details with payer and participant names
 
 **REST API:**
+
 ```
 GET /api/expenses/1          → Returns: id, description, amount, date, payerId
 GET /api/users/2             → Returns: id, name, email, bankAccount, ...
@@ -36,6 +37,7 @@ GET /api/users/4             → Returns: id, name, email, bankAccount, ...
 ```
 
 **Problems:**
+
 - ❌ Multiple HTTP requests (N+1 problem)
 - ❌ Over-fetching: Getting data we don't need (bankAccount, etc.)
 - ❌ Under-fetching: Need multiple requests to get related data
@@ -109,6 +111,7 @@ Speaker Notes:
 GraphQL is a **query language for APIs** and a **runtime for executing those queries**.
 
 **Key Characteristics:**
+
 - 🎯 **Declarative**: Ask for exactly what you need
 - 📝 **Strongly typed**: Schema defines what's possible
 - 🔗 **Hierarchical**: Queries mirror the data structure
@@ -129,14 +132,14 @@ Speaker Notes:
 
 # GraphQL vs REST
 
-| Aspect | REST | GraphQL |
-|--------|------|---------|
-| **Endpoints** | Multiple (`/users`, `/expenses`) | Single (`/graphql`) |
-| **Data Fetching** | Fixed responses | Flexible, client-specified |
-| **Over-fetching** | Common | Eliminated |
-| **Under-fetching** | Requires multiple requests | Single request |
-| **Versioning** | URL versioning (`/v1`, `/v2`) | Schema evolution |
-| **Documentation** | Manual (OpenAPI/Swagger) | Auto-generated (introspection) |
+| Aspect             | REST                             | GraphQL                        |
+| ------------------ | -------------------------------- | ------------------------------ |
+| **Endpoints**      | Multiple (`/users`, `/expenses`) | Single (`/graphql`)            |
+| **Data Fetching**  | Fixed responses                  | Flexible, client-specified     |
+| **Over-fetching**  | Common                           | Eliminated                     |
+| **Under-fetching** | Requires multiple requests       | Single request                 |
+| **Versioning**     | URL versioning (`/v1`, `/v2`)    | Schema evolution               |
+| **Documentation**  | Manual (OpenAPI/Swagger)         | Auto-generated (introspection) |
 
 <!--
 Speaker Notes:
@@ -152,12 +155,14 @@ Speaker Notes:
 # When to Use GraphQL vs REST
 
 **Use GraphQL when:**
+
 - ✅ Complex data relationships
 - ✅ Mobile apps (bandwidth matters)
 - ✅ Multiple clients with different needs
 - ✅ Rapid frontend development
 
 **Use REST when:**
+
 - ✅ Simple CRUD operations
 - ✅ File uploads/downloads
 - ✅ Caching is critical
@@ -197,6 +202,7 @@ Speaker Notes:
 ---
 
 **Components:**
+
 - **Operation**: `expense` (the query name)
 - **Arguments**: `(id: 1)` (input parameters)
 - **Selection Set**: `{ id, description, ... }` (fields to return)
@@ -258,12 +264,15 @@ Speaker Notes:
 # Query Response
 
 **Query:**
+
 ```graphql
 {
   expense(id: 1) {
     description
     amount
-    payer { name }
+    payer {
+      name
+    }
   }
 }
 ```
@@ -271,12 +280,13 @@ Speaker Notes:
 ---
 
 **Response:**
+
 ```json
 {
   "data": {
     "expense": {
       "description": "Team Lunch",
-      "amount": 42.50,
+      "amount": 42.5,
       "payer": {
         "name": "Alice"
       }
@@ -317,11 +327,7 @@ query GetExpense {
 
 ```graphql
 mutation CreateExpense {
-  createExpense(
-    description: "Lunch",
-    amount: 42.5,
-    payerId: 1
-  ) {
+  createExpense(description: "Lunch", amount: 42.5, payerId: 1) {
     id
     description
   }
@@ -342,12 +348,14 @@ Speaker Notes:
 # Query vs Mutation Principles
 
 **Query:**
+
 - 🔍 Read-only operations
 - ⚡ Can be executed in parallel
 - 💾 Cacheable
 - ✅ No side effects
 
 **Mutation:**
+
 - ✏️ Create, update, delete operations
 - 🔄 Executed sequentially
 - 🚫 Not cacheable
@@ -370,6 +378,7 @@ Speaker Notes:
 # Variables in GraphQL
 
 **Without variables:**
+
 ```graphql
 mutation {
   createExpense(description: "Lunch", amount: 42.5, payerId: 1) {
@@ -381,6 +390,7 @@ mutation {
 ---
 
 **With variables (better):**
+
 ```graphql
 mutation CreateExpense($description: String!, $amount: Float!, $payerId: Int!) {
   createExpense(description: $description, amount: $amount, payerId: $payerId) {
@@ -391,6 +401,7 @@ mutation CreateExpense($description: String!, $amount: Float!, $payerId: Int!) {
 ```
 
 **Variables (sent separately):**
+
 ```json
 {
   "description": "Lunch",
@@ -451,7 +462,7 @@ const typeDefs = `#graphql
 
 const resolvers = {
   Query: {
-    hello: () => "Hello GraphQL!",
+    hello: () => 'Hello GraphQL!',
   },
 };
 
@@ -476,11 +487,13 @@ Speaker Notes:
 # Apollo Server Components
 
 **Type Definitions (typeDefs):**
+
 - GraphQL schema definition language
 - Defines types, queries, mutations
 - The "contract" between client and server
 
 **Resolvers:**
+
 - Functions that fetch the data
 - Map to each field in the schema
 - Can call databases, APIs, other services
@@ -492,8 +505,8 @@ const resolvers = {
   Query: {
     expense: (_parent, args, context) => {
       return expenseRepository.getExpenseById(args.id);
-    }
-  }
+    },
+  },
 };
 ```
 
@@ -511,7 +524,7 @@ Speaker Notes:
 # Apollo Client
 
 ```typescript
-import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
 
 const client = new ApolloClient({
   link: new HttpLink({ uri: 'http://localhost:3000/graphql' }),
@@ -520,6 +533,7 @@ const client = new ApolloClient({
 ```
 
 **In React:**
+
 ```tsx
 import { ApolloProvider } from '@apollo/client/react';
 
@@ -552,7 +566,9 @@ const EXPENSE_QUERY = gql`
       id
       description
       amount
-      payer { name }
+      payer {
+        name
+      }
     }
   }
 `;
@@ -629,6 +645,7 @@ if (env.isDevelopment) {
 ---
 
 **Features:**
+
 - 🎨 Syntax highlighting and autocomplete
 - 📚 Schema documentation
 - 📝 Query history
@@ -651,6 +668,7 @@ Speaker Notes:
 # Pothos: Type-Safe Schema Builder
 
 **The Problem:**
+
 ```typescript
 // typeDefs as string - no TypeScript validation
 const typeDefs = `#graphql
@@ -664,12 +682,13 @@ const typeDefs = `#graphql
 ---
 
 **The Solution: Pothos**
+
 ```typescript
 builder.prismaObject('User', {
   fields: (t) => ({
     id: t.exposeID('id'),
-    name: t.exposeString('name'),  // TypeScript catches typos!
-  })
+    name: t.exposeString('name'), // TypeScript catches typos!
+  }),
 });
 ```
 
@@ -687,6 +706,7 @@ Speaker Notes:
 # Why Pothos?
 
 **Benefits:**
+
 - ✅ **Type Safety**: Catch errors at compile time
 - 🔗 **Prisma Integration**: Auto-generate from database schema
 - 🧩 **Modular**: Build schema piece by piece
@@ -719,6 +739,7 @@ Speaker Notes:
 # Pothos + Prisma Integration
 
 **Prisma Schema:**
+
 ```prisma
 model User {
   id    Int    @id @default(autoincrement())
@@ -728,11 +749,12 @@ model User {
 ```
 
 **Pothos Schema (auto-typed!):**
+
 ```typescript
 builder.prismaObject('User', {
   fields: (t) => ({
-    id: t.exposeID('id'),           // TypeScript knows 'id' exists
-    name: t.exposeString('name'),   // and knows 'name' is a string
+    id: t.exposeID('id'), // TypeScript knows 'id' exists
+    name: t.exposeString('name'), // and knows 'name' is a string
     email: t.exposeString('email'),
   }),
 });
@@ -798,6 +820,7 @@ const ExpenseRef = builder.prismaObject('Expense', {
 ```
 
 **Exposes:**
+
 - Prisma fields directly (`exposeID`, `exposeString`, etc.)
 - Relations automatically (`t.relation`)
 - Custom scalars (`DateTime`)
@@ -821,11 +844,11 @@ builder.queryType({
     expense: t.field({
       type: ExpenseRef,
       args: {
-        id: t.arg.int({ required: true })
+        id: t.arg.int({ required: true }),
       },
       resolve: async (_root, args, _ctx) => {
         return expenseRepository.getExpenseById(args.id);
-      }
+      },
     }),
   }),
 });
@@ -834,6 +857,7 @@ builder.queryType({
 ---
 
 **Creates:**
+
 ```graphql
 type Query {
   expense(id: Int!): Expense
@@ -866,7 +890,7 @@ builder.mutationType({
       },
       resolve: async (_parent, args) => {
         return expenseRepository.createExpense(args);
-      }
+      },
     }),
   }),
 });
@@ -886,6 +910,7 @@ Speaker Notes:
 # GraphQL Scalar Types
 
 **Built-in Scalars:**
+
 - `String`: UTF-8 text
 - `Int`: 32-bit integer
 - `Float`: Floating point number
@@ -917,20 +942,17 @@ Speaker Notes:
 import { resolvers } from 'graphql-scalars';
 
 // Filter for scalars we want
-const shouldImportScalar = (name: string) =>
-  ['Date', 'DateTime', 'EmailAddress'].includes(name);
+const shouldImportScalar = (name: string) => ['Date', 'DateTime', 'EmailAddress'].includes(name);
 
 const scalarRegistry = {};
 Object.values(resolvers)
-  .filter(type => shouldImportScalar(type.name))
-  .forEach(scalar => {
+  .filter((type) => shouldImportScalar(type.name))
+  .forEach((scalar) => {
     scalarRegistry[scalar.name] = scalar;
   });
 
 // Add to Pothos builder
-Object.entries(scalarRegistry).forEach(([name, resolver]) =>
-  builder.addScalarType(name, resolver)
-);
+Object.entries(scalarRegistry).forEach(([name, resolver]) => builder.addScalarType(name, resolver));
 ```
 
 <!--
@@ -947,6 +969,7 @@ Speaker Notes:
 # Using DateTime Scalar
 
 **Before:**
+
 ```typescript
 type Mutation {
   createExpense(date: String!): Expense  # Just a string
@@ -962,6 +985,7 @@ createExpense: async (_parent, args) => {
 ---
 
 **After:**
+
 ```typescript
 type Mutation {
   createExpense(date: DateTime!): Expense  # Validated DateTime
@@ -1035,12 +1059,17 @@ builder.prismaObject('Expense', {
 ---
 
 **Query:**
+
 ```graphql
 {
   expense(id: 1) {
     description
-    payer { name }
-    participants { name }
+    payer {
+      name
+    }
+    participants {
+      name
+    }
   }
 }
 ```
@@ -1061,6 +1090,7 @@ Speaker Notes:
 # GraphQL Best Practices
 
 ✅ **DO:**
+
 - Use variables instead of inline values
 - Keep resolvers thin - call repository/service layer
 - Organize schema by feature/domain
@@ -1071,6 +1101,7 @@ Speaker Notes:
 ---
 
 ❌ **DON'T:**
+
 - Put business logic in resolvers
 - Return too much data by default
 - Ignore N+1 query problems
@@ -1104,6 +1135,7 @@ app.use('/graphql', graphqlMiddleware);
 ```
 
 **Use each for what it does best:**
+
 - GraphQL: Complex queries, related data
 - REST: File uploads, simple CRUD, webhooks
 
@@ -1122,6 +1154,7 @@ Speaker Notes:
 # Common GraphQL Patterns
 
 **Pagination:**
+
 ```graphql
 expenses(first: 10, after: "cursor") {
   edges {
@@ -1138,6 +1171,7 @@ expenses(first: 10, after: "cursor") {
 ---
 
 **Filtering:**
+
 ```graphql
 expenses(where: { amount: { gt: 10 } }) {
   id
@@ -1182,6 +1216,7 @@ Speaker Notes:
 # When GraphQL Shines
 
 **Perfect for:**
+
 - 📱 Mobile apps with limited bandwidth
 - 🚀 Internal API (between server & mobile or web app)
 - 🔗 Complex, interconnected data
@@ -1198,4 +1233,3 @@ Speaker Notes:
 • GraphQL can aggregate multiple services
 • Initial setup overhead worth it for complex apps
 -->
-

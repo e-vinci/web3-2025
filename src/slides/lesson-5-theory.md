@@ -159,14 +159,12 @@ Speaker Notes:
 - ✅ Complex data relationships
 - ✅ Mobile apps (bandwidth matters)
 - ✅ Multiple clients with different needs
-- ✅ Rapid frontend development
 
 **Use REST when:**
 
 - ✅ Simple CRUD operations
 - ✅ File uploads/downloads
-- ✅ Caching is critical
-- ✅ Team unfamiliar with GraphQL
+- ✅ Legacy compatibility is critical
 
 **Both:** It's fine to use both in the same app!
 
@@ -349,19 +347,17 @@ Speaker Notes:
 
 **Query:**
 
-- 🔍 Read-only operations
+- 🔍 Read-only operations, No side effects
 - ⚡ Can be executed in parallel
 - 💾 Cacheable
-- ✅ No side effects
 
 **Mutation:**
 
 - ✏️ Create, update, delete operations
 - 🔄 Executed sequentially
 - 🚫 Not cacheable
-- ⚠️ Has side effects
 
-**Both can return data!**
+**Both return data!**
 
 <!--
 Speaker Notes:
@@ -525,7 +521,6 @@ Speaker Notes:
 
 ```typescript
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
-
 const client = new ApolloClient({
   link: new HttpLink({ uri: 'http://localhost:3000/graphql' }),
   cache: new InMemoryCache(),
@@ -536,7 +531,6 @@ const client = new ApolloClient({
 
 ```tsx
 import { ApolloProvider } from '@apollo/client/react';
-
 function App() {
   return (
     <ApolloProvider client={client}>
@@ -572,13 +566,11 @@ const EXPENSE_QUERY = gql`
     }
   }
 `;
-
 export async function loader({ params }) {
   const { data } = await graphqlClient.query({
     query: EXPENSE_QUERY,
     variables: { id: Number(params.id) },
   });
-
   return { expense: data.expense };
 }
 ```
@@ -605,7 +597,6 @@ const CREATE_EXPENSE_GQL = gql`
     }
   }
 `;
-
 const onSubmit = async (data) => {
   await graphqlClient.mutate({
     mutation: CREATE_EXPENSE_GQL,
@@ -812,7 +803,7 @@ const ExpenseRef = builder.prismaObject('Expense', {
     id: t.exposeID('id'),
     description: t.exposeString('description'),
     amount: t.exposeFloat('amount'),
-    date: t.expose('date', { type: 'DateTime' }),
+    date: t.string({ resolve: (parent) => parent.date.toISOString() }),
     payer: t.relation('payer'),
     participants: t.relation('participants'),
   }),
@@ -823,7 +814,6 @@ const ExpenseRef = builder.prismaObject('Expense', {
 
 - Prisma fields directly (`exposeID`, `exposeString`, etc.)
 - Relations automatically (`t.relation`)
-- Custom scalars (`DateTime`)
 
 <!--
 Speaker Notes:
@@ -907,108 +897,6 @@ Speaker Notes:
 
 ---
 
-# GraphQL Scalar Types
-
-**Built-in Scalars:**
-
-- `String`: UTF-8 text
-- `Int`: 32-bit integer
-- `Float`: Floating point number
-- `Boolean`: true or false
-- `ID`: Unique identifier (string)
-
-**Missing:** Date, DateTime, Email, URL, JSON, UUID, etc.
-
-**Solution: graphql-scalars library**
-
-```bash
-npm install graphql-scalars
-```
-
-<!--
-Speaker Notes:
-• GraphQL has only 5 built-in scalar types
-• Missing common types like dates
-• graphql-scalars provides 20+ useful scalars
-• Handles serialization/parsing automatically
-• No need to write custom scalar logic
--->
-
----
-
-# Using graphql-scalars
-
-```typescript
-import { resolvers } from 'graphql-scalars';
-
-// Filter for scalars we want
-const shouldImportScalar = (name: string) => ['Date', 'DateTime', 'EmailAddress'].includes(name);
-
-const scalarRegistry = {};
-Object.values(resolvers)
-  .filter((type) => shouldImportScalar(type.name))
-  .forEach((scalar) => {
-    scalarRegistry[scalar.name] = scalar;
-  });
-
-// Add to Pothos builder
-Object.entries(scalarRegistry).forEach(([name, resolver]) => builder.addScalarType(name, resolver));
-```
-
-<!--
-Speaker Notes:
-• Import only scalars you need
-• Register with Pothos builder
-• Now can use DateTime, Date, etc. in schema
-• Automatic parsing and validation
-• Client can send dates as strings, server gets Date objects
--->
-
----
-
-# Using DateTime Scalar
-
-**Before:**
-
-```typescript
-type Mutation {
-  createExpense(date: String!): Expense  # Just a string
-}
-
-// Manual parsing
-createExpense: async (_parent, args) => {
-  const date = new Date(args.date);  // Error-prone!
-  // ...
-}
-```
-
----
-
-**After:**
-
-```typescript
-type Mutation {
-  createExpense(date: DateTime!): Expense  # Validated DateTime
-}
-
-// Automatic parsing
-createExpense: async (_parent, args) => {
-  const { date } = args;  // Already a Date object!
-  // ...
-}
-```
-
-<!--
-Speaker Notes:
-• DateTime scalar validates and parses automatically
-• Frontend sends ISO string, backend receives Date object
-• No manual parsing or validation needed
-• Type-safe on both ends
-• Errors caught early with clear messages
--->
-
----
-
 # Schema Organization
 
 ## Feature-Based Structure
@@ -1075,6 +963,7 @@ builder.prismaObject('Expense', {
 ```
 
 **Pothos automatically includes relations when queried!**
+(except if you integrate it properly ... which we don't)
 
 <!--
 Speaker Notes:
@@ -1095,8 +984,6 @@ Speaker Notes:
 - Keep resolvers thin - call repository/service layer
 - Organize schema by feature/domain
 - Use Pothos or similar for type safety
-- Document with descriptions
-- Handle errors gracefully
 
 ---
 
@@ -1105,13 +992,10 @@ Speaker Notes:
 - Put business logic in resolvers
 - Return too much data by default
 - Ignore N+1 query problems
-- Skip input validation
-- Expose internal IDs without thought
 
 <!--
 Speaker Notes:
 • Resolvers should delegate to business logic
-• Think about performance - use DataLoader for batching
 • Schema organization matters as it grows
 • Type safety prevents entire classes of bugs
 • Documentation helps frontend developers
@@ -1220,7 +1104,6 @@ Speaker Notes:
 - 📱 Mobile apps with limited bandwidth
 - 🚀 Internal API (between server & mobile or web app)
 - 🔗 Complex, interconnected data
-- 🚀 Rapid frontend iteration
 
 **The flexibility pays off as your application grows**
 

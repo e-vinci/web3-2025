@@ -20,6 +20,15 @@ const transferSchema = z.object({
 
 type TransferFormData = z.infer<typeof transferSchema>;
 
+const CREATE_TRANSFER_MUTATION = `
+  mutation CreateTransfer($amount: Float!, $sourceId: Int!, $targetId: Int!) {
+    createTransfer(amount: $amount, sourceId: $sourceId, targetId: $targetId) {
+      id
+      amount
+    }
+  }
+`;
+
 export default function TransferForm() {
   const currentUser = useCurrentUser();
   const { users } = useLoaderData<LoaderData>();
@@ -36,6 +45,21 @@ export default function TransferForm() {
 
   const onSubmit = async (data: TransferFormData) => {
     try {
+      await fetch(import.meta.env.VITE_GRAPHQL_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: CREATE_TRANSFER_MUTATION,
+          variables: {
+            amount: data.amount,
+            sourceId: Number(data.sourceId),
+            targetId: Number(data.targetId),
+          },
+        }),
+      });
+
       await ApiClient.createTransfer({
         amount: data.amount,
         sourceId: Number(data.sourceId),

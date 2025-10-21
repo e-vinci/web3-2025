@@ -1,4 +1,4 @@
-import { Expense } from '../../../generated/prisma';
+import { Expense } from '@/generated/prisma/client';
 import SchemaBuilder from '../../graphql/builder';
 import * as expenseRepository from './expenseRepository';
 

@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../../generated/prisma';
+import { PrismaClient } from '@/generated/prisma/client';
 import { Transaction, fromExpense, fromTransfer } from './transactionModel';
 
 const prisma = new PrismaClient();

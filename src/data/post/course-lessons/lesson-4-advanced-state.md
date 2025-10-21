@@ -367,7 +367,7 @@ Notice how it is a different command than the one we ran in development, this is
 
 We also need to change how we build and start the app on Render.
 
-The command for building is : `npm install && npm run build`. This will transpile the code and bundle it in "dist/" directory.
+The command for building is : `npm install && && npx prisma generate && npm run build`. This will transpile the code and bundle it in "dist/" directory.
 The command for starting is : `npx prisma migrate deploy && npm run start:prod `. 
 
 

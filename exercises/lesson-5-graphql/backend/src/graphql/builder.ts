@@ -1,7 +1,7 @@
 import SchemaBuilder from '@pothos/core';
 import PrismaPlugin from '@pothos/plugin-prisma';
-import type PrismaTypes from '../../generated/pothos-prisma-types';
-import { PrismaClient } from '../../generated/prisma';
+import type PrismaTypes from '@/generated/pothos-prisma-types';
+import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient();
 

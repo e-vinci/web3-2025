@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as transferRepository from './transferRepository';
-import { StatusCodes } from 'http-status-codes/build/cjs/status-codes';
+import { StatusCodes } from 'http-status-codes';
 
 export async function listTransfers(req: Request, res: Response) {
   const transfers = await transferRepository.getAllTransfers();

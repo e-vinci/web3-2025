@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -17,7 +17,7 @@ datasource db {
 generator pothos {
   provider = "prisma-pothos-types"
   clientOutput = "./prisma" // relative path from pothos output to prisma client
-  output = "../generated/pothos-prisma-types.ts" //  Where to write the generated types
+  output = "../src/generated/pothos-prisma-types.ts" //  Where to write the generated types
 }
 
 model User {

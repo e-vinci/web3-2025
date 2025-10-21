@@ -25,5 +25,4 @@ dist-ssr
 *.sln
 *.sw?
 
-generated/prisma
-generated/pothos-prisma-types.ts
+src/generated/

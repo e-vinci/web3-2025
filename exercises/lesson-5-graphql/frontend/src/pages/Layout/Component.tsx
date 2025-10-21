@@ -8,7 +8,7 @@ export default function Layout() {
   const { users } = useLoaderData<LoaderData>();
   const [currentUser, setCurrentUser] = useState<null | User>(null);
 
-  const handleUserChange = (e) => {
+  const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     const newCurrentUser = users.find((user) => user.id === Number(id)) ?? null;
     setCurrentUser(newCurrentUser);

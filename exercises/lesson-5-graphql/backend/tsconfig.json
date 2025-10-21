@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "ES2022",
     "baseUrl": "./src",
     "paths": {
+      "@/generated/*": ["../generated/*"],
       "@/*": ["*"]
     },
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "outDir": "dist",
     "importsNotUsedAsValues": "remove",
     "strict": true,

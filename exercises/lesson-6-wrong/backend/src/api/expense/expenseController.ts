@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as expenseRepository from './expenseRepository';
-import { StatusCodes } from 'http-status-codes/build/cjs/status-codes';
+import { StatusCodes } from 'http-status-codes';
 
 export async function listExpenses(req: Request, res: Response) {
   const expenses = await expenseRepository.getAllExpenses();

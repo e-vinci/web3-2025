@@ -1,33 +1,32 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
-import { ApolloProvider } from '@apollo/client/react';
-import graphqlClient from './lib/graphql-client';
-import Layout, { loader as layoutLoader } from './pages/Layout';
+import Layout from './pages/Layout';
 import Welcome from './pages/Welcome';
 import Transactions, { loader as transactionsLoader } from './pages/Transactions';
 import ExpenseDetail, { loader as expenseDetailLoader } from './pages/ExpenseDetails';
 import NewTransfer, { loader as NewTransferLoader } from './pages/NewTransfer';
 import NewExpense, { loader as NewExpenseLoader } from './pages/NewExpense';
+import { ApolloProvider } from '@apollo/client/react';
+import client from './lib/graphql-client';
 import { AuthProvider } from './contexts/AuthContext';
-import Login from './pages/Login/Component';
+import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
   {
-    path: '/login',
+    path: 'login',
     Component: Login,
   },
   {
-    path: '/',
     element: (
       <ProtectedRoute>
         <Layout />
       </ProtectedRoute>
     ),
-    loader: layoutLoader,
     id: 'layout',
 
     children: [
       { index: true, Component: Welcome },
+
       {
         path: 'transactions',
         Component: Transactions,
@@ -55,7 +54,7 @@ const router = createBrowserRouter([
 function App() {
   return (
     <AuthProvider>
-      <ApolloProvider client={graphqlClient}>
+      <ApolloProvider client={client}>
         <RouterProvider router={router} />
       </ApolloProvider>
     </AuthProvider>

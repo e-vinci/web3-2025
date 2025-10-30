@@ -1,23 +1,21 @@
-import graphqlClient from '@/lib/graphql-client';
 import type { Expense } from '@/types/Expense';
 import type { LoaderFunctionArgs } from 'react-router';
 import { gql } from '@apollo/client';
+import graphqlClient from '@/lib/graphql-client';
 
 const EXPENSE_QUERY = gql`
   query ExpenseDetail($id: Int!) {
     expense(id: $id) {
       id
       description
-      amount
       date
+      amount
       payer {
         name
-        email
         bankAccount
       }
       participants {
         name
-        email
       }
     }
   }
@@ -28,10 +26,9 @@ export interface LoaderData {
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const { id } = params;
   const { data, error } = await graphqlClient.query<{ expense: Expense }>({
     query: EXPENSE_QUERY,
-    variables: { id: Number(id) },
+    variables: { id: parseInt(params.id!) },
   });
 
   if (!data?.expense || error) {

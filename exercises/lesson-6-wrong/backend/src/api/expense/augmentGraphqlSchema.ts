@@ -1,7 +1,8 @@
-import { requireAuth } from '@/graphql/authHelper';
-import type SchemaBuilder from '../../graphql/builder';
-import * as expenseRepository from './expenseRepository';
+import { Expense } from '@/generated/prisma/client';
+import SchemaBuilder from '@/graphql/builder';
+import { requireAuth } from '@/graphql/authHelpers';
 import { GraphQLError } from 'graphql';
+import * as expenseRepository from './expenseRepository';
 
 const augmentSchema = (builder: typeof SchemaBuilder) => {
   const ExpenseRef = builder.prismaObject('Expense', {
@@ -9,7 +10,9 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
       id: t.exposeID('id'),
       description: t.exposeString('description'),
       amount: t.exposeFloat('amount'),
-      date: t.expose('date', { type: 'Date' }),
+      date: t.string({
+        resolve: (parent: Expense) => parent.date.toISOString(),
+      }),
       payer: t.relation('payer'),
       participants: t.relation('participants'),
     }),
@@ -23,17 +26,13 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
           id: t.arg.int({ required: true }),
         },
         resolve: async (_root, args, ctx, _info) => {
-          // Require authentication
           const user = requireAuth(ctx);
-
           const expense = await expenseRepository.getExpenseById(args.id as number);
-
           if (!expense) {
             throw new GraphQLError('Expense not found', {
               extensions: { code: 'NOT_FOUND' },
             });
           }
-
           // Check if user is involved in this expense (as payer or participant)
           const isInvolved = expense.payer.id === user.userId || expense.participants.some((p) => p.id === user.userId);
 
@@ -56,12 +55,11 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
         args: {
           description: t.arg.string({ required: true }),
           amount: t.arg.float({ required: true }),
-          date: t.arg({ type: 'Date', required: true }),
+          date: t.arg({ type: 'String', required: true }),
           payerId: t.arg.int({ required: true }),
           participantIds: t.arg({ type: ['Int'], required: true }),
         },
         resolve: async (_parent, args, ctx, _info) => {
-          // Require authentication
           const user = requireAuth(ctx);
 
           // User can only create expenses where they are the payer
@@ -72,10 +70,11 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
           }
 
           const { description, amount, date, payerId, participantIds } = args;
+          const parsedDate = new Date(date);
           return expenseRepository.createExpense({
             description,
             amount,
-            date,
+            date: parsedDate,
             payerId,
             participantIds,
           });

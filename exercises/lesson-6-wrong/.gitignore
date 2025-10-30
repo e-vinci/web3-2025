@@ -13,9 +13,11 @@ dist
 build
 dist-ssr
 *.local
+.local/*
 .env
 
 # Editor directories and files
+.vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -25,4 +27,4 @@ dist-ssr
 *.sln
 *.sw?
 
-generated/prisma
+**/src/generated

@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ApiClient } from '@/lib/api';
-import { useCurrentUser } from '@/pages/Layout';
 import { ArrowRightLeft, EuroIcon, Users, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { LoaderData } from './loader';
 import { toast } from 'sonner';
+import { useCurrentUser } from '@/contexts/AuthContext';
 
 const transferSchema = z.object({
-  sourceId: z.string().min(1, 'Source is required'),
   targetId: z.string().min(1, 'Target is required'),
   amount: z.coerce.number<number>().min(0.01, 'Amount must be greater than 0'),
 });
@@ -28,7 +27,6 @@ export default function TransferForm() {
   const form = useForm<TransferFormData>({
     resolver: zodResolver(transferSchema),
     defaultValues: {
-      sourceId: currentUser?.id.toString() || '',
       targetId: '',
       amount: 0,
     },
@@ -38,7 +36,7 @@ export default function TransferForm() {
     try {
       await ApiClient.createTransfer({
         amount: data.amount,
-        sourceId: Number(data.sourceId),
+        sourceId: currentUser!.userId,
         targetId: Number(data.targetId),
       });
       toast('Transfer has been created.');
@@ -72,40 +70,6 @@ export default function TransferForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="flex justify-between">
-                <FormField
-                  control={form.control}
-                  name="sourceId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-foreground">From</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select source" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user.id} value={user.id.toString()}>
-                              <div className="flex items-center gap-2">
-                                <Users className="w-4 h-4 text-muted-foreground" />
-                                {user.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-center mb-6">
-                  <div className="bg-chart-2/10 p-3 rounded-lg">
-                    <ArrowRightLeft className="w-6 h-6 text-chart-2" />
-                  </div>
-                </div>
-
                 <FormField
                   control={form.control}
                   name="targetId"

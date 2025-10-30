@@ -1,6 +1,13 @@
-import { ApolloClient, HttpLink, InMemoryCache, from } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
-import { onError } from '@apollo/client/link/error';
+import {
+  ApolloClient,
+  ApolloLink,
+  CombinedGraphQLErrors,
+  CombinedProtocolErrors,
+  HttpLink,
+  InMemoryCache,
+} from '@apollo/client';
+import { SetContextLink } from '@apollo/client/link/context';
+import { ErrorLink } from '@apollo/client/link/error';
 
 const API_HOST = import.meta.env.VITE_GRAPHQL_URL;
 const TOKEN_KEY = 'auth_token';
@@ -11,7 +18,7 @@ const httpLink = new HttpLink({
 });
 
 // Middleware to add auth token to requests
-const authLink = setContext((_, { headers }) => {
+const authLink = new SetContextLink(({ headers }) => {
   const token = localStorage.getItem(TOKEN_KEY);
 
   return {
@@ -23,10 +30,12 @@ const authLink = setContext((_, { headers }) => {
 });
 
 // Error handling link
-const errorLink = onError(({ graphQLErrors, networkError }) => {
-  if (graphQLErrors) {
-    graphQLErrors.forEach(({ message, extensions }) => {
-      console.error(`[GraphQL error]: Message: ${message}, Code: ${extensions?.code}`);
+const errorLink = new ErrorLink(({ error }) => {
+  if (CombinedGraphQLErrors.is(error)) {
+    error.errors.forEach(({ message, extensions, locations, path }) => {
+      console.error(
+        `[GraphQL error]: Message: ${message}, Location: ${locations}, Code: ${extensions?.code}, Path: ${path}`
+      );
 
       // Handle authentication errors
       if (extensions?.code === 'UNAUTHENTICATED') {
@@ -35,15 +44,17 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
         window.location.href = '/login';
       }
     });
-  }
-
-  if (networkError) {
-    console.error(`[Network error]: ${networkError}`);
+  } else if (CombinedProtocolErrors.is(error)) {
+    error.errors.forEach(({ message, extensions }) =>
+      console.log(`[Protocol error]: Message: ${message}, Extensions: ${JSON.stringify(extensions)}`)
+    );
+  } else {
+    console.error(`[Network error]: ${error}`);
   }
 });
 
 const client = new ApolloClient({
-  link: from([errorLink, authLink, httpLink]),
+  link: ApolloLink.from([errorLink, authLink, httpLink]),
   cache: new InMemoryCache(),
 });
 

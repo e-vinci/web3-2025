@@ -10,10 +10,10 @@ const Welcome = () => {
       </div>
       <div className="flex flex-row gap-4 justify-center">
         <button className="bg-green-800 text-white hover:bg-green-700 rounded-full px-6">
-          <NavLink to="/list">View Expenses</NavLink>
+          <NavLink to="/transactions">View Transactions</NavLink>
         </button>
         <button className="bg-green-800 text-white hover:bg-green-700 rounded-full px-6">
-          <NavLink to="/add">Add Expense</NavLink>
+          <NavLink to="/expenses/new">Add Expense</NavLink>
         </button>
       </div>
     </div>

@@ -1,11 +1,12 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '../../../generated/prisma';
-import type { RegisterInput, LoginInput, AuthResponse } from '@/types/AuthTypes';
-import { AuthenticationError, ConflictError } from '@/errors/AppError';
+import { PrismaClient } from '@/generated/prisma/client';
+import type { RegisterInput, LoginInput, AuthResponse } from '@/types/authTypes';
+import { AuthenticationError, ConflictError } from '@/errors/appErrors';
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-do-not-use';
+const JWT_SECRET = process.env.JWT_SECRET || '';
+if (JWT_SECRET === '') throw new Error('Missing JWT_SECRET environment variable');
 const SALT_ROUNDS = 10;
 
 export async function register(input: RegisterInput): Promise<AuthResponse> {

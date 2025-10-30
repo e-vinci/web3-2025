@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import * as authService from './authService';
-import type { RegisterInput, LoginInput } from '@/types/AuthTypes';
+import type { RegisterInput, LoginInput } from '@/types/authTypes';
 
 export async function register(req: Request, res: Response) {
   try {

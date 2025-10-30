@@ -6,10 +6,7 @@
     "build": "tsc && tsup",
     "start:dev": "node --import=tsx --watch src/index.ts",
     "start:prod": "node dist/index.js",
-    "check": "biome check --write",
-    "test": "vitest run",
-    "test:cov": "vitest run --coverage",
-    "prisma:start_db": "npx prisma dev @0.0.0-dev.202509301625"
+    "check": "biome check --write"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",
@@ -17,14 +14,15 @@
     "@asteasolutions/zod-to-openapi": "7.3.4",
     "@pothos/core": "^4.10.0",
     "@pothos/plugin-prisma": "^4.12.0",
+    "@pothos/plugin-validation": "^4.2.0",
+    "@prisma/cli-dev": "^0.8.3",
     "@prisma/client": "6.16.3",
     "bcrypt": "^6.0.0",
     "cors": "2.8.5",
-    "dotenv": "17.2.1",
+    "dotenv": "^17.2.1",
     "express": "5.1.0",
     "express-rate-limit": "8.0.1",
     "graphql": "^16.11.0",
-    "graphql-scalars": "^1.25.0",
     "helmet": "8.1.0",
     "http-status-codes": "2.3.0",
     "jsonwebtoken": "^9.0.2",
@@ -42,15 +40,14 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/supertest": "6.0.3",
     "@types/swagger-ui-express": "4.1.8",
-    "@vitest/coverage-v8": "3.2.4",
     "pino-pretty": "13.1.1",
     "prisma": "^6.16.3",
     "supertest": "7.1.4",
     "tsup": "8.5.0",
     "tsx": "4.20.4",
     "typescript": "5.9.2",
-    "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.2.4"
+    "vite": "^7.1.12",
+    "vite-tsconfig-paths": "5.1.4"
   },
   "tsup": {
     "entry": [
@@ -60,11 +57,14 @@
     "format": [
       "esm"
     ],
-    "target": "es2020",
     "sourcemap": true,
     "clean": true,
     "dts": true,
     "splitting": false,
     "skipNodeModulesBundle": true
+  },
+  "graphql": {
+    "schema": "https://localhost:3000/graphql",
+    "documents": "**/*.{graphql,js,ts,jsx,tsx}"
   }
 }

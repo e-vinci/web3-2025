@@ -2,9 +2,6 @@ import { useLoaderData, useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { gql } from '@apollo/client';
-import graphqlClient from '@/lib/graphql-client';
-import { useAuth } from '@/contexts/AuthContext';
 import { Receipt, EuroIcon, Users, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +9,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Checkbox } from '@/components/ui/checkbox';
 import type { LoaderData } from './loader';
 import { toast } from 'sonner';
+import { gql } from '@apollo/client';
+import graphqlClient from '@/lib/graphql-client';
+import { useCurrentUser } from '@/contexts/AuthContext';
+
+const expenseSchema = z.object({
+  description: z.string().min(1, 'Description is required'),
+  amount: z.coerce.number<number>().min(0.01, 'Amount must be greater than 0'),
+  date: z.iso.date(),
+  participantIds: z.array(z.string()).min(1, 'At least one participant is required'),
+});
 
 const CREATE_EXPENSE_GQL = gql`
   mutation CreateExpense(
     $description: String!
     $amount: Float!
-    $date: DateTime!
+    $date: String!
     $payerId: Int!
     $participantIds: [Int!]!
   ) {
@@ -34,17 +41,10 @@ const CREATE_EXPENSE_GQL = gql`
   }
 `;
 
-const expenseSchema = z.object({
-  description: z.string().min(1, 'Description is required'),
-  amount: z.coerce.number<number>().min(0.01, 'Amount must be greater than 0'),
-  date: z.string().optional(),
-  participantIds: z.array(z.string()).min(1, 'At least one participant is required'),
-});
-
 type ExpenseFormData = z.infer<typeof expenseSchema>;
 
 export default function ExpenseForm() {
-  const { user } = useAuth();
+  const currentUser = useCurrentUser();
   const { users } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
 
@@ -53,25 +53,20 @@ export default function ExpenseForm() {
     defaultValues: {
       description: '',
       amount: 0,
-      date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+      date: new Date().toISOString().split('T')[0],
       participantIds: [],
     },
   });
 
   const onSubmit = async (data: ExpenseFormData) => {
-    if (!user) {
-      toast.error('You must be logged in to create an expense');
-      return;
-    }
-
     try {
       await graphqlClient.mutate({
         mutation: CREATE_EXPENSE_GQL,
         variables: {
           description: data.description,
           amount: data.amount,
-          date: data.date ? new Date(data.date) : new Date(),
-          payerId: user.userId, // Use authenticated user's ID
+          date: data.date,
+          payerId: currentUser!.userId,
           participantIds: data.participantIds.map((id) => Number(id)),
         },
       });
@@ -95,14 +90,6 @@ export default function ExpenseForm() {
 
       <div className="max-w-xl mx-auto">
         <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-          {/* Info Message */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <p className="text-blue-800 text-sm">
-              You are creating an expense that <strong>you paid for</strong>. Paid by: <strong>{user?.email}</strong>
-            </p>
-          </div>
-
           {/* Error Message */}
           {form.formState.errors.root && (
             <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-2">

@@ -1,8 +1,8 @@
-import { PrismaClient } from './generated/prisma/index.js';
+import 'dotenv/config';
+import { PrismaClient } from '@/generated/prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
-const SALT_ROUNDS = 10;
 
 async function main() {
   // Clear existing data
@@ -12,46 +12,41 @@ async function main() {
 
   console.log('Cleared existing data.');
 
-  // Hash password for all users
-  const hashedPassword = await bcrypt.hash('password123', SALT_ROUNDS);
-
-  // Create users first (without specifying IDs - let Prisma auto-generate them)
-  const alice = await prisma.user.create({
-    data: {
-      name: 'Alice',
-      email: 'alice@expenso.dev',
-      password: hashedPassword,
-      bankAccount: '1234567890',
-    },
+  // Create users first
+  const passwordHash = await bcrypt.hash('topsecret', 10);
+  const users = await prisma.user.createManyAndReturn({
+    data: [
+      {
+        name: 'Alice',
+        email: 'alice@expenso.dev',
+        bankAccount: '1234567890',
+        password: passwordHash,
+      },
+      {
+        name: 'Bob',
+        email: 'bob@expenso.dev',
+        bankAccount: '0987654321',
+        password: passwordHash,
+      },
+      {
+        name: 'Charlie',
+        email: 'charlie@expenso.dev',
+        password: passwordHash,
+      },
+    ],
+    skipDuplicates: true,
   });
+  console.log('Created users:', users);
+  const [alice, bob, charlie] = users;
 
-  const bob = await prisma.user.create({
-    data: {
-      name: 'Bob',
-      email: 'bob@expenso.dev',
-      password: hashedPassword,
-      bankAccount: '0987654321',
-    },
-  });
-
-  const charlie = await prisma.user.create({
-    data: {
-      name: 'Charlie',
-      email: 'charlie@expenso.dev',
-      password: hashedPassword,
-    },
-  });
-
-  console.log('Created users:', { alice, bob, charlie });
-
-  // Create expenses with participants (without specifying IDs)
+  // Create expenses with participants
   const expense1 = await prisma.expense.create({
     data: {
       description: 'Coffee',
       amount: 3.5,
-      payerId: alice.id, // Alice pays
+      payerId: alice.id,
       participants: {
-        connect: [{ id: alice.id }, { id: bob.id }], // Alice and Bob participate
+        connect: [{ id: alice.id }, { id: bob.id }],
       },
     },
   });
@@ -62,7 +57,7 @@ async function main() {
       amount: 45.0,
       payerId: bob.id, // Bob pays
       participants: {
-        connect: [{ id: alice.id }, { id: bob.id }, { id: charlie.id }], // All three participate
+        connect: [{ id: alice.id }, { id: bob.id }, { id: charlie.id }],
       },
     },
   });
@@ -73,39 +68,35 @@ async function main() {
       amount: 60.0,
       payerId: charlie.id, // Charlie pays
       participants: {
-        connect: [{ id: bob.id }, { id: charlie.id }], // Bob and Charlie participate
+        connect: [{ id: bob.id }, { id: charlie.id }],
       },
     },
   });
 
   console.log('Created expenses:', { expense1, expense2, expense3 });
 
-  // Create transfers (without specifying IDs)
-  const transfer1 = await prisma.transfer.create({
-    data: {
-      amount: 1.75, // Bob owes Alice half of coffee
-      sourceId: bob.id, // From Bob
-      targetId: alice.id, // To Alice
-    },
+  // Create transfers
+  const transfers = await prisma.transfer.createMany({
+    data: [
+      {
+        amount: 1.75, // Bob owes Alice half of coffee
+        sourceId: bob.id,
+        targetId: alice.id,
+      },
+      {
+        amount: 15.0, // Alice owes Bob her share of groceries
+        sourceId: alice.id,
+        targetId: bob.id,
+      },
+      {
+        amount: 30.0, // Bob owes Charlie half of internet bill
+        sourceId: bob.id,
+        targetId: alice.id,
+      },
+    ],
+    skipDuplicates: true,
   });
-
-  const transfer2 = await prisma.transfer.create({
-    data: {
-      amount: 15.0, // Alice owes Bob her share of groceries
-      sourceId: alice.id, // From Alice
-      targetId: bob.id, // To Bob
-    },
-  });
-
-  const transfer3 = await prisma.transfer.create({
-    data: {
-      amount: 30.0, // Bob owes Charlie half of internet bill
-      sourceId: bob.id, // From Bob
-      targetId: charlie.id, // To Charlie
-    },
-  });
-
-  console.log('Created transfers:', { transfer1, transfer2, transfer3 });
+  console.log('Created transfers:', transfers);
 
   // Query and display the created data with relations
   const allExpenses = await prisma.expense.findMany({

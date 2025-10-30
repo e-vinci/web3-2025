@@ -1,24 +1,11 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
-
-interface User {
-  userId: number;
-  email: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (token: string) => void;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import type { User } from './types';
+import AuthContext from './Context';
 
 const TOKEN_KEY = 'auth_token';
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem(TOKEN_KEY);
   });
@@ -79,12 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-}
+export default AuthProvider;

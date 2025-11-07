@@ -55,6 +55,10 @@ export const headerData = {
           href: getPermalink('course-lessons/lesson-6-when-things-go-wrong', 'post'),
         },
         {
+          text: 'Lesson 7: Async',
+          href: getPermalink('course-lessons/lesson-7-async-pub-sub', 'post'),
+        },
+        {
           text: 'Aside 1: When things go wrong',
           href: 'https://github.com/e-vinci/web3-2025/raw/refs/heads/main/src/slides/it-does-not-work.pptx',
         },

@@ -64,7 +64,7 @@ Worker 2: Sends email (2s)
 
 ---
 
-## SlideCommon Use Cases for Async Processing
+## Common Use Cases for Async Processing
 **When to Use Background Jobs**
 
 1. **Email Sending**
@@ -114,6 +114,16 @@ Worker 2: Sends email (2s)
 
 ---
 
+### What & Why Redis
+
+A job queue need storage for the tasks in the queues. While we could in theory use a DBMS for that (ie PG here), it's unusual. Job tasks tend to follow a get/set kind of requirements (save an object, retrieve by id).
+
+Something that Redis is quite efficient at.
+
+> A lot of different storages are possible - while RDBMS are the most common, it's important to understand what kind of data are a good fit for each of them.
+
+---
+
 ## BullMQ - Job Queue for Node.js
 **Modern, Redis-backed Queue**
 
@@ -127,11 +137,6 @@ Worker 2: Sends email (2s)
 - ✅ Parent-child jobs
 - ✅ Events and hooks
 
-**Why Redis?**
-- In-memory = fast
-- Persistence available
-- Atomic operations
-- Pub/Sub built-in
 
 ---
 
@@ -159,6 +164,8 @@ Worker 2: Sends email (2s)
 
 ## Bull Board - Queue Monitoring
 **Visual Dashboard for Your Queues**
+
+We want to be able to see how many jobs are in queues, how many are successful or failures, etc.
 
 **Features:**
 - 📊 View all queues and job counts
@@ -530,6 +537,25 @@ GET /user/123
                               │  (Dashboard)  │
                               └───────────────┘
 ```
+
+---
+## Infrastructure update
+
+We had three pieces of infra:
+- Backend (Express)
+- Frontend (React/Vite)
+- Database (PG)
+
+---
+
+We just added two more:
+
+- Worker (Express)
+- Storage (Redis)
+
+--
+
+> When adding new "features", it's important to understand the impact on the infrastructure
 
 ---
 

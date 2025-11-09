@@ -75,6 +75,13 @@ By the end, your app will generate PDF reports asynchronously and push real-time
    redis-server
    ```
 
+   Alternartive: Memurai 
+   
+   -  a Redis compatible software built for windows
+   - https://www.memurai.com/
+
+   Just be careful that the cli is ´memurai-cli´, not ´redis-cli´
+
    **macOS:**
    ```bash
    brew install redis
@@ -89,7 +96,7 @@ By the end, your app will generate PDF reports asynchronously and push real-time
 
 2. **Verify Redis is running:**
    ```bash
-   redis-cli ping
+   redis-cli ping # or memurai-cli ping
    # Should return: PONG
    ```
 
@@ -394,6 +401,8 @@ By the end, your app will generate PDF reports asynchronously and push real-time
    }
    ```
 
+   **Note: Writing PDFs this way is probably a bad idea - it takes a huge amount of code for some lines of results. The usual alternative is to use some kind of template where we'll only add the variable part. Another one is to render HTML, then convert it to PDF.
+
 5. **Create the worker** in `src/workers/pdfWorker.ts`:
    ```ts
    import { Worker, Job } from 'bullmq';
@@ -484,6 +493,8 @@ By the end, your app will generate PDF reports asynchronously and push real-time
    }
    ```
 
+   > **Note**: We now need to run two processes - one for the web server, one for the worker. This will impact our infrastructure too (how ?)
+
 8. **Start the worker in a separate terminal:**
    ```bash
    npm run dev:worker
@@ -497,11 +508,13 @@ By the end, your app will generate PDF reports asynchronously and push real-time
 
 **Goal:** Set up Bull Board to visualize and monitor job queues.
 
+This is very important as we're getting a bit "blind" once we have background process - looking at the web app will np
+
 **Steps:**
 
 1. **Install Bull Board:**
    ```bash
-   npm install @bull-board/express @bull-board/bullmq
+   npm install @bull-board/express @bull-board/api
    ```
 
 2. **Create Bull Board setup** in `src/config/bullBoard.ts`:

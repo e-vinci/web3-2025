@@ -3,14 +3,14 @@
 
 ---
 
-## Slide 1: Title Slide
+## Intro
 **Lesson 7: Asynchronous Processing & Pub/Sub**
 - Background jobs and real-time updates
 - Building scalable, responsive applications
 
 ---
 
-## Slide 2: The Problem with Synchronous Processing
+## The Problem with Synchronous Processing
 **When Everything Waits...**
 
 Example: User creates expense → Generate PDF → Send email → Return response
@@ -36,7 +36,7 @@ POST /expenses
 
 ---
 
-## Slide 3: Asynchronous Processing Solution
+## Asynchronous Processing Solution
 **Do It Later, Respond Now**
 
 ```
@@ -64,7 +64,7 @@ Worker 2: Sends email (2s)
 
 ---
 
-## Slide 4: Common Use Cases for Async Processing
+## SlideCommon Use Cases for Async Processing
 **When to Use Background Jobs**
 
 1. **Email Sending**
@@ -89,7 +89,7 @@ Worker 2: Sends email (2s)
 
 ---
 
-## Slide 5: Job Queue Architecture
+## Job Queue Architecture
 **How It Works**
 
 ```
@@ -114,7 +114,7 @@ Worker 2: Sends email (2s)
 
 ---
 
-## Slide 6: BullMQ - Job Queue for Node.js
+## BullMQ - Job Queue for Node.js
 **Modern, Redis-backed Queue**
 
 **Features:**
@@ -135,7 +135,7 @@ Worker 2: Sends email (2s)
 
 ---
 
-## Slide 7: BullMQ Job Lifecycle
+## BullMQ Job Lifecycle
 **From Creation to Completion**
 
 ```
@@ -157,7 +157,7 @@ Worker 2: Sends email (2s)
 
 ---
 
-## Slide 8: Bull Board - Queue Monitoring
+## Bull Board - Queue Monitoring
 **Visual Dashboard for Your Queues**
 
 **Features:**
@@ -176,7 +176,7 @@ Worker 2: Sends email (2s)
 
 ---
 
-## Slide 9: Pub/Sub Pattern
+## Pub/Sub Pattern
 **Broadcasting Events to Multiple Listeners**
 
 **Traditional Request/Response:**
@@ -203,7 +203,7 @@ Client ◀─response── Server
 
 ---
 
-## Slide 10: Real-time Updates - HTTP Polling vs WebSocket
+## Real-time Updates - HTTP Polling vs WebSocket
 **How to Get Live Data?**
 
 **HTTP Polling (Old Way):**
@@ -230,7 +230,7 @@ Client ─────message────────▶
 
 ---
 
-## Slide 11: WebSocket Connection Lifecycle
+## WebSocket Connection Lifecycle
 **Persistent Bidirectional Connection**
 
 ```
@@ -258,7 +258,7 @@ Client ─────message────────▶
 
 ---
 
-## Slide 12: Socket.io - WebSocket Made Easy
+## Socket.io - WebSocket Made Easy
 **WebSocket Library with Fallbacks**
 
 **Features:**
@@ -278,7 +278,7 @@ Client ─────message────────▶
 
 ---
 
-## Slide 13: Socket.io Rooms
+## Socket.io Rooms
 **Organizing Connections**
 
 ```
@@ -303,7 +303,7 @@ io.to("user-123").emit("notification", data)
 
 ---
 
-## Slide 14: Combining Queues & Real-time
+## Combining Queues & Real-time
 **Complete Async Architecture**
 
 ```
@@ -329,7 +329,7 @@ io.to("user-123").emit("notification", data)
 
 ---
 
-## Slide 15: Error Handling in Async Systems
+## Error Handling in Async Systems
 **Things Will Fail**
 
 **Strategies:**
@@ -360,7 +360,7 @@ io.to("user-123").emit("notification", data)
 
 ---
 
-## Slide 16: Monitoring & Observability
+## Monitoring & Observability
 **You Can't Fix What You Can't See**
 
 **Key Metrics:**
@@ -385,7 +385,7 @@ io.to("user-123").emit("notification", data)
 
 ---
 
-## Slide 17: Best Practices
+## Best Practices
 **Building Reliable Async Systems**
 
 **Do:**
@@ -408,32 +408,7 @@ io.to("user-123").emit("notification", data)
 
 ---
 
-## Slide 18: Scaling Considerations
-**From 1 Worker to 100**
-
-**Horizontal Scaling:**
-```
-1 Worker:  10 jobs/sec
-5 Workers: 50 jobs/sec
-10 Workers: 100 jobs/sec
-```
-
-**Strategies:**
-- Add more workers (easy)
-- Partition queues by type
-- Use multiple Redis instances
-- Rate limit per API
-- Cache expensive operations
-
-**Watch Out For:**
-- Race conditions (multiple workers)
-- Resource limits (DB connections)
-- Redis memory usage
-- Network bandwidth
-
----
-
-## Slide 19: Security Considerations
+## Security Considerations
 **Async Systems Security**
 
 **Job Data:**
@@ -459,7 +434,7 @@ io.to("user-123").emit("notification", data)
 
 ---
 
-## Slide 20: When NOT to Use Async
+## When NOT to Use Async
 **Right Tool for the Job**
 
 **Stick with Synchronous If:**
@@ -493,7 +468,7 @@ GET /user/123
 
 ---
 
-## Slide 21: Our Implementation
+## Our Implementation
 **What We're Building**
 
 **Feature 1: PDF Expense Reports**
@@ -517,7 +492,7 @@ GET /user/123
 
 ---
 
-## Slide 22: Architecture Diagram
+## Architecture Diagram
 **Complete System Overview**
 
 ```
@@ -558,7 +533,7 @@ GET /user/123
 
 ---
 
-## Slide 23: Demo Time!
+## Demo Time!
 **See It In Action**
 
 1. **Create an expense**
@@ -581,8 +556,7 @@ GET /user/123
 
 ---
 
-## Slide 24: Summary
-**Key Takeaways**
+## Key Takeaways
 
 **Async Processing:**
 - Improves response times
@@ -604,8 +578,7 @@ GET /user/123
 
 ---
 
-## Slide 25: Further Learning
-**Resources**
+## Resources
 
 **Documentation:**
 - BullMQ: https://docs.bullmq.io/
@@ -624,33 +597,3 @@ GET /user/123
 - AWS SQS (managed queue)
 - Redis Pub/Sub (simpler than BullMQ)
 
----
-
-## Slide 26: Exercise Overview
-**What You'll Build**
-
-1. Set up Redis and BullMQ
-2. Create PDF generation queue
-3. Add Bull Board monitoring
-4. Integrate with GraphQL API
-5. Set up Socket.io server
-6. Connect React client to WebSocket
-7. Broadcast expense events
-8. Show real-time notifications
-9. (Bonus) Schedule monthly reports
-
-**Time:** ~2-3 hours
-
-**Starting Point:** Your Lesson 6 code (secure GraphQL API)
-
----
-
-## Slide 27: Questions?
-**Let's Build Something Async!**
-
-Questions to consider:
-- When should you use async vs sync?
-- How do you handle job failures?
-- What's the difference between queues and pub/sub?
-- How do you scale workers?
-- How do you secure WebSocket connections?

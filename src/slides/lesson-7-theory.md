@@ -3,8 +3,8 @@
 
 ---
 
-## Intro
-**Lesson 7: Asynchronous Processing & Pub/Sub**
+## Lesson 7: Asynchronous Processing & Pub/Sub**
+
 - Background jobs and real-time updates
 - Building scalable, responsive applications
 
@@ -27,12 +27,24 @@ POST /expenses
   Response: 5100ms total!
 ```
 
+---
+
 **Problems:**
 - User waits 5+ seconds for response
 - Server thread blocked
 - Poor user experience
 - Timeouts on slow operations
 - Wasted resources
+
+---
+
+## Asynchronous at my Supermarket
+
+Colruyt butchery service is asynchronous:
+
+- You fill a form (prefilled with a number) with the meat pieces you want and drop it on a pile
+- The butchers work through the pile one by one ("FIFO")
+- Once your meat is ready, they call your number so you know its ready
 
 ---
 
@@ -55,6 +67,8 @@ Worker 1: Generates PDF (3s)
 Worker 2: Sends email (2s)
 ```
 
+---
+
 **Benefits:**
 - Fast API responses
 - Better resource utilization
@@ -65,27 +79,12 @@ Worker 2: Sends email (2s)
 ---
 
 ## Common Use Cases for Async Processing
-**When to Use Background Jobs**
 
 1. **Email Sending**
-   - Newsletters, notifications, reports
-   - SMTP can be slow/unreliable
-
 2. **File Processing**
-   - PDF generation, image resizing
-   - Video transcoding, file compression
-
 3. **External API Calls**
-   - Payment processing, webhooks
-   - Third-party integrations
-
 4. **Data Processing**
-   - Analytics, reports, aggregations
-   - Batch operations, imports/exports
-
 5. **Scheduled Tasks**
-   - Cleanup jobs, reminders
-   - Daily/weekly reports
 
 ---
 
@@ -105,6 +104,7 @@ Worker 2: Sends email (2s)
                    - Data: {...}
                    - Status: waiting
 ```
+---
 
 **Components:**
 - **Producer**: Creates jobs (your API server)
@@ -137,7 +137,6 @@ Something that Redis is quite efficient at.
 - ✅ Parent-child jobs
 - ✅ Events and hooks
 
-
 ---
 
 ## BullMQ Job Lifecycle
@@ -153,12 +152,7 @@ Something that Redis is quite efficient at.
   [delayed] ──(timer)──▶ [waiting]
 ```
 
-**States:**
-- **waiting**: In queue, ready to process
-- **delayed**: Scheduled for future
-- **active**: Currently being processed
-- **completed**: Successfully finished
-- **failed**: Error occurred (retries possible)
+More than just running - can declaratively decide how much to retry, when etc (very useful for services that can fail - typically external APIs).
 
 ---
 
@@ -174,6 +168,8 @@ We want to be able to see how many jobs are in queues, how many are successful o
 - 🔄 Retry failed jobs manually
 - 🗑️ Clean completed/failed jobs
 - 📈 Real-time updates
+
+---
 
 **Why Monitor?**
 - Debug production issues
@@ -192,6 +188,8 @@ Client ──request──▶ Server
 Client ◀─response── Server
 ```
 
+---
+
 **Pub/Sub:**
 ```
                     ┌─────────┐
@@ -202,11 +200,12 @@ Client ◀─response── Server
    (Browser)                         (Mobile App)
 ```
 
+---
+
 **Key Concepts:**
 - **Publisher**: Emits events (doesn't know who's listening)
 - **Subscriber**: Listens for events (doesn't know who published)
 - **Topic/Channel**: Named event stream
-- **Decoupling**: Publishers and subscribers are independent
 
 ---
 
@@ -222,6 +221,8 @@ Client ──GET /api/updates──▶ Server
 Client ◀─────response────── Server
 ```
 ❌ Wasteful, latency, server load
+
+---
 
 **WebSocket (Modern Way):**
 ```
@@ -249,6 +250,8 @@ Client ─────message────────▶
    Client ◀──────▶ Server
    (persistent connection)
 
+---
+
 3. Bidirectional Events
    Server ──▶ Client: 'expense-created'
    Client ──▶ Server: 'join-room'
@@ -256,6 +259,8 @@ Client ─────message────────▶
 4. Disconnect
    Connection closed (client leaves, timeout, error)
 ```
+
+---
 
 **Advantages:**
 - Low latency (no HTTP overhead)
@@ -276,6 +281,8 @@ Client ─────message────────▶
 - ✅ Binary data support
 - ✅ Acknowledgments
 - ✅ Middleware support
+
+---
 
 **Why Socket.io?**
 - Handles edge cases
@@ -302,6 +309,8 @@ Room: "expense-45"
 io.to("user-123").emit("notification", data)
 ```
 
+---
+
 **Use Cases:**
 - User-specific notifications
 - Group/team channels
@@ -322,6 +331,8 @@ io.to("user-123").emit("notification", data)
    API Server: Queue PDF job ✓
    API Server ──response──▶ Client (200ms)
 
+--- 
+
 3. Background worker processes job
    Worker: Generate PDF (3s)
    Worker: Save to storage ✓
@@ -336,37 +347,6 @@ io.to("user-123").emit("notification", data)
 
 ---
 
-## Error Handling in Async Systems
-**Things Will Fail**
-
-**Strategies:**
-
-1. **Retries with Exponential Backoff**
-   - Attempt 1: immediate
-   - Attempt 2: after 1s
-   - Attempt 3: after 4s
-   - Attempt 4: after 16s
-
-2. **Dead Letter Queue (DLQ)**
-   - Jobs that failed max retries
-   - Manual review and retry
-   - Alert developers
-
-3. **Timeouts**
-   - Don't let jobs run forever
-   - Kill and retry on timeout
-
-4. **Idempotency**
-   - Safe to retry same job
-   - Use unique job IDs
-   - Check if work already done
-
-5. **Circuit Breaker**
-   - Stop calling failing service
-   - Fail fast during outages
-
----
-
 ## Monitoring & Observability
 **You Can't Fix What You Can't See**
 
@@ -377,12 +357,16 @@ io.to("user-123").emit("notification", data)
 - Retry rate
 - Worker utilization
 
+---
+
 **Tools:**
 - **Bull Board**: Queue dashboard
 - **Logs**: Structured logging (JSON)
 - **Metrics**: Prometheus, Grafana
 - **Alerts**: Slack, PagerDuty
 - **Tracing**: OpenTelemetry
+
+---
 
 **What to Monitor:**
 - Job delays (queue backed up?)
@@ -405,6 +389,8 @@ io.to("user-123").emit("notification", data)
 - ✅ Validate job data
 - ✅ Handle worker crashes gracefully
 
+---
+
 **Don't:**
 - ❌ Store large files in job data
 - ❌ Assume jobs run immediately
@@ -412,32 +398,6 @@ io.to("user-123").emit("notification", data)
 - ❌ Create infinite loops
 - ❌ Block workers with sync code
 - ❌ Share state between jobs
-
----
-
-## Security Considerations
-**Async Systems Security**
-
-**Job Data:**
-- Don't store passwords/secrets in jobs
-- Sanitize user input in job data
-- Validate job payload on worker
-
-**Authentication:**
-- WebSocket auth during handshake
-- Verify user can join room
-- Rate limit events per connection
-
-**Authorization:**
-- Check permissions before emitting events
-- Don't leak data to wrong rooms
-- Validate who can create jobs
-
-**Denial of Service:**
-- Rate limit job creation
-- Set max queue size
-- Timeout long-running jobs
-- Limit WebSocket connections per user
 
 ---
 
@@ -450,6 +410,8 @@ io.to("user-123").emit("notification", data)
 - Operation must complete before response
 - Simple CRUD operations
 - Atomic transactions required
+
+---
 
 **Example:**
 ```
@@ -468,6 +430,8 @@ GET /user/123
   Return "check back later"
   ❌ Unnecessarily complex!
 ```
+
+---
 
 **Rule of Thumb:**
 - Sync: Fast, blocking is acceptable
@@ -490,6 +454,8 @@ GET /user/123
 - Broadcast to all participants
 - Show toast notification
 - Update UI without refresh
+
+---
 
 **Tech Stack:**
 - BullMQ + Redis (jobs)
@@ -582,28 +548,6 @@ We just added two more:
 
 ---
 
-## Key Takeaways
-
-**Async Processing:**
-- Improves response times
-- Better resource utilization
-- Enables horizontal scaling
-- BullMQ for job queues
-
-**Pub/Sub:**
-- Decouples components
-- Enables real-time features
-- WebSocket for low latency
-- Socket.io for ease of use
-
-**Best Practices:**
-- Monitor your queues
-- Handle failures gracefully
-- Make jobs idempotent
-- Secure WebSocket connections
-
----
-
 ## Resources
 
 **Documentation:**
@@ -617,9 +561,4 @@ We just added two more:
 - CQRS (Command Query Responsibility Segregation)
 - Event Sourcing
 
-**Alternatives:**
-- Agenda (MongoDB-based jobs)
-- pg-boss (PostgreSQL-based jobs)
-- AWS SQS (managed queue)
-- Redis Pub/Sub (simpler than BullMQ)
 

@@ -1,10 +1,8 @@
 # Lesson 7: Async Processing & Pub/Sub Patterns
 
-## Slide Content Outline
-
 ---
 
-## Lesson 7: Asynchronous Processing & Pub/Sub\*\*
+## Lesson 7: Asynchronous Processing & Pub/Sub
 
 - Background jobs and real-time updates
 - Building scalable, responsive applications
@@ -320,26 +318,6 @@ Client ─────message────────▶
 
 ---
 
-## Socket.io Rooms
-
-**Organizing Connections**
-
-```
-Room: "user-123"
-  ├─ Connection 1 (Browser)
-  ├─ Connection 2 (Mobile)
-  └─ Connection 3 (Tablet)
-
-Room: "expense-45"
-  ├─ Connection A
-  └─ Connection B
-
-// Broadcast to specific room
-io.to("user-123").emit("notification", data)
-```
-
----
-
 **Use Cases:**
 
 - User-specific notifications
@@ -378,67 +356,6 @@ io.to("user-123").emit("notification", data)
 5. Client shows notification
    Client: "Your PDF is ready!" 🎉
 ```
-
----
-
-## Monitoring & Observability
-
-**You Can't Fix What You Can't See**
-
-**Key Metrics:**
-
-- Queue depth (jobs waiting)
-- Processing time (p50, p95, p99)
-- Failure rate
-- Retry rate
-- Worker utilization
-
----
-
-**Tools:**
-
-- **Bull Board**: Queue dashboard
-- **Logs**: Structured logging (JSON)
-- **Metrics**: Prometheus, Grafana
-- **Alerts**: Slack, PagerDuty
-- **Tracing**: OpenTelemetry
-
----
-
-**What to Monitor:**
-
-- Job delays (queue backed up?)
-- Failed jobs (integration down?)
-- Worker crashes (memory leak?)
-- Redis connection (network issue?)
-
----
-
-## Best Practices
-
-**Building Reliable Async Systems**
-
-**Do:**
-
-- ✅ Make jobs idempotent
-- ✅ Set reasonable timeouts
-- ✅ Log job start/end/errors
-- ✅ Monitor queue depth
-- ✅ Use job priorities wisely
-- ✅ Keep job data small
-- ✅ Validate job data
-- ✅ Handle worker crashes gracefully
-
----
-
-**Don't:**
-
-- ❌ Store large files in job data
-- ❌ Assume jobs run immediately
-- ❌ Ignore failed jobs
-- ❌ Create infinite loops
-- ❌ Block workers with sync code
-- ❌ Share state between jobs
 
 ---
 
@@ -577,33 +494,6 @@ We just added two more:
 
 ---
 
-## Demo Time!
-
-**See It In Action**
-
-1. **Create an expense**
-
-   - Watch it appear in real-time for all users
-
-2. **Request PDF report**
-
-   - Job added to queue (Bull Board)
-   - Worker processes (watch progress)
-   - Notification when complete
-
-3. **Simulate failure**
-
-   - Kill worker mid-job
-   - Watch automatic retry
-   - Job completes eventually
-
-4. **Monitor dashboard**
-   - Queue metrics
-   - Job history
-   - Failed jobs
-
----
-
 ## Resources
 
 **Documentation:**
@@ -612,9 +502,3 @@ We just added two more:
 - Socket.io: https://socket.io/docs/
 - Bull Board: https://github.com/felixmosh/bull-board
 
-**Concepts:**
-
-- Message Queues (RabbitMQ, Kafka)
-- Event-Driven Architecture
-- CQRS (Command Query Responsibility Segregation)
-- Event Sourcing

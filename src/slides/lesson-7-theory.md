@@ -1,9 +1,10 @@
 # Lesson 7: Async Processing & Pub/Sub Patterns
+
 ## Slide Content Outline
 
 ---
 
-## Lesson 7: Asynchronous Processing & Pub/Sub**
+## Lesson 7: Asynchronous Processing & Pub/Sub\*\*
 
 - Background jobs and real-time updates
 - Building scalable, responsive applications
@@ -11,6 +12,7 @@
 ---
 
 ## The Problem with Synchronous Processing
+
 **When Everything Waits...**
 
 Example: User creates expense → Generate PDF → Send email → Return response
@@ -30,6 +32,7 @@ POST /expenses
 ---
 
 **Problems:**
+
 - User waits 5+ seconds for response
 - Server thread blocked
 - Poor user experience
@@ -49,6 +52,7 @@ Colruyt butchery service is asynchronous:
 ---
 
 ## Asynchronous Processing Solution
+
 **Do It Later, Respond Now**
 
 ```
@@ -70,6 +74,7 @@ Worker 2: Sends email (2s)
 ---
 
 **Benefits:**
+
 - Fast API responses
 - Better resource utilization
 - Horizontal scalability (add more workers)
@@ -89,6 +94,7 @@ Worker 2: Sends email (2s)
 ---
 
 ## Job Queue Architecture
+
 **How It Works**
 
 ```
@@ -104,9 +110,11 @@ Worker 2: Sends email (2s)
                    - Data: {...}
                    - Status: waiting
 ```
+
 ---
 
 **Components:**
+
 - **Producer**: Creates jobs (your API server)
 - **Queue**: Stores pending jobs (Redis, database)
 - **Worker**: Processes jobs (separate process)
@@ -125,9 +133,11 @@ Something that Redis is quite efficient at.
 ---
 
 ## BullMQ - Job Queue for Node.js
+
 **Modern, Redis-backed Queue**
 
 **Features:**
+
 - ✅ Written in TypeScript
 - ✅ Rate limiting
 - ✅ Job priorities
@@ -140,6 +150,7 @@ Something that Redis is quite efficient at.
 ---
 
 ## BullMQ Job Lifecycle
+
 **From Creation to Completion**
 
 ```
@@ -157,11 +168,13 @@ More than just running - can declaratively decide how much to retry, when etc (v
 ---
 
 ## Bull Board - Queue Monitoring
+
 **Visual Dashboard for Your Queues**
 
 We want to be able to see how many jobs are in queues, how many are successful or failures, etc.
 
 **Features:**
+
 - 📊 View all queues and job counts
 - 🔍 Inspect job details and data
 - ⚠️ Monitor failed jobs
@@ -172,6 +185,7 @@ We want to be able to see how many jobs are in queues, how many are successful o
 ---
 
 **Why Monitor?**
+
 - Debug production issues
 - Track job performance
 - Identify bottlenecks
@@ -180,9 +194,11 @@ We want to be able to see how many jobs are in queues, how many are successful o
 ---
 
 ## Pub/Sub Pattern
+
 **Broadcasting Events to Multiple Listeners**
 
 **Traditional Request/Response:**
+
 ```
 Client ──request──▶ Server
 Client ◀─response── Server
@@ -191,6 +207,7 @@ Client ◀─response── Server
 ---
 
 **Pub/Sub:**
+
 ```
                     ┌─────────┐
          subscribe  │Publisher│  publish
@@ -203,6 +220,7 @@ Client ◀─response── Server
 ---
 
 **Key Concepts:**
+
 - **Publisher**: Emits events (doesn't know who's listening)
 - **Subscriber**: Listens for events (doesn't know who published)
 - **Topic/Channel**: Named event stream
@@ -210,9 +228,11 @@ Client ◀─response── Server
 ---
 
 ## Real-time Updates - HTTP Polling vs WebSocket
+
 **How to Get Live Data?**
 
 **HTTP Polling (Old Way):**
+
 ```
 Every 5 seconds:
 Client ──GET /api/updates──▶ Server
@@ -220,11 +240,13 @@ Client ◀─────response────── Server
 Client ──GET /api/updates──▶ Server
 Client ◀─────response────── Server
 ```
+
 ❌ Wasteful, latency, server load
 
 ---
 
 **WebSocket (Modern Way):**
+
 ```
 Client ──[upgrade to ws]──▶ Server
 Client ◀────connected────── Server
@@ -234,11 +256,13 @@ Client ◀────event 1────────
 Client ◀────event 2────────
 Client ─────message────────▶
 ```
+
 ✅ Real-time, efficient, bidirectional
 
 ---
 
 ## WebSocket Connection Lifecycle
+
 **Persistent Bidirectional Connection**
 
 ```
@@ -263,6 +287,7 @@ Client ─────message────────▶
 ---
 
 **Advantages:**
+
 - Low latency (no HTTP overhead)
 - Full duplex (both directions)
 - Real-time updates
@@ -271,9 +296,11 @@ Client ─────message────────▶
 ---
 
 ## Socket.io - WebSocket Made Easy
+
 **WebSocket Library with Fallbacks**
 
 **Features:**
+
 - ✅ Automatic reconnection
 - ✅ Rooms and namespaces
 - ✅ Broadcasting to groups
@@ -285,6 +312,7 @@ Client ─────message────────▶
 ---
 
 **Why Socket.io?**
+
 - Handles edge cases
 - Cross-browser support
 - Built-in heartbeat/ping
@@ -293,6 +321,7 @@ Client ─────message────────▶
 ---
 
 ## Socket.io Rooms
+
 **Organizing Connections**
 
 ```
@@ -312,6 +341,7 @@ io.to("user-123").emit("notification", data)
 ---
 
 **Use Cases:**
+
 - User-specific notifications
 - Group/team channels
 - Document collaboration
@@ -320,6 +350,7 @@ io.to("user-123").emit("notification", data)
 ---
 
 ## Combining Queues & Real-time
+
 **Complete Async Architecture**
 
 ```
@@ -331,8 +362,11 @@ io.to("user-123").emit("notification", data)
    API Server: Queue PDF job ✓
    API Server ──response──▶ Client (200ms)
 
---- 
+```
 
+---
+
+```
 3. Background worker processes job
    Worker: Generate PDF (3s)
    Worker: Save to storage ✓
@@ -348,9 +382,11 @@ io.to("user-123").emit("notification", data)
 ---
 
 ## Monitoring & Observability
+
 **You Can't Fix What You Can't See**
 
 **Key Metrics:**
+
 - Queue depth (jobs waiting)
 - Processing time (p50, p95, p99)
 - Failure rate
@@ -360,6 +396,7 @@ io.to("user-123").emit("notification", data)
 ---
 
 **Tools:**
+
 - **Bull Board**: Queue dashboard
 - **Logs**: Structured logging (JSON)
 - **Metrics**: Prometheus, Grafana
@@ -369,6 +406,7 @@ io.to("user-123").emit("notification", data)
 ---
 
 **What to Monitor:**
+
 - Job delays (queue backed up?)
 - Failed jobs (integration down?)
 - Worker crashes (memory leak?)
@@ -377,9 +415,11 @@ io.to("user-123").emit("notification", data)
 ---
 
 ## Best Practices
+
 **Building Reliable Async Systems**
 
 **Do:**
+
 - ✅ Make jobs idempotent
 - ✅ Set reasonable timeouts
 - ✅ Log job start/end/errors
@@ -392,6 +432,7 @@ io.to("user-123").emit("notification", data)
 ---
 
 **Don't:**
+
 - ❌ Store large files in job data
 - ❌ Assume jobs run immediately
 - ❌ Ignore failed jobs
@@ -402,9 +443,11 @@ io.to("user-123").emit("notification", data)
 ---
 
 ## When NOT to Use Async
+
 **Right Tool for the Job**
 
 **Stick with Synchronous If:**
+
 - Operation is very fast (<100ms)
 - User needs immediate result
 - Operation must complete before response
@@ -414,6 +457,7 @@ io.to("user-123").emit("notification", data)
 ---
 
 **Example:**
+
 ```
 // Good: Synchronous
 GET /user/123
@@ -434,15 +478,18 @@ GET /user/123
 ---
 
 **Rule of Thumb:**
+
 - Sync: Fast, blocking is acceptable
 - Async: Slow, background work, can fail and retry
 
 ---
 
 ## Our Implementation
+
 **What We're Building**
 
 **Feature 1: PDF Expense Reports**
+
 - User requests expense summary
 - Queue PDF generation job
 - Worker generates PDF using PDFKit
@@ -450,6 +497,7 @@ GET /user/123
 - Download from storage
 
 **Feature 2: Real-time Expense Notifications**
+
 - User creates/updates expense
 - Broadcast to all participants
 - Show toast notification
@@ -458,6 +506,7 @@ GET /user/123
 ---
 
 **Tech Stack:**
+
 - BullMQ + Redis (jobs)
 - Socket.io (real-time)
 - Bull Board (monitoring)
@@ -466,6 +515,7 @@ GET /user/123
 ---
 
 ## Architecture Diagram
+
 **Complete System Overview**
 
 ```
@@ -505,9 +555,11 @@ GET /user/123
 ```
 
 ---
+
 ## Infrastructure update
 
 We had three pieces of infra:
+
 - Backend (Express)
 - Frontend (React/Vite)
 - Database (PG)
@@ -526,17 +578,21 @@ We just added two more:
 ---
 
 ## Demo Time!
+
 **See It In Action**
 
 1. **Create an expense**
+
    - Watch it appear in real-time for all users
 
 2. **Request PDF report**
+
    - Job added to queue (Bull Board)
    - Worker processes (watch progress)
    - Notification when complete
 
 3. **Simulate failure**
+
    - Kill worker mid-job
    - Watch automatic retry
    - Job completes eventually
@@ -551,14 +607,14 @@ We just added two more:
 ## Resources
 
 **Documentation:**
+
 - BullMQ: https://docs.bullmq.io/
 - Socket.io: https://socket.io/docs/
 - Bull Board: https://github.com/felixmosh/bull-board
 
 **Concepts:**
+
 - Message Queues (RabbitMQ, Kafka)
 - Event-Driven Architecture
 - CQRS (Command Query Responsibility Segregation)
 - Event Sourcing
-
-

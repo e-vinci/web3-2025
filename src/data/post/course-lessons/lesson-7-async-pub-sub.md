@@ -544,7 +544,7 @@ This is very important as we're getting a bit "blind" once we have background pr
 2. **Create Bull Board setup** in `src/config/bullBoard.ts`:
    ```ts
    import { createBullBoard } from '@bull-board/api';
-   import { BullMQAdapter } from '@bull-board/bullmq';
+   import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
    import { ExpressAdapter } from '@bull-board/express';
    import { pdfQueue } from '@/queues/pdfQueue';
 

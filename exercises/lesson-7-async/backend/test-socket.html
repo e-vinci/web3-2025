@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.io Test</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+
+<body>
+    <h1>Socket.io Test</h1>
+    <div id="status">Disconnected</div>
+    <script>
+        // Replace with actual JWT token from login
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWxpY2VAZXhwZW5zby5kZXYiLCJpYXQiOjE3NjMwNTMwNjIsImV4cCI6MTc2MzY1Nzg2Mn0.0IQecrX6U-LDA02Dj9NH4yuKnRxaTBTDrdj_E4kwges';
+
+        const socket = io('http://localhost:3000', {
+            auth: { token }
+        });
+
+        socket.on('connect', () => {
+            document.getElementById('status').textContent = 'Connected: ' + socket.id;
+            console.log('Connected!');
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('status').textContent = 'Disconnected';
+            console.log('Disconnected');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error.message);
+        });
+    </script>
+</body>
+
+</html>

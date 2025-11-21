@@ -67,6 +67,10 @@ export default function Home() {
 
   const sortedExpenses = expenses.sort(sortingAlgo);
 
+  const handleDeleteExpense = async (id: string) => {
+    await sendApiRequestandHandleError('POST', 'expenses/delete', { id });
+  };
+
   if (loading) {
     return <div>Loading expenses...</div>;
   }
@@ -90,7 +94,9 @@ export default function Home() {
         {sortedExpenses.length === 0 ? (
           <p>No expenses found.</p>
         ) : (
-          sortedExpenses.map((expense) => <ExpenseItem key={expense.id} expense={expense} />)
+          sortedExpenses.map((expense) => (
+            <ExpenseItem key={expense.id} expense={expense} onDelete={handleDeleteExpense} />
+          ))
         )}
       </div>
     </div>

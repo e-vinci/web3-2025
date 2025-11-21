@@ -329,8 +329,7 @@ import type { GraphQLContext } from "@/types/GraphQLContext";
 
 const builder = new SchemaBuilder<{
   PrismaTypes: PrismaTypes;
-  Scalars: ScalarsMap;
-  Context: GraphQLContext; // Add this
+  Context: GraphQLContext;
 }>({
   plugins: [PrismaPlugin],
   prisma: {
@@ -391,9 +390,11 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
       id: t.exposeID('id'),
       description: t.exposeString('description'),
       amount: t.exposeFloat('amount'),
-      date: t.expose('date', { type: 'Date' }),
+      date: t.string({
+        resolve: (parent: Expense) => parent.date.toISOString(),
+      }),
       payer: t.relation('payer'),
-      participants: t.relation('participants')
+      participants: t.relation('participants'),
     }),
   });
 
@@ -440,10 +441,10 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
         args: {
           description: t.arg.string({ required: true }),
           amount: t.arg.float({ required: true }),
-          date: t.arg({ type: 'Date', required: true }),
+          date: t.arg({ type: 'String', required: true }),
           payerId: t.arg.int({ required: true }),
-          participantIds: t.arg({type: ['Int'], required: true }),
-        },
+          participantIds: t.arg({ type: ['Int'], required: true }),
+        },,
         resolve: async (_parent, args, ctx, _info) => {
           // Require authentication
           const user = requireAuth(ctx);
@@ -456,12 +457,13 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
           }
 
           const { description, amount, date, payerId, participantIds } = args;
+          const parsedDate = new Date(date);
           return expenseRepository.createExpense({
             description,
             amount,
-            date,
+            date: parsedDate,
             payerId,
-            participantIds
+            participantIds,
           });
         }
       }),

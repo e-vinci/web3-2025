@@ -21,3 +21,10 @@ model Expense {
   payer       String
   amount      Float
 }
+
+model TopUp {
+  id     Int    @id @default(autoincrement())
+  user   String
+  amount String
+  date   DateTime @default(now())
+}

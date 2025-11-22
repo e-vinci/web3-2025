@@ -17,7 +17,7 @@ export async function getExpenseDetail(req: Request, res: Response) {
 }
 
 export async function createExpense(req: Request, res: Response) {
-  const { description, amount, date, payerId, participantIds } = req.body;
+  const { description, amount, date, payerId, participantIds, category } = req.body;
 
   const newExpense = await expenseRepository.createExpense({
     description,
@@ -25,6 +25,7 @@ export async function createExpense(req: Request, res: Response) {
     date: date ? new Date(date) : new Date(),
     payerId: Number(payerId),
     participantIds: participantIds,
+    category,
   });
   res.status(StatusCodes.CREATED).json(newExpense);
 }

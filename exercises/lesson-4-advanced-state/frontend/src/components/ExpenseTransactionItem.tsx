@@ -33,6 +33,12 @@ const ExpenseTransactionItem = ({ transaction }: ExpenseTransactionItemProps) =>
                 <span>paid</span>
               </div>
 
+              {transaction.category && (
+                <div className="flex items-center gap-1">
+                  <span className="bg-muted px-2 py-0.5 rounded text-xs">{transaction.category}</span>
+                </div>
+              )}
+
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
                 <span>{transaction.participants.length} people</span>

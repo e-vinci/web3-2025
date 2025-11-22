@@ -11,6 +11,7 @@ import { env } from '@/common/utils/envConfig';
 import expenseRouter from './api/expense/expenseRouter';
 import transferRouter from './api/transfer/transferRouter';
 import transactionRouter from './api/transaction/transactionRouter';
+import * as CategoryController from './api/category/categoryController';
 
 const logger = pino({ name: 'server start' });
 const app: Express = express();
@@ -35,6 +36,9 @@ app.use('/api/users', userRouter);
 app.use('/api/expenses', expenseRouter);
 app.use('/api/transfers', transferRouter);
 app.use('/api/transactions', transactionRouter);
+
+app.get('/api/categories', CategoryController.listCategories);
+app.get('/api/categories/:category/expenses', CategoryController.getExpensesByCategory);
 
 // Error handlers
 app.use(errorHandler());

@@ -7,5 +7,6 @@ export interface LoaderData {
 
 export async function loader() {
   const users = await ApiClient.getUsers();
+  console.log('Loaded users:', users);
   return { users };
 }

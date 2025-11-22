@@ -14,6 +14,7 @@ export interface Expense {
   amount: number;
   date: string; // ISO string
   participants: User[];
+  category?: string;
 }
 
 export interface NewExpensePayload {
@@ -22,4 +23,5 @@ export interface NewExpensePayload {
   date?: string; // ISO string
   payerId: number;
   participantIds: number[];
+  category?: string;
 }

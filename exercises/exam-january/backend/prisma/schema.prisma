@@ -30,6 +30,7 @@ model User {
   transfersOut Transfer[] @relation("UserTransfersSource")
   transfersIn  Transfer[] @relation("UserTransfersTarget")
   participatedExpenses    Expense[] @relation("ParticipantExpenses")
+   comments    Comment[]
 }
 
 model Expense {
@@ -40,6 +41,7 @@ model Expense {
   payer        User     @relation("PayerExpenses", fields: [payerId], references: [id])
   payerId      Int
   participants User[]   @relation("ParticipantExpenses")
+  comments     Comment[]
 }
 
 model Transfer {
@@ -50,4 +52,15 @@ model Transfer {
   sourceId  Int
   target    User   @relation("UserTransfersTarget", fields: [targetId], references: [id])
   targetId  Int
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+  expense   Expense  @relation(fields: [expenseId], references: [id])
+  expenseId Int
 }

@@ -2,9 +2,34 @@ import { useLoaderData } from 'react-router';
 import type { LoaderData } from './loader';
 
 export default function ExpenseDetails() {
-  const { expense } = useLoaderData<LoaderData>();
+  const { expense, comments: initialComments, commentCount } = useLoaderData<LoaderData>();
+
+  const [comments, setComments] = useState(initialComments);
 
   const sharePerParticipant = expense.amount / expense.participants.length;
+
+  const handleAddComment = (content: string) => {
+    const newComment = ApiClient.createComment({
+      content,
+      authorId: 1,
+      expenseId: parseInt(expense.id),
+    });
+
+    setComments([...comments, newComment]);
+  };
+
+  const handleEditComment = async (commentId: string, newContent: string) => {
+    const updated = await ApiClient.updateComment({
+      id: parseInt(commentId),
+      content: newContent,
+    });
+    setComments(comments.map((c) => (c.id === commentId ? updated : c)));
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    ApiClient.deleteComment(parseInt(commentId));
+    setComments(comments.filter((c) => c.id !== commentId));
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -44,6 +69,16 @@ export default function ExpenseDetails() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Comments ({commentCount.count})</h3>
+        </div>
+
+        <CommentList comments={comments as any} onEdit={handleEditComment} onDelete={handleDeleteComment} />
+
+        <CommentForm onSubmit={handleAddComment} />
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 import type { Expense } from '@/types/Expense';
+import type { Comment } from '@/types/Comment';
 import type { LoaderFunctionArgs } from 'react-router';
 import { gql } from '@apollo/client';
 import graphqlClient from '@/lib/graphql-client';
+import ApiClient from '@/lib/api';
 
 const EXPENSE_QUERY = gql`
   query ExpenseDetail($id: Int!) {
@@ -23,6 +25,8 @@ const EXPENSE_QUERY = gql`
 
 export interface LoaderData {
   expense: Expense;
+  comments: Comment[];
+  commentCount: { count: number };
 }
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -35,5 +39,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
     throw new Error('Error while retrieving expense details from the server: ' + error);
   }
 
-  return { expense: data.expense };
+  const comments = ApiClient.getCommentsByExpense(parseInt(params.id!));
+  const commentCount = ApiClient.getCommentCount(parseInt(params.id!));
+
+  return {
+    expense: data.expense,
+    comments: comments,
+    commentCount: commentCount,
+  };
 }

@@ -2,6 +2,7 @@ import type { Expense, NewExpensePayload } from '@/types/Expense';
 import type { Transaction } from '@/types/Transaction';
 import type { NewTransferPayload, Transfer } from '@/types/Transfer';
 import type { User } from '@/types/User';
+import type { Comment, NewCommentPayload, UpdateCommentPayload } from '@/types/Comment';
 
 const API_HOST = import.meta.env.VITE_API_URL;
 
@@ -32,12 +33,30 @@ const createTransfer: (payload: NewTransferPayload) => Promise<Transfer> = (payl
 const createExpense: (payload: NewExpensePayload) => Promise<Expense> = (payload) =>
   sendApiRequest('POST', 'expenses', payload) as Promise<Expense>;
 
+const getAllComments: () => Promise<Comment[]> = () => sendApiRequest('GET', 'comments') as Promise<Comment[]>;
+const getCommentsByExpense: (expenseId: number) => Promise<Comment[]> = (expenseId) =>
+  sendApiRequest('GET', `comments/expense/${expenseId}`) as Promise<Comment[]>;
+const createComment: (payload: NewCommentPayload) => Promise<Comment> = (payload) =>
+  sendApiRequest('POST', 'comments', payload) as Promise<Comment>;
+const updateComment: (payload: UpdateCommentPayload) => Promise<Comment> = (payload) =>
+  sendApiRequest('PUT', `comments/${payload.id}`, { content: payload.content }) as Promise<Comment>;
+const deleteComment: (id: number) => Promise<void> = (id) =>
+  sendApiRequest('DELETE', `comments/${id}`) as Promise<void>;
+const getCommentCount: (expenseId: number) => Promise<{ count: number }> = (expenseId) =>
+  sendApiRequest('GET', `comments/expense/${expenseId}/count`) as Promise<{ count: number }>;
+
 export const ApiClient = {
   getUsers,
   getTransactions,
   getExpenseById,
   createTransfer,
   createExpense,
+  getAllComments,
+  getCommentsByExpense,
+  createComment,
+  updateComment,
+  deleteComment,
+  getCommentCount,
 };
 
 export default ApiClient;

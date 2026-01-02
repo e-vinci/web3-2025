@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator pothos {
+  provider = "prisma-pothos-types"
+  clientOutput = "./prisma" // relative path from pothos output to prisma client
+  output = "../src/generated/pothos-prisma-types.ts" //  Where to write the generated types
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  name        String
+  email       String  @unique
+  password  String 
+  bankAccount String? // optional
+  paidExpenses    Expense[] @relation("PayerExpenses")
+  transfersOut Transfer[] @relation("UserTransfersSource")
+  transfersIn  Transfer[] @relation("UserTransfersTarget")
+  participatedExpenses    Expense[] @relation("ParticipantExpenses")
+}
+
+model Expense {
+  id           Int      @id @default(autoincrement())
+  description  String
+  amount       Float
+  date         DateTime @default(now())
+  payer        User     @relation("PayerExpenses", fields: [payerId], references: [id])
+  payerId      Int
+  participants User[]   @relation("ParticipantExpenses")
+}
+
+model Transfer {
+  id        Int    @id @default(autoincrement())
+  amount    Float
+  date      DateTime @default(now())
+  source    User   @relation("UserTransfersSource", fields: [sourceId], references: [id])
+  sourceId  Int
+  target    User   @relation("UserTransfersTarget", fields: [targetId], references: [id])
+  targetId  Int
+}

@@ -1,0 +1,30 @@
+ @hostname = localhost:3000
+
+
+### Register a new user
+POST http://{{hostname}}/auth/register
+Content-Type: application/json
+
+{
+"name": "David",
+"email": "david@example.com",
+"password": "topsecret"
+}
+
+### Successful authentication
+POST http://{{hostname}}/auth/login
+Content-Type: application/json
+
+{
+"email": "david@example.com",
+"password": "topsecret"
+}
+
+### Failed authentication
+POST http://{{hostname}}/auth/login
+Content-Type: application/json
+
+{
+"email": "david@example.com",
+"password": "wrongpassword"
+}

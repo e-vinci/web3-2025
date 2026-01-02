@@ -1,0 +1,5 @@
+ @hostname = localhost:3000
+
+### Get all expenses
+GET http://{{hostname}}/api/users
+Content-Type: application/json

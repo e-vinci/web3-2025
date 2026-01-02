@@ -2,6 +2,9 @@
 dist/
 .output/
 
+#generated files
+**/src/generated
+
 # dependencies
 node_modules/
 

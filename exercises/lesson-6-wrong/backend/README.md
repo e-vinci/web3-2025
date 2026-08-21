@@ -72,7 +72,6 @@ We'd love to hear your feedback and suggestions for further improvements. Feel f
 
 ```code
 ├── biome.json
-├── Dockerfile
 ├── LICENSE
 ├── package.json
 ├── pnpm-lock.yaml

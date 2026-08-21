@@ -1,4 +1,4 @@
-FROM node:lts AS base
+FROM node:24.12.0-bookworm AS base
 WORKDIR /app
 
 FROM base AS deps

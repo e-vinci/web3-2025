@@ -4,6 +4,14 @@ import { SITE, APP_BLOG } from 'astrowind:config';
 
 import { trim } from '~/utils/utils';
 
+type MenuItem = string | undefined | MenuObject | MenuItem[];
+
+type MenuObject = {
+  [key: string]: MenuItem;
+  type?: string;
+  url?: string;
+};
+
 export const trimSlash = (s: string) => trim(trim(s, '/'));
 const createPath = (...params: string[]) => {
   const paths = params
@@ -104,24 +112,25 @@ export const getAsset = (path: string): string =>
 const definitivePermalink = (permalink: string): string => createPath(BASE_PATHNAME, permalink);
 
 /** */
-export const applyGetPermalinks = (menu: object = {}) => {
+export const applyGetPermalinks = (menu: MenuItem = {}): MenuItem => {
   if (Array.isArray(menu)) {
     return menu.map((item) => applyGetPermalinks(item));
   } else if (typeof menu === 'object' && menu !== null) {
-    const obj = {};
+    const obj: MenuObject = {};
     for (const key in menu) {
       if (key === 'href') {
-        if (typeof menu[key] === 'string') {
-          obj[key] = getPermalink(menu[key]);
-        } else if (typeof menu[key] === 'object') {
-          if (menu[key].type === 'home') {
+        const href = menu[key];
+        if (typeof href === 'string') {
+          obj[key] = getPermalink(href);
+        } else if (typeof href === 'object' && href !== null && !Array.isArray(href)) {
+          if (href.type === 'home') {
             obj[key] = getHomePermalink();
-          } else if (menu[key].type === 'blog') {
+          } else if (href.type === 'blog') {
             obj[key] = getBlogPermalink();
-          } else if (menu[key].type === 'asset') {
-            obj[key] = getAsset(menu[key].url);
-          } else if (menu[key].url) {
-            obj[key] = getPermalink(menu[key].url, menu[key].type);
+          } else if (href.type === 'asset' && href.url) {
+            obj[key] = getAsset(href.url);
+          } else if (href.url) {
+            obj[key] = getPermalink(href.url, href.type);
           }
         }
       } else {

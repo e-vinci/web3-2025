@@ -85,6 +85,9 @@ export interface MetaDataImage {
 export interface MetaDataOpenGraph {
   url?: string;
   siteName?: string;
+  site_name?: string;
+  title?: string;
+  description?: string;
   images?: Array<MetaDataImage>;
   locale?: string;
   type?: string;

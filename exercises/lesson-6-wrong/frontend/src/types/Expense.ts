@@ -14,6 +14,7 @@ export interface Expense {
   amount: number;
   date: string; // ISO string
   participants: User[];
+  shares?: ExpenseShare[];
 }
 
 export interface NewExpensePayload {
@@ -22,4 +23,11 @@ export interface NewExpensePayload {
   date?: string; // ISO string
   payerId: number;
   participantIds: number[];
+  shares?: ExpenseShare[];
+}
+
+export interface ExpenseShare {
+  participantId: string;
+  value: number;
+  mode: string;
 }

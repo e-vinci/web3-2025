@@ -1,10 +1,21 @@
-import { Expense } from '@/generated/prisma/client';
+import { Expense, Share } from '@/generated/prisma/client';
 import SchemaBuilder from '@/graphql/builder';
-import { requireAuth } from '@/graphql/authHelpers';
 import { GraphQLError } from 'graphql';
 import * as expenseRepository from './expenseRepository';
 
 const augmentSchema = (builder: typeof SchemaBuilder) => {
+  const ShareRef = builder.objectRef<Share>('Share').implement({
+    fields: (t) => ({
+      id: t.exposeID('id'),
+      mode: t.exposeString('mode'),
+      value: t.exposeFloat('value'),
+      participantId: t.int({
+        resolve: (share) => share.participantId ?? 0,
+      }),
+      memo: t.exposeString('memo', { nullable: true }),
+    }),
+  });
+
   const ExpenseRef = builder.prismaObject('Expense', {
     fields: (t) => ({
       id: t.exposeID('id'),
@@ -15,6 +26,7 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
       }),
       payer: t.relation('payer'),
       participants: t.relation('participants'),
+      shares: t.relation('shares'),
     }),
   });
 
@@ -26,19 +38,10 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
           id: t.arg.int({ required: true }),
         },
         resolve: async (_root, args, ctx, _info) => {
-          const user = requireAuth(ctx);
           const expense = await expenseRepository.getExpenseById(args.id as number);
           if (!expense) {
             throw new GraphQLError('Expense not found', {
               extensions: { code: 'NOT_FOUND' },
-            });
-          }
-          // Check if user is involved in this expense (as payer or participant)
-          const isInvolved = expense.payer.id === user.userId || expense.participants.some((p) => p.id === user.userId);
-
-          if (!isInvolved) {
-            throw new GraphQLError("You don't have permission to view this expense", {
-              extensions: { code: 'FORBIDDEN' },
             });
           }
 
@@ -58,25 +61,26 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
           date: t.arg({ type: 'String', required: true }),
           payerId: t.arg.int({ required: true }),
           participantIds: t.arg({ type: ['Int'], required: true }),
+          sharePayload: t.arg({ type: ['String'], required: false }),
         },
         resolve: async (_parent, args, ctx, _info) => {
-          const user = requireAuth(ctx);
-
-          // User can only create expenses where they are the payer
-          if (user.userId !== args.payerId) {
-            throw new GraphQLError('You can only create expenses that you paid for', {
-              extensions: { code: 'FORBIDDEN' },
-            });
-          }
-
           const { description, amount, date, payerId, participantIds } = args;
           const parsedDate = new Date(date);
+          const shares = args.sharePayload?.map((encoded) => {
+            const [userId, mode, value] = encoded.split(':');
+            return {
+              participantId: Number(userId),
+              mode: mode ?? 'percentage',
+              value: Number(value ?? amount),
+            };
+          });
           return expenseRepository.createExpense({
             description,
             amount,
             date: parsedDate,
             payerId,
             participantIds,
+            shares,
           });
         },
       }),

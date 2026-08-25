@@ -1,4 +1,4 @@
-import type { Expense, NewExpensePayload } from '@/types/Expense';
+import type { Expense, ExpenseShare, NewExpensePayload } from '@/types/Expense';
 import type { Transaction } from '@/types/Transaction';
 import type { NewTransferPayload, Transfer } from '@/types/Transfer';
 import type { User } from '@/types/User';
@@ -22,15 +22,19 @@ const sendApiRequest = async (method: string = 'GET', path: string, body?: unkno
   }
 };
 
-const getTransactions: () => Promise<Transaction[]> = () =>
-  sendApiRequest('GET', 'transactions') as Promise<Transaction[]>;
-const getUsers: () => Promise<User[]> = () => sendApiRequest('GET', 'users') as Promise<User[]>;
-const getExpenseById: (id: number) => Promise<Expense> = (id) =>
-  sendApiRequest('GET', `expenses/${id}`) as Promise<Expense>;
-const createTransfer: (payload: NewTransferPayload) => Promise<Transfer> = (payload) =>
+const getTransactions = () => sendApiRequest('GET', 'transactions') as Promise<Transaction[]>;
+
+const getUsers = () => sendApiRequest('GET', 'users') as Promise<User[]>;
+
+const getExpenseById = (id: number) => sendApiRequest('GET', `expenses/${id}`) as Promise<Expense>;
+
+const createTransfer = (payload: NewTransferPayload) =>
   sendApiRequest('POST', 'transfers', payload) as Promise<Transfer>;
-const createExpense: (payload: NewExpensePayload) => Promise<Expense> = (payload) =>
-  sendApiRequest('POST', 'expenses', payload) as Promise<Expense>;
+
+const createExpense = (payload: NewExpensePayload) => sendApiRequest('POST', 'expenses', payload) as Promise<Expense>;
+
+const saveExpenseShare = (expenseId: number, share: ExpenseShare) =>
+  sendApiRequest('POST', `expenses/${expenseId}/shares`, share);
 
 export const ApiClient = {
   getUsers,
@@ -38,6 +42,7 @@ export const ApiClient = {
   getExpenseById,
   createTransfer,
   createExpense,
+  saveExpenseShare,
 };
 
 export default ApiClient;

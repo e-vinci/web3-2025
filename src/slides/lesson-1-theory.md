@@ -2,8 +2,8 @@
 marp: true
 theme: default
 paginate: true
-header: 'Web 3 2025 - Recap'
-footer: 'Web 3 2025 - Vinci'
+header: 'Web 3 2026 - Recap'
+footer: 'Web 3 2026 - Vinci'
 ---
 
 # Theoretical Introduction
@@ -23,8 +23,8 @@ footer: 'Web 3 2025 - Vinci'
 ## React: Main Concepts
 
 - **Components**: The building blocks of UIs. Each component is a JavaScript function or class that returns JSX.
-- **Props**: Data passed from parent to child components. Props are read-only.
-- **State**: Data managed within a component. State changes trigger re-renders.
+- **Props**: Data passed **from parent to child** components. Props are read-only.
+- **State**: Data managed **within a component**. State changes trigger re-renders.
 - **Events**: Handling user actions (click, input, etc.)
 - **Composition**: Building complex UIs from smaller components.
 
@@ -42,8 +42,8 @@ function Welcome(props) {
 
 ## React: State & Lifecycle
 
-- **State**: Use `useState` to add local state to function components.
-- **Lifecycle**: Use `useEffect` to run code on mount, update, or unmount.
+- **State**: Use `useState` to add **local** state to function components.
+- **Lifecycle**: Use `useEffect` to run code on mount, update, or unmount. <!-- I don't really understand this point, it may deserve deeper explanations -->
 - **Data Flow**: State flows down, actions flow up via callbacks.
 
 [State and Lifecycle (React Docs)](https://react.dev/learn/state-a-components-memory)

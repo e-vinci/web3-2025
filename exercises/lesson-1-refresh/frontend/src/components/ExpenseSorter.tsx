@@ -1,50 +1,43 @@
-import { useState } from 'react';
-import type { Expense } from '../types/Expense';
-
-type SortOption = 'date-newest' | 'date-oldest' | 'amount-highest' | 'amount-lowest';
-type SortingAlgo = (a: Expense, b: Expense) => number;
+import type { ChangeEvent } from 'react';
+import type { ExpenseComparator } from '../utils/expenseComparators';
+import {
+  byAmountHighestFirst,
+  byAmountLowestFirst,
+  byDateNewestFirst,
+  byDateOldestFirst,
+} from '../utils/expenseComparators';
 
 interface ExpenseSorterProps {
-  setSortingAlgo: (algo: SortingAlgo) => void;
+  onSortChange: (comparator: ExpenseComparator) => void;
 }
 
-const dateNewestAlgo: SortingAlgo = (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime();
-const dateOldestAlgo: SortingAlgo = (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime();
-const amountHighestAlgo: SortingAlgo = (a, b) => b.amount - a.amount;
-const amountLowestAlgo: SortingAlgo = (a, b) => a.amount - b.amount;
+const SORT_OPTIONS = {
+  'date-newest': { label: 'Date (newest first)', comparator: byDateNewestFirst },
+  'date-oldest': { label: 'Date (oldest first)', comparator: byDateOldestFirst },
+  'amount-highest': { label: 'Amount (highest first)', comparator: byAmountHighestFirst },
+  'amount-lowest': { label: 'Amount (lowest first)', comparator: byAmountLowestFirst },
+} as const;
 
-export default function ExpenseSorter({ setSortingAlgo }: ExpenseSorterProps) {
-  const [sortBy, setSortBy] = useState<SortOption>('date-newest');
+type SortKey = keyof typeof SORT_OPTIONS;
 
-  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSortOption = event.target.value as SortOption;
-    setSortBy(newSortOption);
-
-    switch (newSortOption) {
-      case 'date-newest':
-        setSortingAlgo(dateNewestAlgo);
-        break;
-      case 'date-oldest':
-        setSortingAlgo(dateOldestAlgo);
-        break;
-      case 'amount-highest':
-        setSortingAlgo(amountHighestAlgo);
-        break;
-      case 'amount-lowest':
-        setSortingAlgo(amountLowestAlgo);
-        break;
-    }
-  };
+function ExpenseSorter({ onSortChange }: ExpenseSorterProps) {
+  function handleChange(event: ChangeEvent<HTMLSelectElement>) {
+    const key = event.target.value as SortKey;
+    onSortChange(SORT_OPTIONS[key].comparator);
+  }
 
   return (
-    <div>
-      <label htmlFor="sort-select">Sort by:</label>
-      <select id="sort-select" value={sortBy} onChange={handleSortChange}>
-        <option value="date-newest">Date (Newest First)</option>
-        <option value="date-oldest">Date (Oldest First)</option>
-        <option value="amount-highest">Amount (Highest First)</option>
-        <option value="amount-lowest">Amount (Lowest First)</option>
+    <label className="expense-sorter">
+      Sort by:{' '}
+      <select defaultValue="date-newest" onChange={handleChange}>
+        {Object.entries(SORT_OPTIONS).map(([key, { label }]) => (
+          <option key={key} value={key}>
+            {label}
+          </option>
+        ))}
       </select>
-    </div>
+    </label>
   );
 }
+
+export default ExpenseSorter;

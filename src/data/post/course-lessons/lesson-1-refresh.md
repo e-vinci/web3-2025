@@ -198,20 +198,24 @@ curl -X POST http://localhost:3000/api/expenses/reset
 
 **Goal**: Integrate the React frontend with the Express backend API.
 
-- Create a `frontend/src/hooks/useExpenses.ts` custom hook that owns all the backend-communication logic and
-  state for expenses: the `expenses` array itself, plus `loading`/`error` state, an internal function that
-  fetches `http://localhost:3000/api/expenses` (called once on mount via `useEffect`), an `addExpense(expense)`
-  function that POSTs to `/api/expenses` and refreshes the list, and a `resetExpenses()` function that POSTs to
-  `/api/expenses/reset` and refreshes the list. The hook returns `{ expenses, loading, error, addExpense,
-  resetExpenses }`.
-- Update `frontend/src/pages/Home.tsx` to call `useExpenses()` instead of managing its own `useState`/`useEffect`
-  for expenses, and pass the hook's `addExpense` straight through as the `addExpense` prop to `ExpenseAdd` (same
-  prop name you already used in Exercise 3 — no renaming needed).
-- Add a "Reset Data" button in `Home.tsx` that calls the hook's `resetExpenses()` and gives the user feedback
-  (e.g. a brief message) once it resolves.
-- Verify the complete flow works: loading expenses on mount, adding new expenses, and resetting data — including
-  that an added expense is still there after a page reload (proof it's really persisted on the backend, not just
-  in local state).
+- Create a `frontend/src/hooks/useExpenses.ts` custom hook that owns all the backend-communication logic and state for expenses: the `expenses` array itself, plus `loading`/`error` state, an internal function that fetches `http://localhost:3000/api/expenses` (called once on mount via `useEffect`), an `addExpense(expense)` function that POSTs to `/api/expenses` and refreshes the list, and a `resetExpenses()` function that POSTs to `/api/expenses/reset` and refreshes the list. The hook returns `{ expenses, loading, error, addExpense, resetExpenses }`.
+- Update `frontend/src/pages/Home.tsx` to call `useExpenses()` instead of managing its own `useState`/`useEffect` for expenses, and pass the hook's `addExpense` straight through as the `addExpense` prop to `ExpenseAdd` (same prop name you already used in Exercise 3 — no renaming needed).
+- Remove the direct reference to URL and port in the hook, keep only the path (`/api/expenses`). Define a Proxy in `frontend/vite.config.ts` to forward requests to the backend. This proxy will allow you to use relative paths in the frontend and keep a nice development experience. We declare a `proxy` object in the `server` section of the config:
+```ts
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
+  },
+})
+```
+- Add a "Reset Data" button in `Home.tsx` that calls the hook's `resetExpenses()` and gives the user feedback (e.g. a brief message) once it resolves.
+- Verify the complete flow works: loading expenses on mount, adding new expenses, and resetting data — including that an added expense is still there after a page reload (proof it's really persisted on the backend, not just in local state).
 - Ensure proper loading states and error handling throughout the user interface.
 
 **Why a custom hook, not inline `useEffect`?** Pulling the fetch/add/reset logic out of `Home` and into

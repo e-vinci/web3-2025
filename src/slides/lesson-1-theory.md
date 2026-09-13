@@ -171,6 +171,62 @@ app.use('/api', router); // now serves GET /api/expenses
 
 ---
 
+<!--
+Discussion moment
+-->
+
+## Open questions
+
+---
+
+## A step further (1)
+
+In the back end, what did we "do" when we run the command `npm run dev` & `npm run start`?
+
+<!--
+dev VS start : 
+- define in package.json in "scripts" section
+- dev : uses nodemon to watch for changes, could "rebuild" the server and restart the server, very useful for development but quite resource consuming
+- start : just runs the server on "build" files -> JS
+-->
+
+What does it actually do on our own computer?
+<!-- proposition : more like a discussion with students, we need to mention at least :
+- what's a server
+- what's a port
+- ISO TCP/IP layers
+may be listed ideas/concept on the board.
+-->
+
+
+---
+
+## A step further (2)
+
+What happens when we do a `GET` request to `http://localhost:3000/api/expenses`?
+
+- with curl tool,
+- with .http request,
+- with web browser,
+
+Remember the C class where we programmed a GET http request with a socket connection?
+
+---
+
+## A step further (3)
+
+At front end, what's happening when we perform the command `npm run dev`?
+
+What do there is no `npm run start` command? Do we need one?
+
+<!--
+Explain that Vite is a dev server that serves the frontend and hot-reloads the code when it changes.
+We do need a server to serve the built files in production, typical examples are Nginx or Apache. We provide to this server a "build" folder with an entry point (`index.html`). The build is made of html and JS code.
+We could use a simple HTTP server like `http-server` or `serve` but it's not necessary for now.
+-->
+
+---
+
 ## Useful Links
 
 - [Vite – Getting Started](https://vite.dev/guide/)

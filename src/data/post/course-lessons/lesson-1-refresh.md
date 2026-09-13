@@ -138,8 +138,7 @@ broken with no obvious error, try a build before debugging further.
 ```
 
 - Create `backend/types/Expense.ts` with the same `Expense` interface as the frontend (`id`, `date`,
-  `description`, `payer`, `amount`). Yes, this duplicates the frontend's type definition — sharing types between
-  two separate Node projects needs a monorepo/shared-package setup, which is a topic for a later lesson.
+  `description`, `payer`, `amount`). Yes, this duplicates the frontend's type definition — sharing types between two separate Node projects needs a monorepo/shared-package setup, which is a topic for a later lesson.
 - Create `backend/routes/expenses.ts` and define an Express `Router` with:
   - GET `/expenses` route that returns all expenses from the JSON file
   - POST `/expenses` route that adds a new expense to the JSON file
@@ -147,19 +146,9 @@ broken with no obvious error, try a build before debugging further.
   - `getAllExpenses(): Expense[]` function that reads and parses `backend/data/expenses.json`
   - `addExpense(expense: Expense): Expense` function that appends a new expense to the JSON file
 - Connect the expenses router to your main server file (`backend/app.ts`) using `app.use('/api', expensesRouter)`.
-- **TypeScript Note**: the backend's `tsconfig.json` uses `nodenext` module resolution, which — unlike the
-  frontend's bundler-based setup — requires the actual file extension on relative imports:
-  `import { getAllExpenses } from '../services/expenses.ts';`. Leaving it off (`'../services/expenses'`) fails
-  both ways you might notice: `npm run typecheck` reports `TS2835: Relative import paths need explicit file
-  extensions`, and just running `npm run dev` crashes immediately with `ERR_MODULE_NOT_FOUND` — there's no
-  build step to catch it first.
-- Add proper error handling to both routes: wrap the file-based logic in try/catch, log the error to the
-  console, and respond with a 500 http code on failure (this applies to the reset route in the next exercise
-  too — write it once, reuse the pattern). Note that a caught error is typed `unknown` in TypeScript, not
-  `Error` — you can still pass it directly to `console.error`, but check `error instanceof Error` before
-  reading `.message` off it.
-- Test your API endpoints using [REST client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
-  if you're on VS Code, or plain `curl` otherwise (works regardless of editor):
+- **TypeScript Note**: the backend's `tsconfig.json` uses `nodenext` module resolution, which — unlike the frontend's bundler-based setup — requires the actual file extension on relative imports: `import { getAllExpenses } from '../services/expenses.ts';`. Leaving it off (`'../services/expenses'`) fails both ways you might notice: `npm run typecheck` reports `TS2835: Relative import paths need explicit file extensions`, and just running `npm run dev` crashes immediately with `ERR_MODULE_NOT_FOUND` — there's no build step to catch it first.
+- Add proper error handling to both routes: wrap the file-based logic in try/catch, log the error to the console, and respond with a 500 http code on failure (this applies to the reset route in the next exercise too — write it once, reuse the pattern). Note that a caught error is typed `unknown` in TypeScript, not `Error` — you can still pass it directly to `console.error`, but check `error instanceof Error` before reading `.message` off it.
+- Test your API endpoints using [REST client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) if you're on VS Code, or plain `curl` otherwise (works regardless of editor):
 
 ```bash
 curl http://localhost:3000/api/expenses
@@ -181,12 +170,8 @@ import cors from 'cors';
 app.use(cors({ origin: ['http://localhost:5173'] }));
 ```
 
-- You will need the [cors middleware](https://github.com/expressjs/cors): `npm install cors` and, since this
-  is a TypeScript project, its type definitions too: `npm install -D @types/cors`.
-- **Troubleshooting Note**: double-check your frontend actually landed on port 5173 (Vite silently picks the
-  next free port — 5174, 5175... — if 5173 is already in use, e.g. by another project's dev server). If it did,
-  and Exercise 6 then fails with a browser-console CORS error, update the `origin` array to match the port Vite
-  actually printed.
+- You will need the [cors middleware](https://github.com/expressjs/cors): `npm install cors` and, since this is a TypeScript project, its type definitions too: `npm install -D @types/cors`.
+- **Troubleshooting Note**: double-check your frontend actually landed on port 5173 (Vite silently picks the next free port — 5174, 5175... — if 5173 is already in use, e.g. by another project's dev server). If it did, and Exercise 6 then fails with a browser-console CORS error, update the `origin` array to match the port Vite actually printed.
 
 ### 5. Reset Endpoint
 

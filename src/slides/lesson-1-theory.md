@@ -8,7 +8,7 @@ footer: 'Web 3 2026 - Vinci'
 
 # Theoretical Introduction
 
-## Lesson 1 – JS2 Recap & Project Kickoff
+## Lesson 1 – Recap
 
 ---
 
@@ -34,7 +34,6 @@ footer: 'Web 3 2026 - Vinci'
 function Welcome(props) {
   return <h1>Hello, {props.name}!</h1>;
 }
-
 <Welcome name="Alice" />;
 ```
 
@@ -45,6 +44,7 @@ function Welcome(props) {
 - **State**: Use `useState` to add **local** state to function components.
 - **Lifecycle**: Use `useEffect` to run code on mount, update, or unmount. <!-- I don't really understand this point, it may deserve deeper explanations -->
 - **Data Flow**: State flows down, actions flow up via callbacks.
+- **Custom Hooks**: a function starting with `use` that packages up stateful logic (like fetching data) so a  component can call it instead of repeating `useState` and `useEffect` inline
 
 [State and Lifecycle (React Docs)](https://react.dev/learn/state-a-components-memory)
 
@@ -70,9 +70,8 @@ function Counter() {
 
 - **Why TypeScript?**
 
-  - Adds static typing to JavaScript
-  - Catches errors at compile time
-  - Improves code completion and refactoring
+  - Adds static typing to JavaScript, catches errors at compile time
+  - Improves code completion, refactoring, and AI guidance
   - Makes code more maintainable and self-documenting
 
 - **TypeScript Basics**
@@ -95,9 +94,8 @@ interface Expense {
   id: string;
   date: string;
   description: string;
+  payer: string;
   amount: number;
-  paidBy: string;
-  participants: string[];
 }
 
 // Type
@@ -123,15 +121,15 @@ function add(a: number, b: number): number {
 
 ---
 
-```js
-const express = require('express');
+```typescript
+import express, { type Request, type Response } from 'express';
 const app = express();
 
 // Middleware to parse JSON
 app.use(express.json());
 
 // Define a route
-app.get('/api/expenses', (req, res) => {
+app.get('/api/expenses', (req: Request, res: Response) => {
   res.json([]); // return the list of expenses
 });
 
@@ -142,10 +140,32 @@ app.listen(3000, () => {
 
 ---
 
+## Express: Routers & CORS
+
+- **Router**: group related routes, mount them under a path prefix — this is how "Modularity" from the previous
+  slide actually looks in code
+- **CORS**: browsers block cross-origin requests (different port = different origin) by default; a `cors`
+  middleware opts specific origins back in
+
+```typescript
+import { Router } from 'express';
+const router = Router();
+
+router.get('/expenses', (req: Request, res: Response) => {
+  res.json([]);
+});
+
+app.use('/api', router); // now serves GET /api/expenses
+```
+
+---
+
 ## Tooling & Project Structure
 
-- **Vite**: Fast React frontend setup
-- **Express Generator**: Bootstrap the backend
+- **Vite**: Fast React frontend setup (React + TypeScript template)
+- **Express 5**: web server and backend framework (minimalist)
+- **TypeScript + ESM**: frontend and backend both use .ts and `import`/`export` 
+- **oxlint**: the linter Vite scaffolds by default today
 - **npm**: Dependency management
 - **Frontend/backend separation**: two apps, two folders.
 
@@ -153,7 +173,7 @@ app.listen(3000, () => {
 
 ## Useful Links
 
-- [Vite – Getting Started](https://vitejs.dev/guide/)
+- [Vite – Getting Started](https://vite.dev/guide/)
 - [Node.js File System (fs)](https://nodejs.org/api/fs.html)
 - [Last year's JS2 course](https://e-vinci.github.io/js2)
 

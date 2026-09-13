@@ -119,7 +119,7 @@ broken with no obvious error, try a build before debugging further.
   - The `Home` component implements `addExpense` (naming it `handleAddExpense` internally is fine, but the prop
     it hands down to `ExpenseAdd` must be called `addExpense`) and passes it down. Its implementation relies on
     the setter from `useState`.
-- The new expense should immediately appear in the expense list without requiring a page refresh.
+- The new expense should immediately appear in the expense list.
 - Verify that the state updates work correctly and new expenses persist until page reload.
 
 ### 4. Backend Expense Router and Service

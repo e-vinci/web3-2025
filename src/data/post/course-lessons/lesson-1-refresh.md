@@ -238,22 +238,11 @@ that solve this properly.
 
 ### A. Expense Sorting
 
-Create a `frontend/src/components/ExpenseSorter.tsx` component that renders the `select` dropdown, with options
-to sort by date (newest/oldest first) or amount (highest/lowest first). `ExpenseSorter` doesn't hold the sort
-state itself — like `ExpenseAdd` in Exercise 3, it receives a callback prop (e.g.
-`onSortChange: (algorithm: (a: Expense, b: Expense) => number) => void`) and calls it when the user picks an
-option. `Home` is the one that owns the current sort state (via `useState`) and applies it — sorting is a
-concern of `Home`, `ExpenseSorter` is just the UI for picking one. Keep the comparator functions themselves
-somewhere that isn't co-exported from the same file as the component (e.g. inline in `Home`, or in a small
-separate module) — exporting a non-component value alongside a component from the same file triggers an oxlint
-`only-export-components` warning.
+Create a `frontend/src/components/ExpenseSorter.tsx` component that renders the `select` dropdown, with options to sort by date (newest/oldest first) or amount (highest/lowest first). `ExpenseSorter` doesn't hold the sort state itself — like `ExpenseAdd` in Exercise 3, it receives a callback prop (e.g. `onSortChange: (algorithm: (a: Expense, b: Expense) => number) => void`) and calls it when the user picks an option. `Home` is the one that owns the current sort state (via `useState`) and applies it — sorting is a concern of `Home`, `ExpenseSorter` is just the UI for picking one. Keep the comparator functions themselves somewhere that isn't co-exported from the same file as the component (e.g. inline in `Home`, or in a small separate module) — exporting a non-component value alongside a component from the same file triggers an oxlint `only-export-components` warning.
 The sorting should persist until the user changes the selection or refreshes the page.
 
-> **Warning**: This is a tricky exercise. If you store the sorting *function* itself in `useState` — either as
-> its initial value or via the setter — you may see the page go blank with an error about reading a property of
-> `undefined`. This isn't a bug in your sorting logic: it's specifically how `useState` treats function
-> arguments. Before guessing at a fix, read React's own explanation of this exact situation:
-> [useState – "I'm trying to set state to a function, but it gets called instead"](https://react.dev/reference/react/useState#im-trying-to-set-state-to-a-function-but-it-gets-called-instead).
+> **Warning**: This is a tricky exercise. If you store the sorting *function* itself in `useState` — either as its initial value or via the setter — you may see the page go blank with an error about reading a property of `undefined`.
+> This isn't a bug in your sorting logic: it's specifically how `useState` treats function arguments. Before guessing at a fix, read React's own explanation of this exact situation: [useState – "I'm trying to set state to a function, but it gets called instead"](https://react.dev/reference/react/useState#im-trying-to-set-state-to-a-function-but-it-gets-called-instead).
 
 ## Summary
 

@@ -92,13 +92,18 @@ Note the continuous evaluation is final (no way to represent it in August).
 
 ## Agenda (1/2)
 
-- Week 1 (19/09): Web 2 Recap
-- Week 2 (26/09): Deploy and Persistance
-- Week 3 (03/10): Navigation and Style
-- Week 4 (10/10): Advanced state
-- Week 5 (17/10): GraphQL
+- Week 1 (18/09): Refresh: Web 2 Recap
+- Week 2 (25/09): Deploy and Persistance
+- Week 3 (02/10): Validation, errors and the Unhappy path
+- Week 4 (09/10): Async - 1: tasks
+- Week 5 (16/10): Async - 2: PubSub
   - 🎯 Projects groups & topics done
-- Week 6 (24/10): Validation, errors and the Unhappy path <!-- TOFIX: we talk about moving this to week 2. -->
+- Week 6 (23/10): GraphQL 1
+- Week 7 (06/11): GraphQL 2
+- Week 8 (13/11): Projects Preparation
+  - 🎯 Projects Submission done
+- Week 9 (20/11): Projects Presentation
+- Week 10 (27/11): Dry Exam
 
 ---
 

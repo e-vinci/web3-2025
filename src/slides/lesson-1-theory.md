@@ -188,6 +188,7 @@ dev VS start :
 - define in package.json in "scripts" section
 - dev : uses nodemon to watch for changes, could "rebuild" the server and restart the server, very useful for development but quite resource consuming
 - start : just runs the server on "build" files -> JS
+- note: node24+ can run ts files directly, no need to compile to js anymore
 -->
 
 What does it actually do on our own computer?

@@ -86,7 +86,9 @@ Note the continuous evaluation is final (no way to represent it in August).
 - There will be no AI nor Internet at your disposal but any code you write will not be evaluated on being runnable.
 - We're going to practice this every week together -->
 
-**We need to define what the exam will be.**
+Oral exam: you will have to justify and explain some problems and your solutions based on a concret case study.
+
+Example: a PR with some errors, one of the lesson will be to identify the problem and explain how to fix it (what's cors: where do we need to configure that? when and why choosingh GraphQL? What would be my planning if I want to migrate to websocket? etc.).
 
 ---
 
@@ -105,11 +107,11 @@ Note the continuous evaluation is final (no way to represent it in August).
 - Week 9 (20/11): Projects Presentation
 - Week 10 (27/11): Dry Exam
 
----
+<!-- ---
 
 ## Agenda (2/2)
 
-TBD
+TBD -->
 
 
 ---

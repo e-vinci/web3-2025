@@ -21,7 +21,8 @@
     "check:prettier": "prettier --check .",
     "fix": "npm run fix:eslint && npm run fix:prettier",
     "fix:eslint": "eslint --fix .",
-    "fix:prettier": "prettier -w ."
+    "fix:prettier": "prettier -w .",
+    "generate:slides": "npx @marp-team/marp-cli@latest --input-dir src/slides/  --pptx --parallel 1"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",

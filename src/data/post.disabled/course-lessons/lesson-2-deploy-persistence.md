@@ -1,7 +1,7 @@
 ---
 title: 'Lesson 2 – Deploy and persistence'
 description: 'Deploying and improving our collaborative expense-sharing application by switching to an actual database.'
-publishDate: 2025-09-26T00:00:00Z
+publishDate: 2026-09-26T00:00:00Z
 excerpt: 'Refresh React and Express knowledge while building the foundation for a collaborative expense-sharing app with TypeScript, Vite, and modular backend architecture.'
 tags:
   - react
@@ -38,6 +38,7 @@ Last week we started a new full stack app, brushing off last year course of Reac
 - [Prisma ORM (Official Docs)](https://www.prisma.io/docs/orm/overview/introduction/what-is-prisma)
 - [React Hook Forms](https://react-hook-form.com/)
 - [Zod Intro](https://zod.dev/)
+- [Rules of React](https://react.dev/reference/rules)
 
 ## Exercises
 
@@ -69,6 +70,8 @@ app.use(
 ```
 
 - Make sure your application is still working. Then commit and push to your github repo, we will only deploy code available there.
+
+<!-- Should we say something about NOT adding the .env file to git? -->
 
 ### 2. Render projects setup
 

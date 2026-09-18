@@ -4,21 +4,17 @@ interface ExpenseItemProps {
   expense: Expense;
 }
 
-export default function ExpenseItem({ expense }: ExpenseItemProps) {
+function ExpenseItem({ expense }: ExpenseItemProps) {
+  const formattedDate = new Date(expense.date).toLocaleDateString();
+
   return (
-    <div>
-      <div>
-        <strong>Date:</strong> {expense.date}
-      </div>
-      <div>
-        <strong>Description:</strong> {expense.description}
-      </div>
-      <div>
-        <strong>Payer:</strong> {expense.payer}
-      </div>
-      <div>
-        <strong>Amount:</strong> ${expense.amount.toFixed(2)}
-      </div>
-    </div>
+    <li className="expense-item">
+      <span className="expense-item__date">{formattedDate}</span>
+      <span className="expense-item__description">{expense.description}</span>
+      <span className="expense-item__payer">{expense.payer}</span>
+      <span className="expense-item__amount">${expense.amount.toFixed(2)}</span>
+    </li>
   );
 }
+
+export default ExpenseItem;

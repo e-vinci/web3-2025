@@ -19,12 +19,5 @@
     "description": "Example expense #3 from Alice",
     "payer": "Alice",
     "amount": 2
-  },
-  {
-    "id": "1758264866664",
-    "date": "2025-09-19T06:54:26.647Z",
-    "description": "Random Expense 1758264866647",
-    "payer": "Bob",
-    "amount": 80.94
   }
 ]

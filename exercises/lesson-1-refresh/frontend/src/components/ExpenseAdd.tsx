@@ -4,26 +4,35 @@ interface ExpenseAddProps {
   addExpense: (expense: Expense) => void;
 }
 
-export default function ExpenseAdd({ addExpense }: ExpenseAddProps) {
-  const onAdd = () => {
-    const id = Date.now().toString();
-    const date = new Date().toISOString();
-    const description = `Random Expense ${id}`;
-    const payer = Math.random() < 0.5 ? 'Alice' : 'Bob';
-    const amount = parseFloat((Math.random() * 100).toFixed(2));
+const PAYERS = ['Alice', 'Bob'];
 
-    addExpense({
+function randomPayer(): string {
+  return PAYERS[Math.floor(Math.random() * PAYERS.length)];
+}
+
+function randomAmount(): number {
+  // Round to cents so we never end up with more than 2 decimal digits.
+  return Math.round(Math.random() * 100 * 100) / 100;
+}
+
+function ExpenseAdd({ addExpense }: ExpenseAddProps) {
+  function handleAddClick() {
+    const id = Date.now().toString();
+    const newExpense: Expense = {
       id,
-      date,
-      description,
-      payer,
-      amount,
-    });
-  };
+      date: new Date().toISOString(),
+      description: `New expense ${id}`,
+      payer: randomPayer(),
+      amount: randomAmount(),
+    };
+    addExpense(newExpense);
+  }
 
   return (
-    <div>
-      <button onClick={onAdd}>Add</button>
-    </div>
+    <button type="button" onClick={handleAddClick}>
+      Add
+    </button>
   );
 }
+
+export default ExpenseAdd;

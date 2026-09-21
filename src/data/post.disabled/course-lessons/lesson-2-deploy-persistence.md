@@ -151,6 +151,8 @@ Use the following command to initialize Prisma ORM:
 npx prisma orm init --write-env
 ```
 
+Follow the instructions to select the database type (PostgreSQL), set the Prisma as the language of the schema file, the schema file will be in `/src/prisma`, allow the re-installing `prisma.config` and finally allow the creation of the `.env` files.
+
 The three install commands above do the following:
 - `npm install --save-dev prisma` — installs the Prisma v8 CLI
 - `npm install @prisma/orm-postgres` — installs the PostgreSQL runtime adapter (in Prisma v8, the database is selected by installing the right adapter package)

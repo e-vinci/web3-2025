@@ -105,11 +105,12 @@ Go under the Environment tab on render, add a variable `VITE_API_URL` and put th
 
 **Congrats**: You got yourself a working production application. From now on we'll redeploy with each new push (render will do that itself) - so remember to test your application in production, not only locally.
 
-### 2. Install Prisma
+### 3. Install Prisma
 
 **Goal**: Replace our JSON files with a proper database managed using the Prisma ORM. We'll also add a Postgresql database to our infrastructure
+<!-- still usefull ?? -->
 
-Remember this thing about having to restart the server with each change? Let's fix it before going further
+<!-- Remember this thing about having to restart the server with each change? Let's fix it before going further
 
 - install nodemon with `npm i -g nodemon`  , `-g` means "global" ie that this will be installed at your user level, not in the project's `node_modules` folder
 - start your server with `nodemon` instead of `node`. Add a `dev` script in `package.json`. We do not want to change the start script because it is used in production where nodemon is not installed. 
@@ -123,39 +124,135 @@ Remember this thing about having to restart the server with each change? Let's f
 
 **Note: Nodemon have nothing to do with Express - it will work the same on any other commands, in javascript or other languages**
 
-> From the trenches: This is called "DX" - improving the Developer eXperience (versus UX for example) - it make a lot of sense to progressively improve our processes and tools to make our work easier or faster. They should end-up helping the end user too (thanks to faster or better features).
+> From the trenches: This is called "DX" - improving the Developer eXperience (versus UX for example) - it make a lot of sense to progressively improve our processes and tools to make our work easier or faster. They should end-up helping the end user too (thanks to faster or better features). -->
 
 - Install Prisma and run the setup (be careful to run this in the `backend` folder) :
 
 ```bash
-npm install prisma --save-dev
-npx prisma init
+npm install --save-dev prisma
+npm install @prisma/orm-postgres
 ```
 
-This last command has two noticeable effects : It has created the file `prisma/schema.prisma` where we will do most of our work, and it has added a line in `.env` for `DATABASE_URL`.
+<!--
+  What it did (prisma v8) :
+  - npm install @prisma/orm-postgres — selects PostgreSQL as the database adapter
+  - npx prisma orm init --write-env creates:
+    - prisma.config.ts — config file replacing generator/datasource blocks
+    - src/prisma/contract.prisma — contract file (renamed from schema.prisma)
+    - src/prisma/db.ts — the typed database client
+    - .env with a DATABASE_URL placeholder
+  - package.json -> script : `"postinstall": "prisma skills sync || exit 0"` for AI agent skills
+-->
 
-The default `DATABASE_URL` will work with a local version of postgres which you can start with the command: `npx prisma dev`. 
+We are going to init the ORM (Object-Relational Mapping) with Prisma. This will allow us to interact with our database in a type-safe way.
+Use the following command to initialize Prisma ORM:
 
-Try it now, and then run the command `npx prisma db pull` which should tell you the db is empty.
+```bash
+npx prisma orm init --write-env
+```
 
-> Using `npx prisma dev` for running a local database in development is the easiest approach but it relies on [pglite](https://pglite.dev/) and autodownloading from prisma. A more reliable approach is to use a proper PG database, either the one hosted by the school for which you have received access, or you can install postgresql locally quite easily, which is what most engineer do. A third option is using [docker](https://hub.docker.com/_/postgres) 
+The three install commands above do the following:
+- `npm install --save-dev prisma` — installs the Prisma v8 CLI
+- `npm install @prisma/orm-postgres` — installs the PostgreSQL runtime adapter (in Prisma v8, the database is selected by installing the right adapter package)
+- `npx prisma orm init --write-env` — sets up the project structure and creates:
+  - `prisma.config.ts` — the configuration file (replaces the old `datasource db { ... }` and `generator client { ... }` blocks from Prisma v7)
+  - `src/prisma/contract.prisma` — the **contract** file where you define your models (replaces `schema.prisma`; same concept, renamed)
+  - `src/prisma/db.ts` — the typed database client you will import in your application code
+  - `.env` — with a `DATABASE_URL` placeholder
+
+In Prisma v8, the schema file is called a **contract** (`contract.prisma`). The name change reflects that it is a formal, verifiable contract between your code and your database.
+
+The `prisma.config.ts` now holds the database connection — the connection string is no longer inside the contract file:
+
+```typescript
+import "dotenv/config";
+import { definePrismaConfig } from "prisma/config";
+import { defineConfig as ormConfig } from "@prisma/orm-postgres/config";
+
+export default definePrismaConfig({
+  orm: ormConfig({
+    contract: "./src/prisma/contract.prisma",
+    db: {
+      connection: process.env.DATABASE_URL!,
+    },
+  }),
+});
+```
+
+#### 3.1 local db
+
+We're going to run a **local** PostgreSQL database using Docker. This is the recommended approach — it gives you a proper, production-equivalent database without installing PostgreSQL globally on your machine.
+
+Make sure you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+
+Create a `docker-compose.yml` file in your `backend` folder:
+
+```yaml
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: myUSER
+      POSTGRES_PASSWORD: myPASSWORD
+      POSTGRES_DB: expenso
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+```
+
+The `./data/postgres` bind mount stores database files directly in your project folder. Make sure to add it to your `.gitignore` so it is never committed:
+
+```
+data/
+```
+
+Update the `DATABASE_URL` in your `backend/.env` to point to this local Docker database:
+
+```
+DATABASE_URL="postgresql://myUSER:myPASSWORD@localhost:5432/expenso"
+```
+
+Start the database in the same directory as the `docker-compose.yml` file:
+
+```bash
+docker compose up -d
+```
+
+Verify it is running:
+
+```bash
+docker compose ps
+```
+
+> From the trenches: Docker containers are great for local development because they isolate the database from your system, they're easy to start and stop, and they closely match production environments. Every developer on the team runs the exact same database version with the same configuration — no more "it works on my machine". You can stop the database at any time with `docker compose down` and restart it later; your data is persisted in the `postgres_data` named volume. To reset everything to a clean state, use `docker compose down -v`.
+
+> **Note:** `docker-compose.yml` is for local development only — Render does not use it. In production, Render provides its own managed PostgreSQL service.
+
+- Confirm you can connect to both the local Docker DB using any DB tool (if you don't have any, install the [vscode postgres extension](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-pgsql)).
+
+#### 3.2 render db
 
 - Create a new free postgres database on Render and get the external url once done.
 
-- Add a `DATABASE_URL` environment variable in your **backend** service in render. Now you will use your local database when developping locally, and the production database in production. 
+- Add a `DATABASE_URL` environment variable in your **backend** service in render. Now you will use your local Docker database when developing locally, and the production Render database in production.
 
-- Notice how the frontend environments knows the API URL and the backend knows the Database URL. The frontend DOES NOT know the Database URL.
+- Notice how the frontend environment knows the API URL and the backend knows the Database URL. The frontend DOES NOT know the Database URL.
 
-- Confirm you can easily connect to the Render DB using any DB tool (if you don't have any, install the [vscode postgres extension](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-pgsql)).
 
-> From the trenches: We always want the know that the connection is working properly before doing any work. This means that if we get an error message while connecting to the DB via the app it's related to the app - as we know the DB is working. Generally: try to solve problems part by part to avoid situation where an error can have multiple causes.
+> From the trenches: We always want to know that the connection is working properly before doing any work. This means that if we get an error message while connecting to the DB via the app it's related to the app — as we know the DB itself is working. Generally: try to solve problems part by part to avoid situations where an error can have multiple causes.
+
+- validate your render database connection with the same tool you used for the local database (e.g. vscode postgres extension or something similar).
 
 
 ### 3. A first model
 
-Prisma (like JPA) allow you to manage your whole data structure from your code. We're going to create a table to store our Expenses. This is done in the `schema.prisma` file:
+Prisma (like JPA) allow you to manage your whole data structure from your code. We're going to create a table to store our Expenses. This is done in the `src/prisma/contract.prisma` file:
 
 ```prisma
+// use prisma-8
+
 model Expense {
   id          Int      @id @default(autoincrement())
   date        DateTime @default(now())
@@ -165,50 +262,66 @@ model Expense {
 }
 ```
 
-We can declare our "models" in that file and have prisma create the tables accordingly:
+Note the `// use prisma-8` comment at the top — this is required for the Prisma editor extension to recognize the file. The basic model field types (`Int`, `Float`, `String`, `DateTime`) are unchanged from Prisma v7.
+
+We can declare our "models" in that file and have Prisma create the tables accordingly. On a fresh (empty) database, run:
 
 ```bash
-npx prisma db push
+npx prisma db init
 ```
 
-This is the opposite of the pull command:
+This creates the tables for your contract. After that, whenever you modify the contract, use `npx prisma db update` to apply the changes to the existing database.
 
-- `pull` updates the model file (`schema.prisma`) from the database content
-- `push` updates the database from the model
+In Prisma v8, the equivalent commands are:
+- `prisma contract infer` — reads an existing database and writes a draft contract (replaces v7's `db pull`)
+- `prisma db init` — creates tables in an **empty** database from the contract (first time only)
+- `prisma db update` — applies contract changes to an **existing** database (replaces v7's `db push`)
 
-We should normally mostly "push" (ie: the model file should be the source of truth). There is a better way to work on this (migrations) - but let's keep it simple for now.
+We should normally work from the contract file as the source of truth. There is a better way to handle changes (migrations) — but let's keep it simple for now.
 
 Connect to the db and check the Expense table.
 
-> Tips: You can use `npx prisma studio` for viewing your current db data. This is a good addition to a psql client as it will also validates your configuration and schema.
+> Tips: In Prisma v8, `npx prisma studio` is not available from the CLI. Use a database client tool instead (such as the [VS Code postgres extension](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-pgsql)) to browse your data and validate your setup.
 
 ### 4. Data and queries
 
-Aside from synchronizing with the database, the schema is also used by Prisma to generate client code:
+Aside from synchronizing with the database, the contract is also used by Prisma to generate typed client files. Run the following after every change to the contract:
 
 ```bash
-npx prisma generate --no-engine
+npx prisma contract emit
 ```
 
-You should see a new `/generated` folder - as this is generated code, we should never update it manually - see it as a library, even if it's in the repository. This is the "client" code as in code that allows you to interact with the database using JavaScript.
+This writes two files next to your contract (in `src/prisma/`):
+- `contract.json` — the contract as a machine-readable JSON document
+- `contract.d.ts` — TypeScript types for all your models
 
-We're going to test it using a simple `db-read.js` file to ensure our prisma client has been properly generated.
+Unlike Prisma v7, these files **should be committed to version control** — they are not environment-specific. The `src/prisma/db.ts` file (created by `orm init`) imports them and exposes the `db` object you use in your code:
 
-```javascript
-const { PrismaClient } = require('./generated/prisma');
+```typescript
+import "dotenv/config";
+import postgres from "@prisma/orm-postgres/runtime";
+import type { Contract } from "./contract.d";
+import contractJson from "./contract.json" with { type: "json" };
 
-const prisma = new PrismaClient();
+export const db = postgres<Contract>({
+  contractJson,
+  url: process.env.DATABASE_URL!,
+});
+```
+
+We're going to test it using a simple `db-read.ts` file to ensure our database client has been properly set up.
+
+```typescript
+import { db } from './src/prisma/db';
 
 async function main() {
-  const expenses = await prisma.expense.findMany();
+  const expenses = await db.orm.public.Expense.all();
   console.log(expenses);
 }
 
 main()
-  .finally(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
+  .then(() => process.exit(0))
+  .catch((e) => {
     console.error(e);
     process.exit(1);
   });
@@ -216,20 +329,21 @@ main()
 
 The important piece is the main function and especially:
 
-```javascript
-const expenses = await prisma.expense.findMany();
+```typescript
+const expenses = await db.orm.public.Expense.all();
 ```
 
-This is using our generated code - thanks to the schema, prisma was able to generate methods for the "expense" model.
-Run the script and check the result:
+In Prisma v8, `db.orm.public.Expense` is how you access the `Expense` model — `public` is the PostgreSQL schema (namespace) where the table lives. `.all()` replaces v7's `findMany()`.
+
+Run the script and check the result (you need `tsx` to run TypeScript files directly — install it once with `npm install --save-dev tsx`):
 
 ```bash
-node db-read.js
+npx tsx db-read.ts
 ```
 
 What's the output? Why?
 
-- create a separate script called "db-populate.js" to populate our database with the same data we had in the json. This can be done with the [create](https://www.prisma.io/docs/orm/prisma-client/queries/crud#create) method (or the similar `createMany`).
+- create a separate script called "db-populate.ts" to populate our database with the same data we had in the json. This can be done with the [create](https://www.prisma.io/docs/orm/fundamentals/writing-data#create) method (or the similar `createAll` for multiple records). Run it with `npx tsx db-populate.ts`.
 - run and test that the records are properly created (how?)
 
 > From the trenches: Reading things and showing them is usually much easier than creating them (no forms, validation, etc). So it generally make sense to start an application with screens that show list of objects. As we saw here, we can easily create what we need using some basic scripting - which allow us to go very quickly to actual results on the screen, as we'll see in the next section.
@@ -244,11 +358,11 @@ We have all the pieces to show actual data on the screens:
 
 So let's go:
 
-- Replace the `getAllExpenses()`'s content by a call to `findMany()` (if you implemented sorting last week you may have to update it here too)
-- Replace the `addExpense()` by a call to `create()`
+- Replace the `getAllExpenses()`'s content by a call to `db.orm.public.Expense.all()` (if you implemented sorting last week you may have to update it — check the [orderBy](https://www.prisma.io/docs/orm/fundamentals/reading-data#sorting) equivalent)
+- Replace the `addExpense()` by a call to `db.orm.public.Expense.create({...})` (note: in Prisma v8 there is no `data` wrapper — pass the fields directly)
 - Check that the whole cycle is working as expected (from the screen to the database and back)
 
-> Warning: most of prisma's methods are asynchronous - make sure you return actual results, or await for them.
+> Warning: most of Prisma's methods are asynchronous — make sure you return actual results, or await for them.
 
 Looks like a good time to push and deploy.
 Check that everything works fine on render.
@@ -257,14 +371,22 @@ You may encounter these two issues :
 
 - if you have a cors error, remember to allow your backend to serve request from your frontend in `app.js`.
 
-- If it complains about `generated/prisma` not being present, it's because it is in the `.gitignore`. This is on purpose and you need to update your render setting to use the following build command: `npm install && npx prisma generate --no-engine`. Make a new "build" script in your `package.json` for keeping things easy.
+- The `contract.json` and `contract.d.ts` files should be committed to your repository (unlike Prisma v7's generated folder). However, you still need to run `prisma contract emit` as part of the build to ensure they are up to date. Add a `build` script in your `package.json`:
+
+```json
+"scripts": {
+  "build": "npm install && npx prisma contract emit",
+  "dev": "nodemon npm start",
+  "start": "node ./bin/www"
+}
+```
 
 Update your build command on render to `npm run build`.
-Update your start command for updating your DB schema as needed: `npx prisma db push && npm start`. We should use pre-start command for this (and rollback the deploy if it fails) but this feature is only available to paid plans.
+Update your start command to apply any DB schema changes: `npx prisma db update && npm start`. We should use a pre-start command for this (and rollback the deploy if it fails) but this feature is only available on paid plans.
 
-> Why is the generated code in .gitignore ? Because the generated depends on the database which it connects to, and therefore needs to be regenerated with the proper environment variables. 
+> In Prisma v8, `contract.json` and `contract.d.ts` are **not** environment-specific and should be committed to git. The `db.ts` file is also committed. However, running `prisma contract emit` in the build step ensures the contract files are always in sync with the current contract.
 
-`npx prisma db push` is great for prototyping a database but quite dangerous in production. In future lessons we will use migrations for controlling exacly how to evolve the database when adding new features. If you're already interested in going from prototyping to migration, you can read about it [here](https://www.prisma.io/docs/orm/prisma-migrate/workflows/prototyping-your-schema).
+`npx prisma db update` is great for prototyping a database but can be risky in production. In future lessons we will use migrations for controlling exactly how to evolve the database when adding new features. If you're already interested in going from prototyping to migration, you can read about it [here](https://www.prisma.io/docs/orm/migrations/generating-a-migration).
 
 ### 6. A basic form
 

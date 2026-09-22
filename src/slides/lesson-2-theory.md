@@ -92,29 +92,32 @@ DATABASE_URL=postgres://user:pass@host:port/db
 
 ## Prisma: Modern TypeScript ORM
 
-- **Code Generation**: Generates a type-safe client based on your schema.
-- **Schema as Source of Truth**: Edit `schema.prisma`, then generate code.
-- **Push/Pull CLI**:
-  - `prisma db push`: Update DB schema from your code,
-  - `prisma db pull`: Update your code from the DB schema.
+- **Type Emission**: Emits a type-safe client from your contract (`contract.prisma`).
+- **Contract as Source of Truth**: Edit `contract.prisma`, then emit types.
+- **Init/Update/Infer CLI**:
+  - `prisma db init`: Create DB tables from your contract (first time, empty DB),
+  - `prisma db update`: Update existing DB tables to match your contract,
+  - `prisma contract infer`: Draft a contract from an existing DB.
 - **Migration**: Version and apply schema changes.
 - **Great DX**: Autocomplete, type safety, easy to use.
 
 ```bash
-npx prisma db push   # Push schema changes to DB
-npx prisma db pull   # Pull DB schema into code
-npx prisma generate  # Generate client code
+npx prisma db init           # Create tables (first time, empty DB)
+npx prisma db update         # Update DB tables to match contract
+npx prisma contract infer    # Infer contract from existing DB
+npx prisma contract emit     # Emit client types from contract
 ```
 
 ---
 
 ```prisma
+// use prisma-8
 model Expense {
-  id        Int      @id @default(autoincrement())
-  date      String
+  id          Int    @id @default(autoincrement())
+  date        TimestamptzString
   description String
-  amount    Float
-  paidBy    String
+  amount      Float
+  paidBy      String
   participants String
 }
 ```

@@ -257,7 +257,7 @@ Prisma (like JPA) allow you to manage your whole data structure from your code. 
 
 model Expense {
   id          Int      @id @default(autoincrement())
-  date        DateTime @default(now())
+  date        TimestamptzString @default(now())
   description String
   payer       String
   amount      Float
@@ -291,13 +291,14 @@ Aside from synchronizing with the database, the contract is also used by Prisma 
 
 ```bash
 npx prisma contract emit
+npx prisma db update
 ```
 
 This writes two files next to your contract (in `src/prisma/`):
 - `contract.json` — the contract as a machine-readable JSON document
 - `contract.d.ts` — TypeScript types for all your models
 
-Unlike Prisma v7, these files **should be committed to version control** — they are not environment-specific. The `src/prisma/db.ts` file (created by `orm init`) imports them and exposes the `db` object you use in your code:
+These files **should be committed to version control** — they are not environment-specific. The `src/prisma/db.ts` file (created by `orm init`) imports them and exposes the `db` object you use in your code:
 
 ```typescript
 import "dotenv/config";
@@ -314,7 +315,7 @@ export const db = postgres<Contract>({
 We're going to test it using a simple `db-read.ts` file to ensure our database client has been properly set up.
 
 ```typescript
-import { db } from './src/prisma/db';
+import { db } from './src/prisma/db.ts';
 
 async function main() {
   const expenses = await db.orm.public.Expense.all();
@@ -335,17 +336,17 @@ The important piece is the main function and especially:
 const expenses = await db.orm.public.Expense.all();
 ```
 
-In Prisma v8, `db.orm.public.Expense` is how you access the `Expense` model — `public` is the PostgreSQL schema (namespace) where the table lives. `.all()` replaces v7's `findMany()`.
+In Prisma, `db.orm.public.Expense` is how you access the `Expense` model — `public` is the PostgreSQL schema (namespace) where the table lives.
 
-Run the script and check the result (you need `tsx` to run TypeScript files directly — install it once with `npm install --save-dev tsx`):
+Run the script and check the result: 
 
 ```bash
-npx tsx db-read.ts
+node db-read.ts
 ```
 
 What's the output? Why?
 
-- create a separate script called "db-populate.ts" to populate our database with the same data we had in the json. This can be done with the [create](https://www.prisma.io/docs/orm/fundamentals/writing-data#create) method (or the similar `createAll` for multiple records). Run it with `npx tsx db-populate.ts`.
+- create a separate script called "db-populate.ts" to populate our database with the same data we had in the json. This can be done with the [create](https://www.prisma.io/docs/orm/fundamentals/writing-data#create) method (or the similar `createAll` for multiple records). Run it with `node db-populate.ts`.
 - run and test that the records are properly created (how?)
 
 > From the trenches: Reading things and showing them is usually much easier than creating them (no forms, validation, etc). So it generally make sense to start an application with screens that show list of objects. As we saw here, we can easily create what we need using some basic scripting - which allow us to go very quickly to actual results on the screen, as we'll see in the next section.
@@ -360,8 +361,8 @@ We have all the pieces to show actual data on the screens:
 
 So let's go:
 
-- Replace the `getAllExpenses()`'s content by a call to `db.orm.public.Expense.all()` (if you implemented sorting last week you may have to update it — check the [orderBy](https://www.prisma.io/docs/orm/fundamentals/reading-data#sorting) equivalent)
-- Replace the `addExpense()` by a call to `db.orm.public.Expense.create({...})` (note: in Prisma v8 there is no `data` wrapper — pass the fields directly)
+- In your expenses service, replace the `getAllExpenses()`'s content by a call to `db.orm.public.Expense.all()` (if you implemented sorting last week you may have to update it — check the [orderBy](https://www.prisma.io/docs/orm/fundamentals/reading-data#sorting) equivalent)
+- Replace the `addExpense()` by a call to `db.orm.public.Expense.create({...})`
 - Check that the whole cycle is working as expected (from the screen to the database and back)
 
 > Warning: most of Prisma's methods are asynchronous — make sure you return actual results, or await for them.
@@ -371,9 +372,9 @@ Check that everything works fine on render.
 
 You may encounter these two issues :
 
-- if you have a cors error, remember to allow your backend to serve request from your frontend in `app.js`.
+- if you have a cors error, remember to allow your backend to serve request from your frontend in `app.ts`.
 
-- The `contract.json` and `contract.d.ts` files should be committed to your repository (unlike Prisma v7's generated folder). However, you still need to run `prisma contract emit` as part of the build to ensure they are up to date. Add a `build` script in your `package.json`:
+- The `contract.json` and `contract.d.ts` files should be committed to your repository. However, you still need to run `prisma contract emit` as part of the build to ensure they are up to date. Add a `build` script in your `package.json`:
 
 ```json
 "scripts": {

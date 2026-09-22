@@ -378,7 +378,7 @@ You may encounter these two issues :
 
 ```json
 "scripts": {
-  "build": "npm install && npx prisma contract emit",
+  "build": "npm install && npx prisma contract emit && npx prisma db update",
   "dev": "nodemon npm start",
   "start": "node ./bin/www"
 }

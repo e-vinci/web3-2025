@@ -22,28 +22,28 @@ footer: 'Web 3 2025 - Vinci'
 
 ## Hosting: From Bare Metal to PaaS
 
-- **Bare Metal**: Physical servers you manage yourself
-- **Virtual Machines (IaaS)**: Cloud providers (AWS EC2, Azure VM) give you virtual servers (you get the machine & the OS, rest is on you)
-- **Containers (CaaS)**: Run your app in containers (Docker, Kubernetes)
-- **Platform as a Service (PaaS)**: Providers like Render, Heroku, Vercel manage the platform for you (easy deploy, scaling, SSL, etc)
-- **Managed Database**: A database service (Postgres, MySQL, MongoDB, etc) where the provider handles backups, scaling, security, and updates for you
+- **Bare Metal**: Physical servers you manage yourself in your office.
+- **Virtual Machines (IaaS)**: Cloud providers (AWS EC2, Azure VM) give you virtual servers (you get the machine & the OS, rest is on you).
+- **Containers (CaaS)**: Run your app in containers (Docker, Kubernetes).
+- **Platform as a Service (PaaS)**: Providers like Render, Heroku, Vercel manage the platform for you (easy deploy, scaling, SSL, etc).
+- **Managed Database**: A database service (Postgres, MySQL, MongoDB, etc) where the provider handles backups, scaling, security, and updates for you.
 
 ---
 
-> In small teams, we want to focus our time on shipping feature. Infrastructure #1 perk is "can be put online in 30 minutes tops
+> In small teams, we want to focus our time on shipping feature. Infrastructure #1 perk is "can be put online in 30 minutes tops".
 
-> People are more expensive than servers. Anything that double your server cost but reduce dev hours of work is almost certainly a win, financially speaking
+> People are more expensive than servers. Anything that double your server cost but reduce dev hours of work is almost certainly a win, financially speaking.
 
 ---
 
 ## What is Render?
 
-- **PaaS**: Platform as a Service for web apps, APIs, static sites, and databases
-- **Features**: Easy Git-based deploys, free SSL, custom domains, background workers, cron jobs
-- **Managed Postgres**: One-click database setup, automatic backups
-- **Great for students and prototypes**: Free tier, simple UI
+- **PaaS**: Platform as a Service for web apps, APIs, static sites, and databases.
+- **Features**: Easy Git-based deploys, free SSL, custom domains, background workers, cron jobs.
+- **Managed Postgres**: One-click database setup, automatic backups.
+- **Great for students and prototypes**: Free tier, simple UI.
 
-> We selected it because they have a free tier that does not ask for a credit card, so good fit for us. There are limitation, but we'll live with them.
+> We selected it because they have a **free** tier that does not ask for a credit card, so good fit for us.
 
 [Render Documentation](https://render.com/docs)
 
@@ -51,9 +51,14 @@ footer: 'Web 3 2025 - Vinci'
 
 ## Environments & Environment Variables
 
-- **Local**: Your development machine (localhost)
-- **Production**: The live, public version of your app
-- **Environment Variables**: Key-value pairs (API keys, DB URLs, secrets) set outside your code
+We could differentiate between different environments:
+
+- **Local**: Your development machine (localhost) - dev only.
+- **Production**: The live, public version of your app.
+
+In order to configure each environment, we use **Environment Variables**:
+
+- **Environment Variables**: Key-value pairs (API keys, DB URLs, secrets) set outside your code.
 - **.env files**: Store environment variables for local dev, never commit secrets to git!
 
 > Same code, different data, different variables
@@ -72,44 +77,47 @@ DATABASE_URL=postgres://user:pass@host:port/db
 
 ## What is an ORM?
 
-- **Object-Relational Mapping**: Library that lets you interact with your database using objects and methods instead of SQL
+- **Object-Relational Mapping**: Library that lets you interact with your database using objects and methods instead of SQL.
 - **Pros**:
-  - Write less SQL, more readable code
-  - Type safety (with TypeScript)
-  - Easier migrations and schema changes
-  - Database-agnostic (switch DBs more easily)
+  - Write less SQL, more readable code,
+  - Type safety (with TypeScript),
+  - Easier migrations and schema changes,
+  - Database-agnostic (switch DBs more easily).
 - **Cons**:
-  - Can hide performance issues
-  - Sometimes less efficient for complex queries
-  - You still need to understand SQL (to debug, check performance, etc)
+  - Can hide performance issues,
+  - Sometimes less efficient for complex queries,
+  - You still need to understand SQL (to debug, check performance, etc).
 
 ---
 
 ## Prisma: Modern TypeScript ORM
 
-- **Code Generation**: Generates a type-safe client based on your schema
-- **Schema as Source of Truth**: Edit `schema.prisma`, then generate code
-- **Push/Pull CLI**:
-  - `prisma db push`: Update DB schema from your code
-  - `prisma db pull`: Update your code from the DB schema
-- **Migration**: Version and apply schema changes
-- **Great DX**: Autocomplete, type safety, easy to use
+- **Type Emission**: Emits a type-safe client from your contract (`contract.prisma`).
+- **Contract as Source of Truth**: Edit `contract.prisma`, then emit types.
+- **Init/Update/Infer CLI**:
+  - `prisma db init`: Create DB tables from your contract (first time, empty DB),
+  - `prisma db update`: Update existing DB tables to match your contract,
+  - `prisma contract infer`: Draft a contract from an existing DB.
+- **Migration**: Version and apply schema changes.
+- **Great DX**: Autocomplete, type safety, easy to use.
 
 ```bash
-npx prisma db push   # Push schema changes to DB
-npx prisma db pull   # Pull DB schema into code
-npx prisma generate  # Generate client code
+npx prisma db init           # Create tables (first time, empty DB)
+npx prisma db update         # Update DB tables to match contract
+npx prisma contract infer    # Infer contract from existing DB
+npx prisma contract emit     # Emit client types from contract
 ```
 
 ---
 
 ```prisma
+// use prisma-8
 model Expense {
-  id        Int      @id @default(autoincrement())
-  date      String
+  id          Int    @id @default(autoincrement())
+  date        TimestamptzString
   description String
-  amount    Float
-  paidBy    String
+  amount      Float
+  paidBy      String
   participants String
 }
 ```
@@ -122,9 +130,9 @@ model Expense {
 
 ## HTML Forms: The Basics
 
-- **Form**: Collects user input and sends it to the server
+- **Form**: Collects user input and sends it to the server.
 - **Elements**: `<form>`, `<input>`, `<select>`, `<button>`, etc.
-- **Submit**: Sends the data to server and handle response (usually redisplay or redirect)
+- **Submit**: Sends the data to server and handle response (usually redisplay or redirect).
 
 ```html
 <form action="/api/expenses" method="post">
@@ -138,11 +146,11 @@ model Expense {
 
 ## Why Forms Are Complex in React
 
-- **Interactivity**: React wants to control form state for instant feedback
-- **Controlled Components**: Each input's value is tied to React state
-- **Validation**: Must check user input before submit
+- **Interactivity**: React wants to control form state for instant feedback.
+- **Controlled Components**: Each input's value is tied to React state.
+- **Validation**: Must check user input before submit.
 - **Error Handling**: Show errors, disable submit, etc.
-- **Boilerplate**: Lots of code for even simple forms
+- **Boilerplate**: Lots of code for even simple forms.
 
 ---
 
@@ -150,19 +158,20 @@ model Expense {
 import { useState } from 'react';
 
 function ExpenseAdd() {
+  /* One state per input field */
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [errors, setErrors] = useState<{ description?: string; amount?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission
     const newErrors: typeof errors = {};
     if (!description) newErrors.description = 'Description required';
     if (!amount || parseFloat(amount) < 0.01) newErrors.amount = 'Amount required';
     setErrors(newErrors);
     if (Object.keys(newErrors).length === 0) {
       console.log({ description, amount: parseFloat(amount) });
-      // Reset form or send to API
+      // TODO: Reset form's values, then send to API
     }
   };
 
@@ -182,11 +191,13 @@ function ExpenseAdd() {
 
 ## Benefits of React Hook Form
 
-- **Less Boilerplate**: Register fields, get values, and validate with minimal code
-- **Performance**: Minimizes re-renders
-- **Easy Validation**: Integrates with libraries like Zod
-- **Better UX**: Built-in error handling, field-level validation
-- **Flexible**: Works with controlled and uncontrolled components
+`react-hook-form` is a popular **library** for handling forms in React.
+
+- **Less Boilerplate**: Register fields, get values, and validate with minimal code.
+- **Performance**: Minimizes re-renders.
+- **Easy Validation**: Integrates with libraries like Zod.
+- **Better UX**: Built-in error handling, field-level validation.
+- **Flexible**: Works with controlled and uncontrolled components.
 
 [React Hook Form Docs](https://react-hook-form.com/)
 
@@ -203,7 +214,7 @@ function ExpenseAdd() {
     handleSubmit,
     formState: { errors },
   } = useForm();
-  const onSubmit = (data) => console.log(data);
+  const onSubmit = (data) => console.log(data); // define what to do with validated data
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -232,7 +243,9 @@ function ExpenseAdd() {
 
 ## Introducing Zod: TypeScript-first Schema Validation
 
-- **Zod** is a TypeScript-first schema declaration and validation library
+`zod` is a popular **library** for schema validation in TypeScript.
+
+<!-- - **Zod** is a TypeScript-first schema declaration and validation library -->
 - **Why Zod?**
   - Type-safe validation for objects, forms, and APIs
   - Works great with React Hook Form

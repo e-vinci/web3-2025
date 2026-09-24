@@ -125,61 +125,19 @@ Go under the Environment tab on render, add a variable `VITE_API_URL` and put th
 ### 3. Install Prisma
 
 **Goal**: Replace our JSON files with a proper database managed using the Prisma ORM. We'll also add a Postgresql database to our infrastructure
-<!-- still usefull ?? -->
-
-<!-- Remember this thing about having to restart the server with each change? Let's fix it before going further
-
-- install nodemon with `npm i -g nodemon`  , `-g` means "global" ie that this will be installed at your user level, not in the project's `node_modules` folder
-- start your server with `nodemon` instead of `node`. Add a `dev` script in `package.json`. We do not want to change the start script because it is used in production where nodemon is not installed. 
-
-```json
-  "scripts": {
-    "dev": "nodemon npm start",
-    "start": "node ./bin/www"
-  },
-```
-
-**Note: Nodemon have nothing to do with Express - it will work the same on any other commands, in javascript or other languages**
-
-> From the trenches: This is called "DX" - improving the Developer eXperience (versus UX for example) - it make a lot of sense to progressively improve our processes and tools to make our work easier or faster. They should end-up helping the end user too (thanks to faster or better features). -->
-
-- Install Prisma and run the setup (be careful to run this in the `backend` folder) :
-
-```bash
-npm install --save-dev prisma
-npm install @prisma/orm-postgres
-```
-
-<!--
-  What it did (prisma v8) :
-  - npm install @prisma/orm-postgres — selects PostgreSQL as the database adapter
-  - npx prisma orm init --write-env creates:
-    - prisma.config.ts — config file replacing generator/datasource blocks
-    - src/prisma/contract.prisma — contract file (renamed from schema.prisma)
-    - src/prisma/db.ts — the typed database client
-    - .env with a DATABASE_URL placeholder
-  - package.json -> script : `"postinstall": "prisma skills sync || exit 0"` for AI agent skills
--->
-
-We are going to init the ORM (Object-Relational Mapping) with Prisma. This will allow us to interact with our database in a type-safe way.
-Use the following command to initialize Prisma ORM:
-
-```bash
-npx prisma orm init --write-env
-```
 
 Follow the instructions to select the database type (PostgreSQL), set the Prisma as the language of the schema file, the schema file will be in `/src/prisma`, allow the re-installing `prisma.config` and finally allow the creation of the `.env` files.
 
 The three install commands above do the following:
 - `npm install --save-dev prisma` — installs the Prisma v8 CLI
-- `npm install @prisma/orm-postgres` — installs the PostgreSQL runtime adapter (in Prisma v8, the database is selected by installing the right adapter package)
+- `npm install @prisma/orm-postgres` — installs the PostgreSQL runtime adapter
 - `npx prisma orm init --write-env` — sets up the project structure and creates:
-  - `prisma.config.ts` — the configuration file (replaces the old `datasource db { ... }` and `generator client { ... }` blocks from Prisma v7)
+  - `prisma.config.ts` — the configuration file
   - `src/prisma/contract.prisma` — the **contract** file where you define your models (replaces `schema.prisma`; same concept, renamed)
   - `src/prisma/db.ts` — the typed database client you will import in your application code
   - `.env` — with a `DATABASE_URL` placeholder
 
-In Prisma v8, the schema file is called a **contract** (`contract.prisma`). The name change reflects that it is a formal, verifiable contract between your code and your database.
+In Prisma, the schema file is called a **contract** (`contract.prisma`). The name change reflects that it is a formal, verifiable contract between your code and your database.
 
 The `prisma.config.ts` now holds the database connection — the connection string is no longer inside the contract file:
 
@@ -281,7 +239,7 @@ model Expense {
 }
 ```
 
-Note the `// use prisma-8` comment at the top — this is required for the Prisma editor extension to recognize the file. The basic model field types (`Int`, `Float`, `String`, `DateTime`) are unchanged from Prisma v7.
+Note the `// use prisma-8` comment at the top — this is required for the Prisma editor extension to recognize the file.
 
 We can declare our "models" in that file and have Prisma create the tables accordingly. On a fresh (empty) database, run:
 
@@ -291,16 +249,11 @@ npx prisma db init
 
 This creates the tables for your contract. After that, whenever you modify the contract, use `npx prisma db update` to apply the changes to the existing database.
 
-In Prisma v8, the equivalent commands are:
-- `prisma contract infer` — reads an existing database and writes a draft contract (replaces v7's `db pull`)
-- `prisma db init` — creates tables in an **empty** database from the contract (first time only)
-- `prisma db update` — applies contract changes to an **existing** database (replaces v7's `db push`)
-
 We should normally work from the contract file as the source of truth. There is a better way to handle changes (migrations) — but let's keep it simple for now.
 
 Connect to the db and check the Expense table.
 
-> Tips: In Prisma v8, `npx prisma studio` is not available from the CLI. Use a database client tool instead (such as the [VS Code postgres extension](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-pgsql)) to browse your data and validate your setup.
+> Tips: In Prisma v8, use a database client tool (such as the [VS Code postgres extension](https://marketplace.visualstudio.com/items?itemName=ms-ossdata.vscode-pgsql)) to browse your data and validate your setup.
 
 ### 4. Data and queries
 
@@ -315,7 +268,7 @@ This writes two files next to your contract (in `src/prisma/`):
 - `contract.json` — the contract as a machine-readable JSON document
 - `contract.d.ts` — TypeScript types for all your models
 
-These files **should be committed to version control** — they are not environment-specific. The `src/prisma/db.ts` file (created by `orm init`) imports them and exposes the `db` object you use in your code:
+These files **must be committed to version control** — they are not environment-specific. The `src/prisma/db.ts` file (created by `orm init`) imports them and exposes the `db` object you use in your code:
 
 ```typescript
 import "dotenv/config";
@@ -402,9 +355,10 @@ You may encounter these two issues :
 ```
 
 Update your build command on render to `npm run build`.
-Update your start command to apply any DB schema changes: `npx prisma db update && npm start`. We should use a pre-start command for this (and rollback the deploy if it fails) but this feature is only available on paid plans.
 
-> In Prisma v8, `contract.json` and `contract.d.ts` are **not** environment-specific and should be committed to git. The `db.ts` file is also committed. However, running `prisma contract emit` in the build step ensures the contract files are always in sync with the current contract.
+Update your start command to apply any DB schema changes: `npx prisma db update && npm start`.
+
+> The files `contract.json` and `contract.d.ts` are **not** environment-specific and should be committed to git. The `db.ts` file is also committed. However, running `prisma contract emit` in the build step ensures the contract files are always in sync with the current contract.
 
 `npx prisma db update` is great for prototyping a database but can be risky in production. In future lessons we will use migrations for controlling exactly how to evolve the database when adding new features. If you're already interested in going from prototyping to migration, you can read about it [here](https://www.prisma.io/docs/orm/migrations/generating-a-migration).
 

@@ -1,7 +1,7 @@
 import type { Expense } from "../types/Expense";
 
 interface ExpenseAddProps {
-  expenseAdd: (expense: Expense) => void;
+  addExpense: (expense: Expense) => void;
 }
 
 function generateRandomExpense(): Expense {
@@ -14,10 +14,10 @@ function generateRandomExpense(): Expense {
   };
 }
 
-function ExpenseAdd({ expenseAdd }: ExpenseAddProps) {
+function ExpenseAdd({ addExpense }: ExpenseAddProps) {
   return <div>
     <h2>Add a new random Expense</h2>
-    <button onClick={() => expenseAdd(generateRandomExpense())}>Add</button>
+    <button onClick={() => addExpense(generateRandomExpense())}>Add</button>
   </div>;
 }
 

@@ -2,7 +2,7 @@ import type { Expense } from "../types/Expense";
 import ExpenseItem from "../components/ExpenseItem";
 import { useState, useEffect } from "react";
 import ExpenseAdd from "../components/ExpenseAdd";
-import { addExpense, getExpenses } from "../hooks/useExpenses";
+import useExpenses from "../hooks/useExpenses";
 import ExpenseReset from "../components/ExpenseReset";
 import ExpenseSorter from "../components/ExpenseSorter";
 
@@ -13,25 +13,23 @@ import ExpenseSorter from "../components/ExpenseSorter";
 // ];
 
 function Home() {
-  const [expensesList, setExpensesList] = useState<Expense[]>([]);
+  const { expenses, loading, error, addExpense, resetExpenses } = useExpenses();
   const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => () => 1);
-
-  useEffect(() => {
-    getExpenses().then((expenses) => setExpensesList(expenses));
-  }, []);
 
   const handleAlgoChange = (algo: (a: Expense, b: Expense) => number) => {
     setSortingAlgo(() => algo); // We're wrapping algo in a function because useState setter accept either a value or a function returning a value.
   };
 
+  const sortedExpenses = [...expenses].sort(sortingAlgo);
+
   return <div>
     <h1>Manage your expenses</h1>
-    <ExpenseAdd expenseAdd={(expense) => addExpense(expense).then((expenses) => setExpensesList(expenses))} />
-    <ExpenseReset setExpenses={setExpensesList}/>
+    <ExpenseAdd addExpense={addExpense} />
+    <ExpenseReset resetExpenses={resetExpenses}/>
     <h2>Your expenses</h2>
-    {expensesList.length > 0 && <ExpenseSorter setSortingAlgo={handleAlgoChange} />}
+    {sortedExpenses.length > 0 && <ExpenseSorter setSortingAlgo={handleAlgoChange} />}
     <ul>
-      {expensesList.sort(sortingAlgo).map((expense) => (
+      {sortedExpenses.map((expense) => (
         <li key={expense.id}>
           <ExpenseItem expense={expense} />
         </li>

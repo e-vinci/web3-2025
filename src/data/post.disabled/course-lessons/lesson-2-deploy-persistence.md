@@ -71,6 +71,23 @@ app.use(
 
 - Make sure your application is still working. Then commit and push to your github repo, we will only deploy code available there.
 
+---
+## Warning
+
+> Do NOT (please do NOT) commit your `.env` file to git.
+
+What should we do:
+
+- Add `.env` to your `.gitignore` file.
+- Create a `.env.example` file with placeholder values for the environment variables and give some documentation on what each variable is for.
+- Commit the `.env.example` file to git.
+
+We shall also do:
+
+- Create different `.env` files for each environment (development, staging, production) and add them to the `.gitignore` file.
+  - `.env.development`: fits your local development environment (db in docker, front and back on the same machine),
+  - `.env.production`: fits your production environment (SaaS, your entreprise installation).
+
 <!-- Should we say something about NOT adding the .env file to git? -->
 
 ### 2. Render projects setup

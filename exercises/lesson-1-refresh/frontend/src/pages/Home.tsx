@@ -1,19 +1,13 @@
 import type { Expense } from "../types/Expense";
 import ExpenseItem from "../components/ExpenseItem";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ExpenseAdd from "../components/ExpenseAdd";
 import useExpenses from "../hooks/useExpenses";
 import ExpenseReset from "../components/ExpenseReset";
 import ExpenseSorter from "../components/ExpenseSorter";
 
-// const expenses: Expense[] = [
-//   { id: "1", date: "2026-09-15", description: "Restaurant", payer: "John Doe", amount: 50 },
-//   { id: "2", date: "2026-09-16", description: "Groceries", payer: "Abdallah Doe", amount: 10.123 },
-//   { id: "3", date: "2026-09-17", description: "Coffee", payer: "Andrea Doe", amount: 5.5 },
-// ];
-
 function Home() {
-  const { expenses, loading, error, addExpense, resetExpenses } = useExpenses();
+  const { expenses, addExpense, resetExpenses } = useExpenses();
   const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => () => 1);
 
   const handleAlgoChange = (algo: (a: Expense, b: Expense) => number) => {

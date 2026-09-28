@@ -128,7 +128,7 @@ model Expense {
 
 > What we want to achieve: automatically reproduce a workspace environment where we automatically build backend application and update frontend files from git directory.
 
-At this state we should have :
+At this state we should have (final objectives of prev. week):
 - a PostGRSQP database with some data:
   - This database is a declared as a service in Redender,
   - we should have a private URL linked to that database,
@@ -139,17 +139,18 @@ At this state we should have :
 
 ---
 
-## Two environments
+## The environments
 
-- The "dev" env
+- The "dev" env:
   - backend: Express, local port : 3000
   - frontend: vite server, local port : 5317
   - database: docker 
     - the database port inside the contener: 5432
-    - the vm port: 5333 (-> see error during previous ex. session " authentificaion erro")
-- The "production" env
+    - the vm port: 5333 (-> see error during previous ex. session " authentification error")
+- The "production" env:
   - in the Saas solution : Render
   - 3 local VM with backend, frontend, db
+  - defined with private/public URL
 - (still a good practice) The "staging" env
 
 <!--
@@ -161,13 +162,26 @@ The staging env is the environment where we test the application before deployin
 ---
 
 # PRISMA
-<!--TODO: find a better explanation, trop brouillon, split into two ?-->
+<!--TODO: find a better explanation, trop brouillon-->
+
+(also an objective of last week exercice)
+
 - Prisma is an ORM (Object-Relational Mapping) tool for Node.js and TypeScript.
   - "it leaves between the backend and the database".
   - It allows you to define your database schema in a declarative way using a schema file.
     - You are using it in any service that deals with a ressource in db (user, expense, etc.).
     - "data base schema": you define the object in a `.prisma` file where you declare variables and types. It abstracts the real declaration in the database.
-  - It generates a client (called a "service" in web1, see `db.ts` file) that you can use to interact with your database.
+
+---
+
+## Prisma Client
+
+- prisma client: an executable installed in the project (see `package.json` "devDependencies" section package "@prisma/cli-engine"), located in the `node_modules` folder.
+  - example: `npx prisma generate` (npx = node package executor)
+  - Note: not present in production env in `package.json`
+- prisma client generated code in our code based 
+- Some code we can use to interact with your database:
+  - `src/prisma/db.ts`
     - see the usage of the env varibale
 
 ```ts
@@ -201,11 +215,12 @@ The `contract.d.ts` file is autogenerate by the prisma client. We we perform a `
 <!--
 TODO: find valid arguments about publishing on the git. Need to dig.
 -->
+
 ---
 
 ### package.json
 
-See that prisma client updated your `packages.json` file in our backend ? It added a command
+See that prisma client updated your `package.json` file in our backend ? It added a command
 
 ```json
 {

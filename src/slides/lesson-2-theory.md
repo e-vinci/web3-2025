@@ -124,6 +124,134 @@ model Expense {
 
 ---
 
+# Render : Assessment
+
+> What we want to achieve: automatically reproduce a workspace environment where we automatically build backend application and update frontend files from git directory.
+
+At this state we should have :
+- a PostGRSQP database with some data:
+  - This database is a declared as a service in Redender,
+  - we should have a private URL linked to that database,
+- a backend application that can connect to the database
+  - the connection is performed with an environment variable in the backend project,
+- a frontend application that can connect to the backend application
+  - the connection is "created" into the environment variable of the frontend project,
+
+---
+
+## Two environments
+
+- The "dev" env
+  - backend: Express, local port : 3000
+  - frontend: vite server, local port : 5317
+  - database: docker 
+    - the database port inside the contener: 5432
+    - the vm port: 5333 (-> see error during previous ex. session " authentificaion erro")
+- The "production" env
+  - in the Saas solution : Render
+  - 3 local VM with backend, frontend, db
+- (still a good practice) The "staging" env
+
+<!--
+The staging env is the environment where we test the application before deploying it to the production environment. We are "as close as possible" to the production environment with dummy data.
+-->
+
+> One place to configure the environments : `.venv` files
+
+---
+
+# PRISMA
+<!--TODO: find a better explanation, trop brouillon, split into two ?-->
+- Prisma is an ORM (Object-Relational Mapping) tool for Node.js and TypeScript.
+  - "it leaves between the backend and the database".
+  - It allows you to define your database schema in a declarative way using a schema file.
+    - You are using it in any service that deals with a ressource in db (user, expense, etc.).
+    - "data base schema": you define the object in a `.prisma` file where you declare variables and types. It abstracts the real declaration in the database.
+  - It generates a client (called a "service" in web1, see `db.ts` file) that you can use to interact with your database.
+    - see the usage of the env varibale
+
+```ts
+// src/prisma/db.ts
+export const db = postgres<Contract>({
+  contractJson,
+  url: process.env['DATABASE_URL']!,
+});
+```
+
+### Contracts
+
+```ts
+// src/prisma/db.ts
+export const db = postgres<Contract>({
+  contractJson,
+  url: process.env['DATABASE_URL']!,
+});
+```
+
+The "db" object has two inputs :
+- The DATABASE_URL
+- Contract Type.
+
+The `contract.d.ts` file is autogenerate by the prisma client. We we perform a `prisma generate` command, the prisma client will generate the `contract.d.ts` file based on the schema defined in the `.prisma` file.
+
+> We want to run the command `prisma generate` command every time we update our database object files.
+
+> We emit the contract on the git.
+
+<!--
+TODO: find valid arguments about publishing on the git. Need to dig.
+-->
+---
+
+### package.json
+
+See that prisma client updated your `packages.json` file in our backend ? It added a command
+
+```json
+{
+  "scripts":{
+    "contract:emit": "prisma contract emit"
+  }
+}
+```
+
+With prisma our builds become a litter more complex
+
+```json
+{
+  "scripts":{
+    "build": "npm install && npm run contract:emit && npx prisma db update",
+    "contract:emit": "prisma contract emit"
+  }
+}
+```
+
+<!--TODO: find a valid template, this is just mine.-->
+
+---
+
+How are ***your environments*** deployed ?
+
+- dev ?
+  - docker ? working ? (auth error -> change port in docker "5433:5432")
+- prod ?
+  - db ? private URL ?
+  - backend ? npm cmds ? env configured ?
+  - frontend ? should be fine if env configured ;)
+- In Red
+
+<!--
+Rise your hands if it's working in dev ? Prod ?
+-->
+
+> After the intro that's your starting point if it's not working!
+
+---
+
+> And now ... something different ... !
+
+---
+
 # Forms
 
 ---
@@ -281,3 +409,17 @@ if (!result.success) {
   // Shows validation errors for each field
 }
 ```
+
+--- 
+
+### Prisma and Zod
+
+> Both use schema definitions to 
+>   - validate data (Zod)
+>   - generate types (Prisma) in order to "abstract" the database
+
+Schema definition  
+- ways to easily manage the future modifications of data/properties management along the time.
+- define the structure of the data
+- define the validation rules for the data
+- define the types for the data

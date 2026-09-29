@@ -145,8 +145,7 @@ export default definePrismaConfig({
 
 <!--
 Speaker Notes:
-• In Prisma 8 the datasource and generator blocks no longer exist in the schema
-• Connection string and file paths live in prisma.config.ts instead
+• Connection string and file paths live in prisma.config.ts
 • Import from @prisma/orm-postgres/config — this is what selects PostgreSQL
 • Run: npm install @prisma/orm-postgres
 • The contract key points at your contract.prisma file

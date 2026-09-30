@@ -118,8 +118,8 @@ This will involve significant changes: updating our API endpoints, enhancing our
 
 ## Recommended Reading
 
-- [Prisma – Relations (Official Docs)](https://www.prisma.io/docs/orm/prisma-schema/data-model/relations) – Learn how to define relations (one-to-many, many-to-many) between models in the Prisma schema.
-- [Prisma – Migrate Your Schema (Official Docs)](https://www.prisma.io/docs/orm/prisma-migrate) – Understand how to use Prisma Migrate to apply schema changes to your database safely (as opposed to `db push`).
+- [Prisma 8 – Relations (Official Docs)](https://www.prisma.io/docs/orm/data-modeling/relations) – Learn how to define relations (one-to-many, many-to-many) between models in Prisma 8.
+- [Prisma 8 – How Migrations Work (Official Docs)](https://www.prisma.io/docs/orm/migrations/how-migrations-work) – Understand how Prisma 8 migrations work: contracts, plans, and applying changes safely (offline, no shadow database).
 - [React Router – Data Loading (Official Docs)](https://reactrouter.com/en/main/routers/picking-a-router#data-loading) – Review how to fetch data with route **loaders** and access it via `useLoaderData`.
 
 ## Exercises : Data Models and Migration
@@ -132,39 +132,36 @@ Our app now requires understanding **who** paid or transferred money to whom. We
 
 #### 1 Initial migration
 
-In the previous lesson, we had to call `npx prisma db update` on render before starting the app. This was necessary to ensure the database was indeed in the expected state described in the schema file. This is a very simple and dangerous way to keep a database "in sync" with the schema, what we actually want to do is running migration(s) we have carefully prepared for controlling how the database evolves. 
+In the previous lesson, we had to call `npx prisma db update` on render before starting the app. This was necessary to ensure the database was in the expected state described in the contract. This is a quick prototyping command, but it is not safe for production — it can silently drop and recreate columns. What we actually want is to run carefully prepared **migrations** that give us full control over how the database evolves.
 
-In order to run with migrations, we need a second database in development, it's called the "shadow database" and it's a temporary database which purpose is protecting the dev database from dangerous change. More info [here](https://www.prisma.io/docs/orm/prisma-migrate/understanding-prisma-migrate/shadow-database). If you use `npx prisma dev` for starting your database, you get that shadow database automatically. If you use a more conventional setup, you will need to add a new connection string to your `.env` file: `SHADOW_DATABASE_URL="postgres://<...>"`.
+One important advantage of Prisma 8's migration system is that **planning a migration is offline**: `npx prisma migration plan` reads only your local files and never connects to a database. 
+There is no "shadow database" anymore (as presented in last year course) — that was a Prisma 7 concept specific to `migrate dev`.
 
-First of all, we want to have an initial migration describing the current db state. We already have a table in the database and we need a migration describing this. Having this initial migration will allow us in the future to start from an empty database and simply run all migrations to reach the current state.
-
-> We will follow the process described in the [prisma documentation](https://www.prisma.io/docs/orm/prisma-migrate/getting-started#create-a-baseline-migration)
-
-```bash
-mkdir -p prisma/migrations/0_init
-npx prisma migration plan
-npx prisma migration show 0_init
-```
-
-You can look at the file `prisma/migrations/0_init/migration.sql` and see that it simply contains a `CREATE TABLE` for the table we used las week. This is what `npx prisma db update` did when we executed it with the schema from last week.
-
-Mark this migration as resolved :
+First, make sure your contract is emitted:
 
 ```bash
-npx prisma migrate resolve --applied 0_init
+npx prisma contract emit
 ```
 
-You also need to mark this migration as already applied in production.
-Change your `DATABASE_URL` in your `.env` to the value you use in production and run the above command again. 
-Then restore your `.env` file with your local value.
+This generates `contract.json` and `contract.d.ts` next to your contract file.
 
-> **Important** It is not "normal" to manipulate the production database from your local environment, and most of the time this will not even be allowed by the configuration of your database. We are doing it here because we started the project with a prototyping mindset (using `prisma db update`) and we are now in a more future proof mindset.
+We already have a table in the database and our contract already describes it. Prisma lets us **sign** the database: record that it already matches the current contract.
+
+```bash
+npx prisma db sign
+```
+
+This writes a marker in the database recording which contract state it matches. Future `migration plan` runs will compute changes relative to this signed state.
+
+You also need to sign the production database. Change `DATABASE_URL` in your `.env` to the production value, run the command again, then restore the local value.
+
+> **Important** It is not "normal" to manipulate the production database from your local environment, and most of the time this will not even be allowed by the configuration of your database. We are doing it here because we started the project with a prototyping mindset (using `prisma db update`) and we are now in a more future-proof mindset.
 
 ---
 
 #### 2. **Define `User` Model**: 
 
-Open `prisma/schema.prisma`. Under the `datasource` and `generator` blocks, define a new model for users:
+Open `src/prisma/contract.prisma`. In Prisma, this file has no `datasource` or `generator` blocks — those are replaced by `prisma.config.ts`. The contract file **must start with `// use prisma-8`**. Define a new model for users:
 
 ```prisma
 model User {
@@ -172,10 +169,10 @@ model User {
   name        String
   email       String  @unique
   bankAccount String? // optional
-  paidExpenses    Expense[] @relation("PayerExpenses")
-  transfersOut Transfer[] @relation("UserTransfersSource")
-  transfersIn  Transfer[] @relation("UserTransfersTarget")
-  participatedExpenses    Expense[] @relation("ParticipantExpenses")
+  paidExpenses         Expense[]     @relation("PayerExpenses")
+  transfersOut         Transfer[]    @relation("UserTransfersSource")
+  transfersIn          Transfer[]    @relation("UserTransfersTarget")
+  participatedExpenses ExpenseUser[]
 }
 ```
 
@@ -197,13 +194,39 @@ model Expense {
   date         DateTime @default(now())
   payer        User     @relation("PayerExpenses", fields: [payerId], references: [id])
   payerId      Int
-  participants User[]   @relation("ParticipantExpenses")
+  participants ExpenseUser[]
 }
 ```
 
 Changes made:
 - `payer` is now a **relation** to the User model (with a foreign key `payerId`). This replaces the old `payer` string field.
-- `participants` is a ***many-to-many relation*** to `User`. This will implicitly create a join table between `Expense` and `User` behind the scenes. Look at the [documentation](https://www.prisma.io/docs/orm/prisma-schema/data-model/relations/many-to-many-relations#implicit-many-to-many-relations) for understanding how join tables can be ignored by the backend and mapped to collections.
+- `participants` is a **many-to-many relation** to `User`. In Prisma 8, implicit join tables are not supported — you must write the join table as an explicit model. The field type becomes `ExpenseUser[]` instead of `User[]` directly.
+
+---
+
+#### 3b. **Define `ExpenseUser` Join Table**:
+
+In Prisma 8, many-to-many relations require an explicit join-table model. Add it directly after the `Expense` model:
+
+```prisma
+model ExpenseUser {
+  expenseId Int
+  userId    Int
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([expenseId, userId])
+  @@map("_ParticipantExpenses")
+}
+```
+
+`@@map("_ParticipantExpenses")` maps the model to the exact table name that the migration SQL will create, keeping it compatible with the naming convention. Also update the `User` model's back-relation to use `ExpenseUser[]` instead of `Expense[]`:
+
+```prisma
+participatedExpenses ExpenseUser[]
+```
+
+> **Backend impact**: accessing participants in your backend code now gives you `ExpenseUser[]` objects. To get the list of users, map over the join records: `expense.participants.map(p => p.user)`. Make sure to `.include("participants")` with a nested include for the user when querying.
 
 ---
 
@@ -232,157 +255,169 @@ A `Transfer` represents money moving from one user to another:
 
 #### 5. **Create a Migration**: 
 
-Now that the models are defined, we will use Prisma Migrate to apply these changes:
+Now that the models are defined, we will use Prisma Migrate to apply these changes. First emit the updated contract so Prisma knows what changed:
 
 ```bash
-npx prisma migration plan
+npx prisma contract emit
 ```
 
-This should do the following, but it will fail:
-- Generate a SQL migration file (under `prisma/migrations/`) reflecting the changes (new tables for User and Transfer, updated Expense table with new columns and join table for participants).
-- Apply the migration to your database. If all goes well, your database now has three tables (plus an implicit join table for Expense <-> User many-to-many).
-- Update the Prisma Client to be in sync with the new schema (this happens automatically on migrate; alternatively you could run `npx prisma generate`).
-
-The command failed because there is already data in the database and it cannot enforce a default value for required column Expense.payerId.
-***This is exactly why we want to have control over migrations***, we need to do something smarter for evolving the database while preserving data.
-
-Let's instead create the migration and customize it before applying it. There is documentation about this process [here](https://www.prisma.io/docs/orm/prisma-migrate/workflows/customizing-migrations)
+Then plan the migration:
 
 ```bash
-npx prisma migrate dev --name add-users-and-transfers --create-only
+npx prisma migration plan --name add_users_and_transfers
 ```
 
-Now open the file `prisma/migrations/<timestamp>_add_users_and_transfers/migration.sql` and adapt it for creating the required data and sequencing the changes in a relevant order.
+This creates the directory `migrations/app/<timestamp>_add_users_and_transfers/` with a `migration.ts` file. **This command is offline** — it reads only your local files and never connects to the database. It also does not apply anything: applying is a separate step.
 
-Since the point of this course is not SQL, here is a working code, read it and observe how we generate data, how we make a column temporarily nullabe then non-nullable, how we add a foreign key only when data is available, etc.
+The planned migration would fail to apply as-is, because it would try to add a required `payerId` column to `Expense` rows that already exist, with no default value.
+***This is exactly why we want to have control over migrations*** — we need to sequence the changes carefully to preserve existing data.
 
-```sql
-/*
-  Warnings:
+Read the documentation on [editing migrations in Prisma 8](https://www.prisma.io/docs/orm/migrations/editing-a-migration).
 
-  - You are about to drop the column `payer` on the `Expense` table. All the data in the column will be lost.
-  - Added the required column `payerId` to the `Expense` table without a default value. This is not possible if the table is not empty.
+You can observe that the actual changes are described in the file `migrations/app/<timestamp>_add_users_and_transfers/migration.ts`. A list of SQL commands are defined in this autogernerated file.
 
-*/
--- CreateTable
-CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "bankAccount" TEXT,
-
-    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Transfer" (
-    "id" SERIAL NOT NULL,
-    "amount" DOUBLE PRECISION NOT NULL,
-    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "sourceId" INTEGER NOT NULL,
-    "targetId" INTEGER NOT NULL,
-
-    CONSTRAINT "Transfer_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "_ParticipantExpenses" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL,
-
-    CONSTRAINT "_ParticipantExpenses_AB_pkey" PRIMARY KEY ("A","B")
-);
-
--- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
-CREATE INDEX "_ParticipantExpenses_B_index" ON "_ParticipantExpenses"("B");
-
--- Insert User records from existing Expense.payer data
-INSERT INTO "User" ("name", "email")
-SELECT DISTINCT 
-    "payer" as "name",
-    LOWER(REGEXP_REPLACE("payer", '[^a-zA-Z0-9]', '.', 'g')) || '@expenso.dev' as "email"
-FROM "Expense"
-WHERE "payer" IS NOT NULL;
-
--- Add payerId column as nullable first
-ALTER TABLE "Expense" ADD COLUMN "payerId" INTEGER;
-
--- Update payerId with corresponding User IDs
-UPDATE "Expense" 
-SET "payerId" = "User"."id"
-FROM "User"
-WHERE "User"."email" = LOWER(REGEXP_REPLACE("Expense"."payer", '[^a-zA-Z0-9]', '.', 'g')) || '@expenso.dev';
-
--- Make payerId NOT NULL after setting values
-ALTER TABLE "Expense" ALTER COLUMN "payerId" SET NOT NULL;
-
--- Drop the old payer column
-ALTER TABLE "Expense" DROP COLUMN "payer";
-
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_payerId_fkey" FOREIGN KEY ("payerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Transfer" ADD CONSTRAINT "Transfer_sourceId_fkey" FOREIGN KEY ("sourceId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Transfer" ADD CONSTRAINT "Transfer_targetId_fkey" FOREIGN KEY ("targetId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ParticipantExpenses" ADD CONSTRAINT "_ParticipantExpenses_A_fkey" FOREIGN KEY ("A") REFERENCES "Expense"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_ParticipantExpenses" ADD CONSTRAINT "_ParticipantExpenses_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-```
-
-Now run the migration 
+<!-- Open `migrations/app/<timestamp>_add_users_and_transfers/migration.ts` and edit the `operations()` method. In Prisma 8, migrations are **TypeScript**, not SQL — you describe operations as method calls, and Prisma compiles them to SQL stored in `ops.json`. After editing, recompile the migration from your project root:
 
 ```bash
-npx prisma migrate dev
+node migrations/app/<timestamp>_add_users_and_transfers/migration.ts
+``` -->
+
+<!-- Since the point of this course is not the migration API, here is a working `operations()` method. Read it and observe how we generate data, how we make a column temporarily nullable then non-nullable, and how we use `rawSql` for data operations that span multiple tables:
+
+```typescript
+// operations() inside migrations/app/<timestamp>_add_users_and_transfers/migration.ts
+// (the full file boilerplate — imports, class wrapper, MigrationCLI.run — is generated by `migration plan`)
+
+override get operations() {
+  return [
+    // --- Structural changes (auto-generated by migration plan) ---
+
+    // Create User, Transfer, and _ParticipantExpenses tables
+    this.createTable({ schema: 'public', table: 'User', /* ... */ }),
+    this.createTable({ schema: 'public', table: 'Transfer', /* ... */ }),
+    this.createTable({ schema: 'public', table: '_ParticipantExpenses', /* ... */ }),
+
+    // --- Custom: data migration steps (hand-written) ---
+
+    // 1. Insert User records derived from the existing Expense.payer strings
+    rawSql({
+      id: 'data.insert-users-from-payer',
+      label: 'Insert User records from existing Expense.payer data',
+      operationClass: 'data',
+      target: { id: 'postgres' },
+      execute: [
+        {
+          description: 'Insert users from payer strings',
+          sql: `
+            INSERT INTO "User" ("name", "email")
+            SELECT DISTINCT
+              "payer" AS "name",
+              LOWER(REGEXP_REPLACE("payer", '[^a-zA-Z0-9]', '.', 'g')) || '@expenso.dev' AS "email"
+            FROM "Expense"
+            WHERE "payer" IS NOT NULL
+          `,
+        },
+      ],
+    }),
+
+    // 2. Add payerId as nullable first (existing rows can't satisfy NOT NULL yet)
+    this.addColumn({
+      schema: 'public',
+      table: 'Expense',
+      column: col('payerId', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+    }),
+
+    // 3. Backfill payerId by matching the payer string to the User email we just inserted
+    rawSql({
+      id: 'data.backfill-expense-payerId',
+      label: 'Set payerId on Expense rows from matching User email',
+      operationClass: 'data',
+      target: { id: 'postgres' },
+      execute: [
+        {
+          description: 'Update payerId',
+          sql: `
+            UPDATE "Expense"
+            SET "payerId" = "User"."id"
+            FROM "User"
+            WHERE "User"."email" =
+              LOWER(REGEXP_REPLACE("Expense"."payer", '[^a-zA-Z0-9]', '.', 'g')) || '@expenso.dev'
+          `,
+        },
+      ],
+      postcheck: [
+        {
+          description: 'All expenses have a payerId',
+          sql: `SELECT NOT EXISTS (SELECT 1 FROM "Expense" WHERE "payerId" IS NULL) AS ok`,
+        },
+      ],
+    }),
+
+    // 4. Now make payerId NOT NULL (safe: every row has a value)
+    this.setNotNull({ schema: 'public', table: 'Expense', column: 'payerId' }),
+
+    // 5. Drop the old plain-text payer column
+    this.dropColumn({ schema: 'public', table: 'Expense', column: 'payer' }),
+
+    // --- Foreign-key constraints (auto-generated by migration plan) ---
+    // addForeignKey calls for Expense→User, Transfer→User (×2), _ParticipantExpenses→Expense/User
+  ];
+}
 ```
 
-This will try to run all the missing migration, and this time it will succeed.
+After editing, recompile from the project root and review the generated `ops.json`:
+
+```bash
+node migrations/app/<timestamp>_add_users_and_transfers/migration.ts
+``` -->
+
+Now apply the migration:
+
+```bash
+npx prisma db migrate --advance-ref db
+```
+
+`--advance-ref db` moves the local `db` ref to the state you just applied, so the next `migration plan` starts from the right point.
+
+This will apply all pending migrations, and this time it will succeed.
 
 ---
 
-#### 6 **Verify the Schema in DB**: Use Prisma Studio or a database client to inspect the tables:
-
-```bash
-npx prisma studio
-```
-
-Check that you have Models for `User`, `Expense`, and `Transfer`. 
-Look how you migration properly created the User records and connected them to the Expense records.
-
 #### 7 **Run the migration on production**
 
-Now we will need to add a new step after generating the client but before starting the app: executing the migrations. 
-The command for executing migrations is `npx prisma migrate deploy`
+Now we will need to add a new step after emitting the contract but before starting the app: executing the migrations.
+The command for executing migrations is `npx prisma db migrate`
 
-Notice ***how it is a different command than the one we ran in development***, this is because this command :
+Notice ***how it is a different command than the one we ran in development***, this is because in production you omit `--advance-ref db` (there is no local dev ref to advance). This command:
 
-- Does not look for drift in the database or changes in the Prisma schema
+- Does not look for drift in the database or changes in the contract
 - Does not reset the database or generate artifacts
-- Does not rely on a shadow database
+- Does not rely on a shadow database (Prisma 8 never did)
 
 We also need to change how we build and start the app on Render.
 
-The command for building is : `npm install && && npx prisma generate && npm run build`. This will transpile the code and bundle it in "dist/" directory.
-The command for starting is : `npx prisma migrate deploy && npm run start:prod `. 
+The command for building is: `npm install && npx prisma contract emit && npm run build`. This will transpile the code and bundle it in the `dist/` directory.
+The command for starting is: `npx prisma db migrate && npm run start:prod`
 
+---
+
+### 8 Update your code
+
+Your Expense creation and getter in your `src/app/modules/expense/expense.service.ts` file need to be updated to reflect the new schema.
+
+> Read the [documentation](https://www.prisma.io/docs/orm/fundamentals/writing-data) and more particularly the section about [creating a record and its related records](https://www.prisma.io/docs/orm/fundamentals/writing-data#create-a-record-and-its-related-records)
+
+---
 
 #### **Seeding Initial Data**: 
 
-Usually we want to have some initial data when working in development, this is the purpose of the script `db-populate.js`. We may also need initial data for our app to work correctly, like a list of countries, or a list of currencies, this is called "seed" data. 
+Usually we want to have some initial data when working in development, this is the purpose of the script `db-populate.ts`. We may also need initial data for our app to work correctly, like a list of users, exepenses, etc..
 
-Prisma has a tool for inserting seed data any time you reset your database, and you can read more about it [here](https://www.prisma.io/docs/orm/prisma-migrate/workflows/seeding). For our project, we will simply keep and adapt our `db-populate.js` script, it's a simpler alternative, even if less powerful. Making this kind of choice - choosing to stop at what is good enough and will be easy to improve later - is a very important skill for software engineers, because we always work under time constraints. 
+In Prisma there is no built-in seed command. You simply write and run your script directly with Node.js or tsx. For our project, we will simply keep and adapt our `db-populate.ts` script. Making this kind of choice — choosing to stop at what is good enough and will be easy to improve later — is a very important skill for software engineers, because we always work under time constraints. 
 
-Adapt your script `db-populate.js` for creating a few users, expenses, and transactions.
+Adapt your script `db-populate.ts` for creating a few users, expenses, and transactions.
 
+> This is when you actually contact your new db for the first time ... errors may occur, fix them as you go.
 
-#### **Delete your backup backend directory**
+---
 
-We won't need it anymore and it will make it harder for you to navigate your files.

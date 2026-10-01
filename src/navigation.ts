@@ -38,10 +38,10 @@ export const headerData = {
           text: 'Lesson 2: Deploy and persistence',
           href: getPermalink('course-lessons/lesson-2-deploy-persistence', 'post'),
         },
-        //     {
-        //       text: 'Lesson 3: Styles and navigation',
-        //       href: getPermalink('course-lessons/lesson-3-routing-styles', 'post'),
-        //     },
+        {
+          text: 'Lesson 3: Forms and migration',
+          href: getPermalink('course-lessons/lesson-3-form-migration', 'post'),
+        },
         //     {
         //       text: 'Lesson 4: Advanced state',
         //       href: getPermalink('course-lessons/lesson-4-advanced-state', 'post'),

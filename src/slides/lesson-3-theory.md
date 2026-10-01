@@ -2,397 +2,581 @@
 marp: true
 theme: default
 paginate: true
-header: 'Web 3 2025 - Navigation & Style'
-footer: 'Web 3 2025 - Vinci'
+header: 'Web 3 2026 - Environments, forms and migration'
+footer: 'Web 3 2026 - Vinci'
 ---
 
-# Theoretical Introduction
+# End of lesson 2 : Render Assessment
 
-## Lesson 3 – Navigation and Style
+> What we want to achieve: automatically reproduce a workspace environment where we automatically build backend application and update frontend files from git directory.
 
+At this state we should have (final objectives of prev. week):
+- a Postgresql database with some data:
+  - This database is a declared as a service in Redender,
+  - we should have a private URL linked to that database,
+- a backend application that can connect to the database
+  - the connection to db is configured via an environment variable
+- a frontend application that can connect to the backend application
+  - the connection to backend is configured via an environment variable
 ---
 
-## Lesson Objectives
+## The environments
 
-- Move from a technical POC to a real usable application
-- Improve user experience (UX)
-- Discover routing and modern design
+- The "dev" env:
+  - backend: Express, local port : 3000
+  - frontend: vite server, local port : 5317
+  - database: docker 
+    - the database port inside the contener: 5432
+    - the vm port: 5333 (-> see error during previous ex. session "authentification error")
+- The "production" env:
+  - deployed on the Paas solution : Render
+  - 3 services: backend, frontend, db
+  - each has a private & public URL
+- (still a good practice) The "staging" env
 
+<!--
+The staging env is the environment where we test the application before deploying it to the production environment. We are "as close as possible" to the production environment with dummy data.
+-->
 ---
 
-## Key Routing Concepts
+# End of lesson 2 : PRISMA
 
-- **Navigation**: Split the app into pages (Welcome, List, Add)
-- **Navigation state**: Manage the current page
-- **React Router**: Routing library for React
+(also an objective of last week exercice)
 
-[React Router (docs)](https://reactrouter.com/)
-
-```tsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-<BrowserRouter>
-  <Routes>
-    <Route path="/" element={<Welcome />} />
-    <Route path="/list" element={<List />} />
-    <Route path="/add" element={<AddExpense />} />
-  </Routes>
-</BrowserRouter>;
-```
-
+- Prisma is an ORM (Object-Relational Mapping) tool for Node.js and TypeScript.
+  - "it lives between the backend and the database".
+  - It allows you to define your database schema in a declarative way using a contract file.
+    - You are using it in any service that deals with a ressource in db (user, expense, etc.).
+    - "database contract": you define the object in a `.prisma` file where you declare variables and types. It abstracts the real declaration in the database.
+    - It then enables you to manipulate data (CRUD) from your code without stitching together SQL fragments.
 ---
 
-## Tailwind CSS Deep Dive
+## Prisma Client
 
-### Library Ideology: Utility-First
-
-- **Traditional approach**: Write custom CSS classes
-- **Utility-first approach**: Compose styles from small utility classes
-
-```html
-<!-- Traditional CSS -->
-<div class="card">
-  <h2 class="card-title">Title</h2>
-</div>
-
-<!-- Tailwind utility-first -->
-<div class="bg-white rounded-lg shadow-md p-6">
-  <h2 class="text-xl font-bold text-gray-800">Title</h2>
-</div>
-```
-
-**Benefits**: Faster development, consistent design system, no CSS bloat
-
----
-
-## Tailwind Build System
-
-### How Tailwind Avoids CSS Bloat
-
-- **Problem**: Tailwind has thousands of utility classes (~3MB full CSS)
-- **Solution**: **Purging/Tree-shaking** - only include used classes in production
-
-```javascript
-// Tailwind scans your code for used classes
-<div className="bg-blue-500 text-white p-4"> // ✅ Included
-<div className="bg-red-500 text-black p-2"> // ❌ Not used, excluded
-```
-
-**Result**: Production CSS is typically <10KB instead of 3MB
-
-**Build process**: Tailwind CLI scans your files → generates minimal CSS
+- prisma client: an executable installed in the project (see `package.json` "devDependencies" section package "@prisma/cli-engine"), located in the `node_modules` folder.
+  - example: `npx prisma generate` (npx = node package executor)
+  - Note: not present in production env in `package.json`
+- prisma client generated code in our code based 
+- Some code we can use to interact with your database:
+  - `src/prisma/db.ts`
+    - see the usage of the env variable
 
 ---
 
-## Tailwind Configuration & Variables
-
----
-
-### Modern CSS Configuration (2024+)
-
-```css
-/* imports... */
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-  }
-}
-
-/* Usage in components */
-.my-component {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-}
-```
-
----
-
-**Benefits**: CSS custom properties, better IDE support, easier theming
-
----
-
-## Tailwind: The Bad Parts
-
-### Goes Against Traditional CSS Best Practices
-
-**Traditional CSS principles Tailwind violates:**
-
-1. **Separation of Concerns**: Mix styling directly in HTML
-
-   ```html
-   <!-- Traditional: Clean HTML, styles in CSS -->
-   <div class="card">Content</div>
-
-   <!-- Tailwind: Styling mixed with markup -->
-   <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">Content</div>
-   ```
-
----
-
-2. **Don't Repeat Yourself (DRY)**: Copy-paste styling everywhere
-   ```html
-   <!-- Same button styling repeated 10 times -->
-   <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"></button>
-   </button>
-   ```
-
----
-
-3. **Semantic CSS**: Utility classes are non-semantic
-
-   ```css
-   /* Semantic (good) */
-   .submit-button {
-     /* clearly describes purpose */
-   }
-
-   /* Non-semantic (Tailwind) */
-   .bg-blue-500 {
-     /* describes appearance, not meaning */
-   }
-   ```
-
-**Critics say**: "It's just inline styles with extra steps!"
-
----
-
-## Tailwind: The Good Parts
-
-**1. "Separation of Concerns" is outdated in component-based apps:**
-
-```tsx
-// React component = HTML + CSS + JS together anyway
-function Button({ children }) {
-  return <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">{children}</button>;
-}
-// Component encapsulates ALL concerns, not just HTML
-```
-
----
-
-**2. DRY violation solved by components, not CSS:**
-
-```tsx
-// Extract to reusable component, not CSS class
-<PrimaryButton>Submit</PrimaryButton>
-<PrimaryButton>Cancel</PrimaryButton>
-// No repetition, and you see ALL styling context immediately
-```
-
----
-
-**3. Utility classes are MORE maintainable:**
-
-```html
-<!-- Traditional: What does "card-header" actually look like? Need to check CSS -->
-<div class="card-header">
-  <!-- Tailwind: Styling is immediately visible and predictable -->
-  <div class="text-xl font-bold text-gray-800 mb-4"></div>
-</div>
-```
-
----
-
-## Component Libraries Overview
-
-### What are Component Libraries?
-
-Pre-built, reusable UI components that speed up development:
-
-- **Material UI (MUI)**: Google's Material Design for React
-
-  ```tsx
-  import { Button, TextField } from '@mui/material';
-  <Button variant="contained">Click me</Button>;
-  ```
-
-- **Chakra UI**: Simple, modular and accessible
-
-  ```tsx
-  import { Button, Input } from '@chakra-ui/react';
-  <Button colorScheme="blue">Click me</Button>;
-  ```
-
-- **Shadcn/ui**: Modern, customizable, copy-paste components
-  ```tsx
-  import { Button } from '@/components/ui/button';
-  <Button variant="outline">Click me</Button>;
-  ```
-
----
-
-## Headless Libraries
-
----
-
-### What is a "Headless" Library?
-
-**Headless library**: Provides functionality and behavior WITHOUT styling
-
-```tsx
-// Radix UI (headless) - logic only, no styles
-import * as Dialog from '@radix-ui/react-dialog';
-
-<Dialog.Root>
-  <Dialog.Trigger className="my-custom-button">Open</Dialog.Trigger>
-  <Dialog.Content className="my-custom-modal">{/* You style this however you want */}</Dialog.Content>
-</Dialog.Root>;
-```
-
----
-
-**Benefits**:
-
-- Complete control over appearance
-- Accessibility handled automatically
-- Framework agnostic
-
-**Examples**: Radix UI, Headless UI, React Hook Form
-
----
-
-## Shadcn/ui Philosophy
-
-### Installation Ideology: "Copy, Don't Import"
-
-**Traditional libraries**: Install via npm, import components
-
-```bash
-npm install @mui/material  # Library in node_modules
-import { Button } from '@mui/material';
-```
-
-**Shadcn approach**: Copy component source code into your project
-
-```bash
-npx shadcn-ui@latest add button  # Copies code to your src/
-import { Button } from "@/components/ui/button";  # Your local file
-```
-
-**Benefits**: Full customization, no dependency bloat, you own the code
-
----
-
-## What NPX Does
-
-### Understanding `npx shadcn-ui add button`
-
-1. **Downloads**: Fetches the latest Button component code
-2. **Installs dependencies**: Adds required packages (like `@radix-ui/react-slot`)
-3. **Copies files**: Places component in `src/components/ui/button.tsx`
-4. **Updates config**: Modifies import paths and styling
-
-**Result**: You have a fully customizable Button component in your codebase
-
----
-
-## Shadcn + Radix Integration
-
----
-
-### Built on Radix Primitives
-
-Shadcn/ui components are **styled wrappers** around Radix headless components:
-
-```tsx
-// Shadcn Button component (simplified)
-import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot'; // Headless primitive
-
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
-  }
-);
-```
-
-**Radix provides**: Accessibility, keyboard navigation, focus management
-**Shadcn provides**: Beautiful default styling with Tailwind
-
----
-
-## Shadcn Theming Options
-
----
-
-### Customization Approaches
-
-1. **CSS Variables**: Change theme colors globally
-
-```css
-:root {
-  --primary: 221.2 83.2% 53.3%; /* Blue theme */
-  --secondary: 210 40% 98%;
-}
-
-[data-theme='dark'] {
-  --primary: 217.2 91.2% 59.8%; /* Darker blue */
-  --secondary: 217.2 32.6% 17.5%;
-}
-```
-
----
-
-2. **Tailwind Config**: Extend color palette
-
-```javascript
-// tailwind.config.js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        primary: 'hsl(var(--primary))',
-        secondary: 'hsl(var(--secondary))',
-      },
-    },
-  },
-};
-```
-
----
-
-3. **Component Variants**: Modify component styling directly
-
-```tsx
-const buttonVariants = cva('inline-flex items-center justify-center rounded-md text-sm font-medium', {
-  variants: {
-    variant: {
-      default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-      destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-      // Add your custom variant
-      gradient: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
-    },
-  },
+### Contracts
+
+```ts
+// src/prisma/db.ts
+export const db = postgres<Contract>({
+  contractJson,
+  url: process.env['DATABASE_URL']!,
 });
 ```
 
----
+The "db" object has three inputs :
+- The DATABASE_URL
+- Contract Type.
+- The Contract JSON
 
-> The user thinks the interface is the software - and they're right
-
----
-
-## UX Best Practices
-
-- Clear interfaces and visible actions
-- Fast user feedback (loading, errors)
-- Smooth and intuitive navigation
+Both `contract.d.ts` and `contract.json` files are generated by the prisma client when we perform a `prisma contract emit` command, these files are based on the contract defined in the `.prisma` file.
 
 ---
 
-## Key Takeaways
+#### Prisma and contract files
 
-- **Tailwind**: Utility-first approach with smart build optimization
-- **Component libraries**: Speed up development with pre-built components
-- **Headless libraries**: Behavior without styling constraints
-- **Shadcn/ui**: Copy-paste approach gives you full control
-- **Modern tooling**: CSS variables and build systems work together
+The reason why we need those two files (`.d.ts` and `.json`) is because we need prisma support at differen times:
+
+- at development time: With the help of the types file, our IDE will be able to pevent some error during compilation;
+- at runtime: With the help of the JSON file, prisma will be able to compare the database actual structure with the contract, sign it, or raise errors if it does not match.
+
+Remember than all the Typescript will have disapeared at runtime, and therefore the db objects needs the json file during execution.
 
 ---
 
-**Next: Advanced state management and multi-user support!**
+#### What to do with those files?
+ 
+> We want to run the command `prisma contract emit` command every time we update our database object files. This will update the type file and in the json file.
+> We track those files on git because we want to ensure everyone is working from the same contract and we do not want the types and json file to tell a different story than the .prisma file.
+
+---
+
+### package.json
+
+See that prisma client updated your `package.json` file in our backend ? It added a command
+
+```json
+{
+  "scripts":{
+    "contract:emit": "prisma contract emit"
+  }
+}
+```
+
+With prisma our builds become a litter more complex
+
+```json
+{
+  "scripts":{
+    "build": "npm install && npx prisma db update",
+    "contract:emit": "prisma contract emit"
+  }
+}
+```
+
+<!--TODO: find a valid template, this is just mine.-->
+
+---
+
+How are ***your environments*** deployed ?
+
+- dev ?
+  - docker ? working ? (auth error -> change port in docker "5433:5432")
+- prod ?
+  - db ? private URL ?
+  - backend ? npm cmds ? env configured ?
+  - frontend ? should be fine if env configured ;)
+<!-- - In Red -->
+
+<!--
+Rise your hands if it's working in dev ? Prod ?
+-->
+
+> After the intro that's your starting point if it's not working!
+
+---
+
+> And now ... something different ... !
+
+---
+
+# Lesson 3.1 : Forms
+
+---
+
+## HTML Forms: The Basics
+
+- **Form**: Collects user input and sends it to the server.
+- **Elements**: `<form>`, `<input>`, `<select>`, `<button>`, etc.
+- **Submit**: Sends the data to server and handle response (usually redisplay or redirect).
+
+```html
+<form action="/api/expenses" method="post">
+  <input name="description" />
+  <input name="amount" type="number" />
+  <button type="submit">Add</button>
+</form>
+```
+
+---
+
+## Why Forms Are Complex in React
+
+- **Interactivity**: React wants to control form state for instant feedback.
+- **Controlled Components**: Each input's value is tied to React state.
+- **Validation**: Must check user input before submit.
+- **Error Handling**: Show errors, disable submit, etc.
+- **Boilerplate**: Lots of code for even simple forms.
+
+---
+
+```tsx
+import { useState } from 'react';
+
+function ExpenseAdd() {
+  /* One state per input field */
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [errors, setErrors] = useState<{ description?: string; amount?: string }>({});
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent default form submission
+    const newErrors: typeof errors = {};
+    if (!description) newErrors.description = 'Description required';
+    if (!amount || parseFloat(amount) < 0.01) newErrors.amount = 'Amount required';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length === 0) {
+      console.log({ description, amount: parseFloat(amount) });
+      // TODO: Reset form's values, then send to API
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" />
+      {errors.description && <span>{errors.description}</span>}
+      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" />
+      {errors.amount && <span>{errors.amount}</span>}
+      <button type="submit">Add</button>
+    </form>
+  );
+}
+```
+
+---
+
+## Benefits of React Hook Form
+
+`react-hook-form` is a popular **library** for handling forms in React.
+
+- **Less Boilerplate**: Register fields, get values, and validate with minimal code.
+- **Performance**: Minimizes re-renders.
+- **Easy Validation**: Integrates with libraries like Zod.
+- **Better UX**: Built-in error handling, field-level validation.
+- **Flexible**: Works with controlled and uncontrolled components.
+
+[React Hook Form Docs](https://react-hook-form.com/)
+
+---
+
+## Example: React Hook Form with Validation
+
+```tsx
+import { useForm } from 'react-hook-form';
+
+function ExpenseAdd() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const onSubmit = (data) => console.log(data); // define what to do with validated data
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input
+        {...register('description', {
+          required: 'Description required',
+          maxLength: { value: 100, message: 'Max 100 chars' },
+        })}
+        placeholder="Description"
+      />
+      {errors.description && <span>{errors.description.message}</span>}
+      <input
+        type="number"
+        step="0.01"
+        {...register('amount', { required: 'Amount required', min: { value: 0.01, message: 'Must be positive' } })}
+        placeholder="Amount"
+      />
+      {errors.amount && <span>{errors.amount.message}</span>}
+      <button type="submit">Add</button>
+    </form>
+  );
+}
+```
+
+---
+
+## Introducing Zod: TypeScript-first Schema Validation
+
+`zod` is a popular **library** for schema validation in TypeScript.
+
+<!-- - **Zod** is a TypeScript-first schema declaration and validation library -->
+- **Why Zod?**
+  - Type-safe validation for objects, forms, and APIs
+  - Works great with React Hook Form
+  - Generates types from schemas automatically
+- **Alternatives**: Yup, Joi, class-validator
+
+[Zod Documentation](https://zod.dev/)
+
+---
+
+## Example: Validating an Expense with Zod
+
+```typescript
+import { z } from 'zod';
+
+// Define a schema for an expense
+const ExpenseSchema = z.object({
+  description: z.string().min(1, 'Description required').max(100, 'Max 100 chars'),
+  amount: z.number().min(0.01, 'Amount must be positive'),
+  payer: z.enum(['Alice', 'Bob'], { errorMap: () => ({ message: 'Payer must be Alice or Bob' }) }),
+  date: z.string().optional(),
+});
+
+// Example usage
+const result = ExpenseSchema.safeParse({
+  description: '',
+  amount: -5,
+  payer: 'Charlie',
+});
+
+if (!result.success) {
+  console.log(result.error.format());
+  // Shows validation errors for each field
+}
+```
+
+<!--- 
+Mention discriminated union related to success and error fields
+--->
+--- 
+
+### Prisma and Zod
+
+Current version of Prisma does not yet integrate with zod because it is very recent (it's actually still in RC).
+
+In the near future, Prisma will likely integrate with Zod for input validation, based on the contract json file. 
+In the meantime, you can use zod normally to validate your input on the backend and ensure you do not persist incoherent data.
+
+---
+
+# Lesson 3.2 : Migration
+
+What We're Building Now
+
+- **Multi-user expense sharing app**
+- **Money transfers between users**
+- **Production-ready backend architecture**
+- **Advanced React Router patterns**
+
+<!--
+Speaker Notes:
+• Users can create accounts and share expenses with friends
+• Transfer money to settle debts between users
+• Moving from simple CRUD to real-world application
+• Learning patterns used in professional development
+-->
+
+---
+
+## Feature-Based Architecture (layer 1: Controller)
+
+```typescript
+// routes/expense.router.ts
+expensesRouter.post("/", async (req, res) => {
+  try {
+    const expense: Expense = req.body;
+    if (!isValidNewExpense(expense)) {
+      return res.status(400).json({ error: "Invalid expense" });
+    }
+    const expenses = await ExpensesService.addExpense(expense);
+    res.status(201).json(expenses);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+```
+<!--
+Speaker Notes:
+• Consistent pattern: Router → Controller → Repository
+• Controllers handle HTTP concerns, repositories handle data access
+• Makes code predictable and testable
+• TypeScript catches errors at compile time
+• Notice proper status codes and type conversions
+-->
+
+---
+
+## Feature-Based Architecture (layer 2: Service)
+
+```typescript
+// services/expense.service.ts
+public static async addExpense(newExpense: NewExpense): Promise<Expense> {  
+  try {
+    const expense = await db.orm.public.Expense.create(newExpense);
+    return {
+      id: expense.id.toString(),
+      date: expense.date,
+      amount: expense.amount,
+      description: expense.description,
+      payer: expense.payer,
+    };
+  } catch (error) {
+    console.error("Error adding expense:", error);
+    throw error;
+  }
+}
+```
+<!--
+Speaker Notes:
+• Service handles business logic
+• Keeps controllers thin and focused on HTTP concerns
+• Makes code more testable and maintainable
+Repositories handle data access
+• Managed by Prisma
+-->
+
+---
+
+## Prisma: prisma.config.ts
+
+Config is automatically generated by `npm init prisma`.
+
+```typescript
+// prisma.config.ts
+import 'dotenv/config';
+import { definePrismaConfig } from 'prisma/config';
+import { defineConfig as ormConfig } from '@prisma/orm-postgres/config';
+
+export default definePrismaConfig({
+  orm: ormConfig({
+    contract: './src/prisma/contract.prisma',
+    db: {
+      connection: process.env.DATABASE_URL!,
+    },
+  }),
+});
+```
+
+<!--
+Speaker Notes:
+• Connection string and file paths live in prisma.config.ts
+• Import from @prisma/orm-postgres/config — this is what selects PostgreSQL
+• Run: npm install @prisma/orm-postgres
+• The contract key points at your contract.prisma file
+-->
+
+---
+
+## Prisma: Many-to-Many Relations
+
+```prisma
+model Expense {
+  id           Int      @id @default(autoincrement())
+  description  String
+  amount       Float
+  payer        User     @relation("PayerExpenses", fields: [payerId], references: [id])
+  payerId      Int
+  participants User[]   @relation("ParticipantExpenses")
+}
+
+model ExpenseParticipant {
+  expenseId Int
+  userId    Int
+  expense   Expense @relation("ParticipantExpenses", fields: [expenseId], references: [id])
+  user      User    @relation("ParticipantExpenses", fields: [userId], references: [id])
+
+  @@id([expenseId, userId])
+}
+```
+<!--
+Speaker Notes:
+• One expense has one payer but multiple participants
+• Prisma 8 requires an explicit join model — no more implicit many-to-many
+• ExpenseParticipant is the join table; its @@id must be exactly the two foreign keys
+• Relation names disambiguate: User has two relations to Expense
+• Query participants with .include("participants") — join model is transparent
+-->
+
+---
+
+## Prisma: Migration Workflow
+
+### Development
+
+```bash
+npx prisma contract emit                              
+npx prisma migration plan --name add-users-and-transfers
+npx prisma db migrate --advance-ref db              
+```
+
+First command generates the contract files (contract.json and contract.d.ts) from the contract.prisma file.
+
+Second command generates the migration file (migration.ts) from the contract files.
+
+Third command applies the migration to the development database.
+
+### Production
+
+```bash
+npx prisma db migrate
+```
+
+This command applies the migration to the production database.
+
+<!--
+Speaker Notes:
+• Three-step loop: emit → plan → migrate
+• prisma contract emit reads contract.prisma, writes contract.json + contract.d.ts
+• prisma migration plan generates a TypeScript migration.ts file to review
+• prisma db migrate applies pending migrations to the database
+• --advance-ref db records which contract state was applied (for dev)
+• No more db push — use db init (new DB) or db update (existing DB) instead
+-->
+
+---
+
+# Custom Migration: TypeScript
+
+File automatically generated by the command `prisma migration plan`.
+
+```typescript
+// migrations/app/20260101T0000_add-users-and-transfers/migration.ts
+override get operations() {
+  return [
+    this.addColumn({ schema: 'public', table: 'Expense',
+      column: col('payerId', 'int4', {}) }),
+
+    this.dataTransform(endContract, 'backfill-expense-payerId', {
+      // check: rows still needing the backfill
+      check: () => db.public.Expense.select('id')
+        .where((f, fns) => fns.eq(f.payerId, null)).limit(1),
+      // run: one typed update per known payer -> matching User.id
+      run: 
+        () => db.public.Expense.update({ payerId: 1 }) // hardcoded, see next slide
+          .where((f, fns) => fns.eq(f.payer, null)),
+    }),
+
+    this.setNotNull({ schema: 'public', table: 'Expense', column: 'payerId' }),
+    this.dropColumn({ schema: 'public', table: 'Expense', column: 'payer' }),
+  ];
+}
+```
+
+<!--
+Speaker Notes:
+• Prisma migrations are TypeScript files
+• migration plan auto-generates the skeleton with placeholders
+• dataTransform handles the backfill: check finds remaining rows, run fixes them
+• addColumn → dataTransform → setNotNull is the safe 3-step pattern for required cols
+• Edit migration.ts then recompile: node migrations/app/<dir>/migration.ts
+• Commit migration.ts, ops.json, migration.json, and snapshot dirs
+-->
+
+---
+
+# Custom Migration: Raw SQL (Advanced)
+
+The typed query builder can't set a column from a join or subquery against another table — so a backfill that matches `Expense.payer` to *any* `User.name` (not just a few known names) needs raw SQL.
+
+```typescript
+this.rawSql({
+  id: 'backfill-expense-payerId',
+  label: 'Backfill Expense.payerId from Expense.payer',
+  operationClass: 'data',
+  target: { id: 'postgres' },
+  precheck: [
+    { description: 'rows still needing the backfill',
+      sql: 'SELECT EXISTS (SELECT 1 FROM "Expense" WHERE "payerId" IS NULL)' },
+  ],
+  execute: [
+    { description: 'match User.name to Expense.payer',
+      sql: `UPDATE "Expense" e SET "payerId" = u.id
+            FROM "User" u
+            WHERE u.name = e.payer AND e."payerId" IS NULL` },
+  ],
+  postcheck: [
+    { description: 'no rows left unmatched',
+      sql: 'SELECT NOT EXISTS (SELECT 1 FROM "Expense" WHERE "payerId" IS NULL)' },
+  ],
+}),
+```
+
+<!--
+Speaker Notes:
+• This is the technically correct fix for the real Expense.payer -> User.id backfill: it matches
+  any name to any user.
+• Why not dataTransform: setting a column from a join/subquery isn't expressible with the typed
+  builder today (open limitation in Prisma's migration tooling) — run must return a typed query
+  plan, not SQL text, so there is no "just make run raw SQL" option
+• rawSql replaces dataTransform's check/run with precheck/execute/postcheck — all plain SQL
+• Trade-off worth calling out: raw SQL isn't validated against the contract the way a typed
+  dataTransform is — Prisma's own migration guide treats it as a last resort for exactly that
+  reason, since nothing checks it matches the schema
+• Too advanced to be the first migration pattern students see — most of their migrations will
+  look like the previous slide; this one is here so the deck doesn't lie about what a real,
+  arbitrary-data backfill requires
+-->
+
+

@@ -32,7 +32,7 @@ Check that everything is running properly.
 
 > What's wrong with using just the HTML components? Nothing... but managing a form state is not that easy - you have to tackle databinding (how does the form input gets into your object) and also validation. We'll see that react-hook-form helps a lot there.
 
-- Install react hook form
+- Install react hook form (on the frontend)
 
 ```bash
 npm install react-hook-form
@@ -79,7 +79,7 @@ We can already see some benefits:
 
 React Hook Form has many other features, but this already shows its power. Have a look at the documentation for understanding how it will make your forms much easier than handling all the useState manually : https://react-hook-form.com/get-started#Quickstart
 
-Before you end your exercice, ensure your types are properly defined. The Form component should define the FormData type describing what is passed to onSubmit (all the fields from the UI). The file src/types/Core.ts should define `Identifiable` which only needs an id. The file src/types/Expense.ts should define the interface `ExpenseInput` which is what you send to the API and `Expense` which is what you get from the API.
+Before you end your exercice, ensure your types are properly defined. The file src/types/Expense.ts should define the interface `NewExpense` which is what you send to the API and `Expense` which is what you get from the API.
 
 Make sure to deploy & test everything again.
 
@@ -87,7 +87,7 @@ Make sure to deploy & test everything again.
 
 ## 3. Use Zod for better validation
 
-Get to the form again and use Zod to get proper validation:
+Get to the form again and use Zod to get proper validation. You will need to install zod and @hookform/resolvers for this. More info in the [documentation](https://react-hook-form.com/docs/useform#resolver)
 
 - user need to be one of either "Bob" or "Alice"
 - amount should be a positive float
@@ -124,8 +124,6 @@ This will involve significant changes: updating our API endpoints, enhancing our
 
 ## Exercises : Data Models and Migration
 
-All exercises continue building on our collaborative expense-sharing app. We will start fresh with a new backend structure but will carry over and extend the functionality from lessons 1–3. Make sure you have your previous code handy for reference, but be prepared to reorganize it. The frontend will be refactored within the existing Vite React project from lesson 3.
-
 **Goal**: Define (or update) the Prisma data models for `User`, `Expense`, and `Transfer` with proper relations, then create and apply a migration to update the database schema.
 
 Our app now requires understanding **who** paid or transferred money to whom. We will introduce a `User` model and link it to expenses and transfers. We’ll also modify the existing `Expense` model to reference users instead of using plain strings.
@@ -135,7 +133,6 @@ Our app now requires understanding **who** paid or transferred money to whom. We
 In the previous lesson, we had to call `npx prisma db update` on render before starting the app. This was necessary to ensure the database was in the expected state described in the contract. This is a quick prototyping command, but it is not safe for production — it can silently drop and recreate columns. What we actually want is to run carefully prepared **migrations** that give us full control over how the database evolves.
 
 One important advantage of Prisma 8's migration system is that **planning a migration is offline**: `npx prisma migration plan` reads only your local files and never connects to a database. 
-There is no "shadow database" anymore (as presented in last year course) — that was a Prisma 7 concept specific to `migrate dev`.
 
 First, make sure your contract is emitted:
 
@@ -155,6 +152,8 @@ This writes a marker in the database recording which contract state it matches. 
 
 You also need to sign the production database. Change `DATABASE_URL` in your `.env` to the production value, run the command again, then restore the local value.
 
+You might have to add `?ssl=true` at the end of your connection string if prisma complains about SSL being mandatory. It should be the default but some setup needs to mention it explicitely.
+
 > **Important** It is not "normal" to manipulate the production database from your local environment, and most of the time this will not even be allowed by the configuration of your database. We are doing it here because we started the project with a prototyping mindset (using `prisma db update`) and we are now in a more future-proof mindset.
 
 ---
@@ -169,10 +168,11 @@ model User {
   name        String
   email       String  @unique
   bankAccount String? // optional
-  paidExpenses         Expense[]     @relation("PayerExpenses")
+
   transfersOut         Transfer[]    @relation("UserTransfersSource")
   transfersIn          Transfer[]    @relation("UserTransfersTarget")
-  participatedExpenses ExpenseUser[]
+  participatedExpenses Expense[] @relation("ParticipantExpenses")
+  paidExpenses Expense[]  @relation("PayerExpenses")
 }
 ```
 
@@ -200,7 +200,7 @@ model Expense {
 
 Changes made:
 - `payer` is now a **relation** to the User model (with a foreign key `payerId`). This replaces the old `payer` string field.
-- `participants` is a **many-to-many relation** to `User`. In Prisma 8, implicit join tables are not supported — you must write the join table as an explicit model. The field type becomes `ExpenseUser[]` instead of `User[]` directly.
+- `participants` is a **many-to-many relation** to `User`. In Prisma 8, implicit join tables are not supported — you must write the join table as an explicit model. 
 
 ---
 
@@ -218,14 +218,6 @@ model ExpenseUser {
   @@id([expenseId, userId])
 }
 ```
-
-And in User model, we also want to access the expenses paid by the User, and the ones he participated to.
-
-```prisma
-participatedExpenses Expense[] @relation("ParticipantExpenses")
-paidExpenses Expense[]  @relation("PayerExpenses")
-```
-
 
 ---
 
@@ -275,6 +267,33 @@ Read the documentation on [editing migrations in Prisma 8](https://www.prisma.io
 
 You can observe that the actual changes are described in the file `migrations/app/<timestamp>_add_users_and_transfers/migration.ts`. A list of SQL commands are defined in this autogernerated file.
 
+As we have seen in the theory, the proper way to handle this is to write a SQL migration. But going down this rabbit hole would force us to spend a lot of time outside the scope of what we want to teach you. Therefore we will simply clear the database of any data. 
+Obviously, this is NOT how it works in real life and if you use Prisma in your internship or your job, you must learn to write raw SQL migrations.
+
+So you can replace the whole dataTransform block with:
+
+````
+this.dataTransform(contract, 'wipe-expense-before-payer-migration', {
+  run: () => db.public.expense.delete(),
+}),
+```
+
+If you have an error about endContract not matching the proper type. You can use this at the beginning of your migration file:
+
+```
+import {
+  Migration,
+  MigrationCLI,
+  col,
+  fn,
+  primaryKey,
+} from '@prisma/orm-postgres/migration';
+
+const { sql: db, contract } = postgres<End>({ contractJson: endContract });
+
+```
+
+
 <!-- Open `migrations/app/<timestamp>_add_users_and_transfers/migration.ts` and edit the `operations()` method. In Prisma 8, migrations are **TypeScript**, not SQL — you describe operations as method calls, and Prisma compiles them to SQL stored in `ops.json`. After editing, recompile the migration from your project root:
 
 ```bash
@@ -286,6 +305,15 @@ node migrations/app/<timestamp>_add_users_and_transfers/migration.ts
 ```typescript
 // operations() inside migrations/app/<timestamp>_add_users_and_transfers/migration.ts
 // (the full file boilerplate — imports, class wrapper, MigrationCLI.run — is generated by `migration plan`)
+// update the imports for accessing rawSql() function
+import {
+  Migration,
+  MigrationCLI,
+  col,
+  fn,
+  primaryKey,
+  rawSql,
+} from '@prisma/orm-postgres/migration';
 
 override get operations() {
   return [
@@ -358,17 +386,18 @@ override get operations() {
     // 5. Drop the old plain-text payer column
     this.dropColumn({ schema: 'public', table: 'Expense', column: 'payer' }),
 
-    // --- Foreign-key constraints (auto-generated by migration plan) ---
-    // addForeignKey calls for Expense→User, Transfer→User (×2), _ParticipantExpenses→Expense/User
+    // --- Foreign-key and indexes constraints (auto-generated by migration plan) ---
+    // addUnique / createIndex / addForeignKey 
   ];
 }
 ```
+-->
 
 After editing, recompile from the project root and review the generated `ops.json`:
 
 ```bash
 node migrations/app/<timestamp>_add_users_and_transfers/migration.ts
-``` -->
+``` 
 
 Now apply the migration:
 
@@ -384,18 +413,14 @@ This will apply all pending migrations, and this time it will succeed.
 
 #### 7 **Run the migration on production**
 
-Now we will need to add a new step after emitting the contract but before starting the app: executing the migrations.
+Now we will need to add a new step before starting the app: executing the migrations.
 The command for executing migrations is `npx prisma db migrate`
 
-Notice ***how it is a different command than the one we ran in development***, this is because in production you omit `--advance-ref db` (there is no local dev ref to advance). This command:
+Notice ***how it is a different command than the one we ran in development***, this is because in production you omit `--advance-ref db` (there is no local dev ref to advance). This is because `--advance-ref` only create a small file locally that helps you plan the next migration without connecting to the db. You only plan migrations on dev, therefore you only advance ref on dev.
 
-- Does not look for drift in the database or changes in the contract
-- Does not reset the database or generate artifacts
+We also need to change how we start the app on Render.
 
-We also need to change how we build and start the app on Render.
-
-The command for building is: `npm install && npx prisma contract emit && npm run build`. This will transpile the code and bundle it in the `dist/` directory.
-The command for starting is: `npx prisma db migrate && npm run start:prod`
+The command for starting is: `npx prisma db migrate && npm run start`
 
 ---
 

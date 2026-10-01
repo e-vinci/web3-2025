@@ -17,7 +17,7 @@ category: 'course-lesson'
 
 ## 1. A basic form
 
-We want to update our "ExpanseAdd" button to be able to add a real expanse using a proper form & fields.
+We want to update our "ExpenseAdd" button to be able to add a real expense using a proper form & fields.
 
 - Create a form in ExpenseAdd with fields for payer (Bob or Alice, use a select), date, description, amount
 - As a first step, create a `handleSubmit()` method to be called on submit, outputing (via the console or an alert) the form content
@@ -161,7 +161,7 @@ You also need to sign the production database. Change `DATABASE_URL` in your `.e
 
 #### 2. **Define `User` Model**: 
 
-Open `src/prisma/contract.prisma`. In Prisma, this file has no `datasource` or `generator` blocks — those are replaced by `prisma.config.ts`. The contract file **must start with `// use prisma-8`**. Define a new model for users:
+Open `src/prisma/contract.prisma`. The contract file **must start with `// use prisma-8`**. Define a new model for users:
 
 ```prisma
 model User {
@@ -194,7 +194,7 @@ model Expense {
   date         DateTime @default(now())
   payer        User     @relation("PayerExpenses", fields: [payerId], references: [id])
   payerId      Int
-  participants ExpenseUser[]
+  participants User[]
 }
 ```
 
@@ -212,21 +212,20 @@ In Prisma 8, many-to-many relations require an explicit join-table model. Add it
 model ExpenseUser {
   expenseId Int
   userId    Int
-  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expense   Expense @relation("ParticipantExpenses", fields: [expenseId], references: [id], onDelete: Cascade)
+  user      User    @relation("ParticipantExpenses", fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([expenseId, userId])
-  @@map("_ParticipantExpenses")
 }
 ```
 
-`@@map("_ParticipantExpenses")` maps the model to the exact table name that the migration SQL will create, keeping it compatible with the naming convention. Also update the `User` model's back-relation to use `ExpenseUser[]` instead of `Expense[]`:
+And in User model, we also want to access the expenses paid by the User, and the ones he participated to.
 
 ```prisma
-participatedExpenses ExpenseUser[]
+participatedExpenses Expense[] @relation("ParticipantExpenses")
+paidExpenses Expense[]  @relation("PayerExpenses")
 ```
 
-> **Backend impact**: accessing participants in your backend code now gives you `ExpenseUser[]` objects. To get the list of users, map over the join records: `expense.participants.map(p => p.user)`. Make sure to `.include("participants")` with a nested include for the user when querying.
 
 ---
 
@@ -392,7 +391,6 @@ Notice ***how it is a different command than the one we ran in development***, t
 
 - Does not look for drift in the database or changes in the contract
 - Does not reset the database or generate artifacts
-- Does not rely on a shadow database (Prisma 8 never did)
 
 We also need to change how we build and start the app on Render.
 

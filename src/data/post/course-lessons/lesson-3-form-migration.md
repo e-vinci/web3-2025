@@ -272,7 +272,7 @@ Obviously, this is NOT how it works in real life and if you use Prisma in your i
 
 So you can replace the whole dataTransform block with:
 
-````
+```ts
 this.dataTransform(contract, 'wipe-expense-before-payer-migration', {
   run: () => db.public.expense.delete(),
 }),
@@ -280,7 +280,7 @@ this.dataTransform(contract, 'wipe-expense-before-payer-migration', {
 
 If you have an error about endContract not matching the proper type. You can use this at the beginning of your migration file:
 
-```
+```ts
 import {
   Migration,
   MigrationCLI,

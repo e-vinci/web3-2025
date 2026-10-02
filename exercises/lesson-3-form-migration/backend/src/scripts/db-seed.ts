@@ -6,21 +6,25 @@ const users = [
     id: 1,
     name: "John Doe",
     email: "john.doe@example.com",
+    bankAccount: "BE12 3456 7890 1234",
   },
   {
     id: 2,
     name: "Jane Doe",
     email: "jane.doe@example.com",
+    bankAccount: "BE13 3456 7890 1234",
   },
   {
     id: 3,
     name: "Abdallah Doe",
     email: "abdallah.doe@example.com",
+    bankAccount: "BE14 3456 7890 1234",
   },
   {
     id: 4,
     name: "Soufiane Doe",
     email: "soufiane.doe@example.com",
+    bankAccount: "BE15 3456 7890 1234",
   },
 ];
 

@@ -9,14 +9,15 @@ export class ExpensesService {
   
   public static async getExpenses(): Promise<Expense[]> {
     try {
-      const rows = await db.orm.public.Expense.include('participants').all();
+      const rows = await db.orm.public.Expense.include('participants', (p) => p.include('user')).include('payer').all();
       const expenses = rows.map((row) => ({
         id: row.id,
         date: row.date,
         amount: row.amount,
         description: row.description,
         payerId: row.payerId,
-        participants: row.participants.map((p) => p.userId),
+        payer: row.payer,
+        participants: row.participants.map((p) => p.user),
       }));
       return expenses;
     } catch (error) {
@@ -27,7 +28,7 @@ export class ExpensesService {
   
   public static async addExpense(newExpense: NewExpense): Promise<Expense> {  
     try {
-      const expense = await db.orm.public.Expense.create({
+      const created = await db.orm.public.Expense.create({
         description: newExpense.description,
         amount: newExpense.amount,
         date: newExpense.date,
@@ -35,57 +36,46 @@ export class ExpensesService {
         participants: (mutator) =>
           mutator.create(newExpense.participants.map((userId) => ({ userId }))),
       });
+      if (!created) {
+        throw new Error("Failed to create expense");
+      }
+      const expense = await db.orm.public.Expense
+        .where({ id: created.id })
+        .include('participants', (p) => p.include('user'))
+        .include('payer')
+        .first();
       return {
-        id: expense.id,
-        date: expense.date,
-        amount: expense.amount,
-        description: expense.description,
-        payerId: expense.payerId,
-        participants: newExpense.participants,
+        id: expense!.id,
+        date: expense!.date,
+        amount: expense!.amount,
+        description: expense!.description,
+        payerId: expense!.payerId,
+        payer: expense!.payer,
+        participants: expense!.participants.map((p) => p.user),
       };
     } catch (error) {
       console.error("Error adding expense:", error);
       throw error;
     }
   }
-  
-  // public static resetExpenses(): Expense[] {
-  //   this._resetExpenses();
-  //   return this.readExpenses();
-  // }
-  
-  // private static readExpenses(): Expense[] {
-  //   try {
-  //     const data = JSON.parse(fs.readFileSync(this.dataPath, "utf-8"));
-  //     return data;
-  //   } catch (error) {
-  //     console.error("Error reading expenses file:", error);
-  //     throw error;
-  //   }
-  // }
-  
-  // private static saveExpenses(expenses: Expense[]): void {
-  //   try {
-  //     fs.writeFileSync(this.dataPath, JSON.stringify(expenses, null, 2));
-  //   } catch (error) {
-  //     console.error("Error saving expenses file:", error);
-  //     throw error;
-  //   }
-  // }
 
-  // private static _resetExpenses(): void {
-  //   try {
-  //     const defaultExpenses: Expense[] = JSON.parse(fs.readFileSync(this.resetPath, "utf-8"));
-  //     db.orm.public.Expense.createAll(defaultExpenses.map((expense) => ({
-  //       date: expense.date,
-  //       amount: expense.amount,
-  //       description: expense.description,
-  //       payer: expense.payer,
-  //     })));
-  //   } catch (error) {
-  //     console.error("Error resetting expenses file:", error);
-  //     throw error;
-  //   }
-  // }
-  
+  public static async resetExpenses(): Promise<Expense[]> {
+    try {
+      await db.orm.public.Expense.where({}).deleteAll();
+      const defaultExpenses: Expense[] = JSON.parse(fs.readFileSync(this.resetPath, "utf-8"));
+      const created = await db.orm.public.Expense.createAll(defaultExpenses.map((expense) => ({
+        date: expense.date,
+        amount: expense.amount,
+        description: expense.description,
+        payerId: expense.payerId,
+      })));
+      if (!created) {
+        throw new Error("Failed to reset expenses");
+      }
+      return this.getExpenses();
+    } catch (error) {
+      console.error("Error resetting expenses:", error);
+      throw error;
+    }
+  }
 }

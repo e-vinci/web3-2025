@@ -120,3 +120,5 @@ Modify the backend to handle the query parameter `categoryId` and return the exp
 ### UI
 
 In the search form, add a dropdown menu to select a category. The dropdown should be populated with the categories returned by the backend. Adpte the form to accept the category as a filter.
+
+---

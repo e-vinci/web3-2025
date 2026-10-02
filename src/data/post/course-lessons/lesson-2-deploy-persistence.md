@@ -348,9 +348,7 @@ You may encounter these two issues :
 
 ```json
 "scripts": {
-  "build": "npm install && npx prisma contract emit && npx prisma db update",
-  "dev": "nodemon npm start",
-  "start": "node ./bin/www"
+  "build": "npm install &&  npx prisma db update",
 }
 ```
 
@@ -362,97 +360,3 @@ Update your start command to apply any DB schema changes: `npx prisma db update 
 
 `npx prisma db update` is great for prototyping a database but can be risky in production. In future lessons we will use migrations for controlling exactly how to evolve the database when adding new features. If you're already interested in going from prototyping to migration, you can read about it [here](https://www.prisma.io/docs/orm/migrations/generating-a-migration).
 
-### 6. A basic form
-
-We want to update our "ExpanseAdd" button to be able to add a real expanse using a proper form & fields.
-
-- Create a form in ExpenseAdd with fields for payer (Bob or Alice, use a select), date, description, amount
-- As a first step, create a `handleSubmit()` method to be called on submit, outputing (via the console or an alert) the form content
-
-Check that everything is running properly.
-
-- Replace the `console.log` to a call to the create API. Disregard validation issues for now.
-
-### 7. React Hook Form
-
-> What's wrong with using just the HTML components? Nothing... but managing a form state is not that easy - you have to tackle databinding (how does the form input gets into your object) and also validation. We'll see that react-hook-form helps a lot there.
-
-- Install react hook form
-
-```bash
-npm install react-hook-form
-```
-
-Let's review our code using the package by:
-
-- Calling useForm at the start:
-
-```typescript
-const {
-  register,
-  handleSubmit,
-  formState: { errors },
-} = useForm();
-
-const onSubmit = (data) => console.log(data);
-```
-
-The onSubmit method is for us to implement (here a simple console.log, that can be later changed to call addExpense). The hook manages the first step (notably to run validation before calling our onSubmit method).
-
-You can link your form, the hook, and you onSubmit callback by using this in the form component :
-
-```typescript
-<form onSubmit={handleSubmit(onSubmit)} ...
-```
-
-Then you can adapt each field of your form for registering a value which will be passed to your onSubmit callback.
-
-- Using the register method for each field:
-
-```tsx
-<label>
-  Amount:
-  <input type="number" {...register('amount', { required: true })} placeholder="Enter amount" />
-  {errors.amount && <span>Amount field is required</span>}
-</label>
-```
-
-We can already see some benefits:
-
-- We have nice error messages if some field are missing on submit
-- We get a properly formatted object on submit
-
-React Hook Form has many other features, but this already shows its power. Have a look at the documentation for understanding how it will make your forms much easier than handling all the useState manually : https://react-hook-form.com/get-started#Quickstart
-
-Before you end your exercice, ensure your types are properly defined. The Form component should define the FormData type describing what is passed to onSubmit (all the fields from the UI). The file src/types/Core.ts should define `Identifiable` which only needs an id. The file src/types/Expense.ts should define the interface `ExpenseInput` which is what you send to the API and `Expense` which is what you get from the API.
-
-Make sure to deploy & test everything again.
-
----
-
-## Optional Challenges
-
-### A. Use Zod for better validation
-
-Get to the form again and use Zod to get proper validation:
-
-- user need to be one of either "Bob" or "Alice"
-- amount should be a positive float
-- description is optional but cannot be bigger than 200 characters
-
-Make sure to show proper error messages for each case.
-
----
-
-## Summary
-
-- Deploying to "PaSS" like render can be done pretty easily
-- Prisma has the same concepts as JPA - model, migration, client
-- Well designed API & function allow you to make big changes (moving from json to a database) without touching 80% if the application
-- Forms states are complicated
-
----
-
-## The PR
-
-https://github.com/e-vinci/web3-2025/pull/6

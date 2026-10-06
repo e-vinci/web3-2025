@@ -28,13 +28,4 @@ expensesRouter.post("/", async (req, res) => {
   }
 });
 
-// expensesRouter.post("/reset", (req, res) => {
-//   try {
-//     const expenses = ExpensesService.resetExpenses();
-//     res.json(expenses);
-//   } catch (error) {
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// });
-
 export default expensesRouter;

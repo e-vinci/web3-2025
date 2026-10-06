@@ -1,0 +1,5 @@
+[
+  { "id": "1", "date": "2026-09-15", "description": "Restaurant", "payer": "John Doe", "amount": 50 },
+  { "id": "2", "date": "2026-09-16", "description": "Groceries", "payer": "Abdallah Doe", "amount": 10.123 },
+  { "id": "3", "date": "2026-09-17", "description": "Coffee", "payer": "Andrea Doe", "amount": 5.5 }
+]

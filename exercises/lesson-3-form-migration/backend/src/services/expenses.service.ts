@@ -31,7 +31,7 @@ export class ExpensesService {
       const created = await db.orm.public.Expense.create({
         description: newExpense.description,
         amount: newExpense.amount,
-        date: newExpense.date,
+        date: Temporal.Instant.from(`${newExpense.date}T00:00:00Z`),
         payerId: newExpense.payerId,
         participants: (mutator) =>
           mutator.create(newExpense.participants.map((userId) => ({ userId }))),

@@ -1,0 +1,53 @@
+// use prisma-8
+model User {
+  id                   Int           @id @default(autoincrement())
+  name                 String
+  email                String        @unique
+  bankAccount          String? // optional
+  paidExpenses         Expense[]     @relation("PayerExpenses")
+  transfersOut         Transfer[]    @relation("UserTransfersSource")
+  transfersIn          Transfer[]    @relation("UserTransfersTarget")
+  participatedExpenses ExpenseUser[]
+  @@map("user") // keep the table name with lowercase
+}
+
+model ExpenseUser {
+  expenseId Int
+  userId    Int
+  expense   Expense @relation(fields:[expenseId], references:[id], onDelete: Cascade)
+  user      User    @relation(fields:[userId], references:[id], onDelete: Cascade)
+
+  @@id([expenseId, userId])
+  @@map("_ParticipantExpenses")
+}
+
+model Expense {
+  id           Int           @id @default(autoincrement())
+  description  String
+  amount       Float
+  date         DateTime      @default(now())
+  payer        User          @relation("PayerExpenses", fields:[payerId], references:[id])
+  payerId      Int
+  participants ExpenseUser[]
+  categoryId   Int?
+  category     Category?      @relation(fields:[categoryId], references:[id])
+  @@map("expense") // keep the table name with lowercase
+}
+
+model Transfer {
+  id       Int      @id @default(autoincrement())
+  amount   Float
+  date     DateTime @default(now())
+  source   User     @relation("UserTransfersSource", fields:[sourceId], references:[id])
+  sourceId Int
+  target   User     @relation("UserTransfersTarget", fields:[targetId], references:[id])
+  targetId Int
+  @@map("transfer") // keep the table name with lowercase
+}
+
+model Category {
+  id     Int    @id @default(autoincrement())
+  name   String @unique
+  colour String
+  @@map("category") // keep the table name with lowercase
+}

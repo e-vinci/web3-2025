@@ -275,7 +275,7 @@ So you can replace the whole dataTransform block with:
 ```ts
 this.dataTransform(contract, 'wipe-expense-before-payer-migration', {
   run: () => db.public.expense.delete(),
-}),
+})
 ```
 
 If you have an error about endContract not matching the proper type. You can use this at the beginning of your migration file:
@@ -290,15 +290,16 @@ import {
 } from '@prisma/orm-postgres/migration';
 
 const { sql: db, contract } = postgres<End>({ contractJson: endContract });
-
 ```
 
 
-<!-- Open `migrations/app/<timestamp>_add_users_and_transfers/migration.ts` and edit the `operations()` method. In Prisma 8, migrations are **TypeScript**, not SQL — you describe operations as method calls, and Prisma compiles them to SQL stored in `ops.json`. After editing, recompile the migration from your project root:
+<!--
+Open `migrations/app/<timestamp>_add_users_and_transfers/migration.ts` and edit the `operations()` method. In Prisma 8, migrations are **TypeScript**, not SQL — you describe operations as method calls, and Prisma compiles them to SQL stored in `ops.json`. After editing, recompile the migration from your project root:
 
 ```bash
 node migrations/app/<timestamp>_add_users_and_transfers/migration.ts
-``` -->
+```
+-->
 
 <!-- Since the point of this course is not the migration API, here is a working `operations()` method. Read it and observe how we generate data, how we make a column temporarily nullable then non-nullable, and how we use `rawSql` for data operations that span multiple tables:
 

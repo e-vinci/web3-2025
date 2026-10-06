@@ -16,10 +16,11 @@ category: 'course-lesson'
 
 # Objectives
 
-- Create filter (search functionality) of expenses by payer and amount,
-- Migration: add category ressource and relation to expense,
-- Add category to expense form,
-- Search expenses by category.
+- Intensive use of React hooks and context
+- Create filter (search functionality) of `expenses` by payer and amount
+- Migration: add `category` ressource and relation to `expense`
+- Add `category` to `expense` form creation
+- Search `expenses` by category
 
 ---
 
@@ -104,13 +105,12 @@ Run the migration to create the new table in the database.
 Reminder: to run the migration, use the following command in dev environment:
 
 ```bash
+  npx prisma contract emit
   npx prisma migration plan --name add-category
   npx prisma db migrate --advance-ref db
 ```
 
 Have a look to your migration plan and be sure that all the existing `expense` received the `categoryId` field with the value `NULL` as default.
-
-Modify some existing expenses to have a category assigned to them.
 
 While in production, use the following command:
 
@@ -120,13 +120,18 @@ npx prisma db migrate
 
 Create a script to populate the database with some categories. ***Do not delete existing data.*** You try to reproduce your production environment as much as possible: so you try to migrate without dropping the database.
 
+Using some VSC extension, modify some existing expenses to have a category assigned to them.
+
 ## 2.3 BE + UI
 
 Create a new route in the backend to fetch all categories.
 
-Modify the UI to allow users to select a category when creating an expense. Insert a dropdown menu to select a category. The dropdown should be populated with the categories returned by the backend.
+Modify the UI to: 
 
-At rendering time, display the category name with a background color in the expense list.
+- create a new hook to fetch all categories
+- allow users to select a category when creating an expense. Insert a dropdown menu to select a category. The dropdown should be populated with the categories returned by the backend.
+
+At rendering time, display the category name with a colour in the expense list.
 
 Finally, when creating an expense, ask the user to select a category.
 

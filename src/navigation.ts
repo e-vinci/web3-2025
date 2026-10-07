@@ -42,10 +42,10 @@ export const headerData = {
           text: 'Lesson 3: Forms and migration',
           href: getPermalink('course-lessons/lesson-3-form-migration', 'post'),
         },
-        //     {
-        //       text: 'Lesson 4: Advanced state',
-        //       href: getPermalink('course-lessons/lesson-4-advanced-state', 'post'),
-        //     },
+        {
+          text: 'Lesson 4: Search and more migrations',
+          href: getPermalink('course-lessons/lesson-4-search-migration2', 'post'),
+        },
         //     {
         //       text: 'Lesson 5: GraphQL',
         //       href: getPermalink('course-lessons/lesson-5-graphql', 'post'),

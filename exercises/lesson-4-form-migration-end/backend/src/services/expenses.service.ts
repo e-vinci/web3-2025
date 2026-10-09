@@ -7,13 +7,21 @@ export class ExpensesService {
 
   private static dataPath = "./data/expenses.json";
   private static resetPath = "./data/expenses.init.json";
-  
-  public static async getExpenses(filter?: ExpenseFilter): Promise<Expense[]> {
+
+  public static async getExpenses(filter: ExpenseFilter): Promise<Expense[]> {
     try {
       let query = db.orm.public.Expense
         .include('participants', (p) => p.include('user'))
         .include('payer')
         .include('category');
+
+      const { amount, ...rest } = filter;
+
+      if (amount) {
+        query = query.where((expenseRow) => expenseRow.amount.gte(amount));
+      }
+      query = query.where(rest);
+
       if (filter) {
         query = query.where(filter);
       }
@@ -35,8 +43,8 @@ export class ExpensesService {
       throw error;
     }
   }
-  
-  public static async addExpense(newExpense: NewExpense): Promise<Expense> {  
+
+  public static async addExpense(newExpense: NewExpense): Promise<Expense> {
     try {
       const created = await db.orm.public.Expense.create({
         description: newExpense.description,

@@ -1,0 +1,855 @@
+{
+  "schemaVersion": "1",
+  "targetFamily": "sql",
+  "target": "postgres",
+  "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
+  "roots": {
+    "_ParticipantExpenses": {
+      "model": "ExpenseUser",
+      "namespace": "public"
+    },
+    "category": {
+      "model": "Category",
+      "namespace": "public"
+    },
+    "expense": {
+      "model": "Expense",
+      "namespace": "public"
+    },
+    "transfer": {
+      "model": "Transfer",
+      "namespace": "public"
+    },
+    "user": {
+      "model": "User",
+      "namespace": "public"
+    }
+  },
+  "domain": {
+    "namespaces": {
+      "public": {
+        "models": {
+          "Category": {
+            "fields": {
+              "colour": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "colour": {
+                  "column": "colour"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                }
+              },
+              "namespaceId": "public",
+              "table": "category"
+            }
+          },
+          "Expense": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "categoryId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "date": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "description": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "payerId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "category": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "categoryId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Category",
+                  "namespace": "public"
+                }
+              },
+              "participants": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "expenseId"
+                  ]
+                },
+                "to": {
+                  "model": "ExpenseUser",
+                  "namespace": "public"
+                }
+              },
+              "payer": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "payerId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "categoryId": {
+                  "column": "categoryId"
+                },
+                "date": {
+                  "column": "date"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "payerId": {
+                  "column": "payerId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "expense"
+            }
+          },
+          "ExpenseUser": {
+            "fields": {
+              "expenseId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "expense": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "expenseId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Expense",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "expenseId": {
+                  "column": "expenseId"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "_ParticipantExpenses"
+            }
+          },
+          "Transfer": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "date": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "sourceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "targetId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "source": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "sourceId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "target": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "targetId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "date": {
+                  "column": "date"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "sourceId": {
+                  "column": "sourceId"
+                },
+                "targetId": {
+                  "column": "targetId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "transfer"
+            }
+          },
+          "User": {
+            "fields": {
+              "bankAccount": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "email": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "paidExpenses": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "payerId"
+                  ]
+                },
+                "to": {
+                  "model": "Expense",
+                  "namespace": "public"
+                }
+              },
+              "participatedExpenses": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "ExpenseUser",
+                  "namespace": "public"
+                }
+              },
+              "transfersIn": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "targetId"
+                  ]
+                },
+                "to": {
+                  "model": "Transfer",
+                  "namespace": "public"
+                }
+              },
+              "transfersOut": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "sourceId"
+                  ]
+                },
+                "to": {
+                  "model": "Transfer",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "bankAccount": {
+                  "column": "bankAccount"
+                },
+                "email": {
+                  "column": "email"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                }
+              },
+              "namespaceId": "public",
+              "table": "user"
+            }
+          }
+        }
+      }
+    }
+  },
+  "storage": {
+    "namespaces": {
+      "public": {
+        "entries": {
+          "table": {
+            "_ParticipantExpenses": {
+              "columns": {
+                "expenseId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "expenseId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "_ParticipantExpenses"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "expense"
+                  }
+                },
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "_ParticipantExpenses"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "expenseId"
+                  ],
+                  "name": "_ParticipantExpenses_expenseId_idx_69d413fa",
+                  "prefix": "_ParticipantExpenses_expenseId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "_ParticipantExpenses_userId_idx_a489d58a",
+                  "prefix": "_ParticipantExpenses_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "expenseId",
+                  "userId"
+                ]
+              },
+              "uniques": []
+            },
+            "category": {
+              "columns": {
+                "colour": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "name"
+                  ]
+                }
+              ]
+            },
+            "expense": {
+              "columns": {
+                "amount": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": false
+                },
+                "categoryId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "date": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "payerId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "payerId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "expense"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "categoryId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "expense"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "category"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "categoryId"
+                  ],
+                  "name": "expense_categoryId_idx_15c304f2",
+                  "prefix": "expense_categoryId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "payerId"
+                  ],
+                  "name": "expense_payerId_idx_3d3ae95d",
+                  "prefix": "expense_payerId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "transfer": {
+              "columns": {
+                "amount": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": false
+                },
+                "date": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "sourceId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "targetId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "sourceId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "transfer"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "targetId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "transfer"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "sourceId"
+                  ],
+                  "name": "transfer_sourceId_idx_d92a2571",
+                  "prefix": "transfer_sourceId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "targetId"
+                  ],
+                  "name": "transfer_targetId_idx_9852d518",
+                  "prefix": "transfer_targetId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "user": {
+              "columns": {
+                "bankAccount": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "email": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "email"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "id": "public",
+        "kind": "postgres-schema"
+      }
+    },
+    "storageHash": "e04c207a49a2c453ab3b941d75e6f4502a58b5441dd401d99832a3d33f95f686"
+  },
+  "capabilities": {
+    "postgres": {
+      "distinctOn": true,
+      "jsonAgg": true,
+      "lateral": true,
+      "limit": true,
+      "orderBy": true,
+      "returning": true
+    },
+    "sql": {
+      "checkConstraint": true,
+      "defaultInInsert": true,
+      "enums": true,
+      "insertOnConflictSkip": true,
+      "insertOnConflictWithoutTarget": true,
+      "lateral": true,
+      "returning": true,
+      "scalarList": true
+    }
+  },
+  "extensions": {},
+  "meta": {},
+  "_generated": {
+    "warning": "⚠️  GENERATED FILE - DO NOT EDIT",
+    "message": "This file is automatically generated by \"prisma contract emit\".",
+    "regenerate": "To regenerate, run: prisma contract emit"
+  }
+}

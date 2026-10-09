@@ -344,7 +344,7 @@ You may encounter these two issues :
 
 - if you have a cors error, remember to allow your backend to serve request from your frontend in `app.ts`.
 
-- The `contract.json` and `contract.d.ts` files should be committed to your repository. However, you still need to run `prisma contract emit` as part of the build to ensure they are up to date. Add a `build` script in your `package.json`:
+- The `contract.json` and `contract.d.ts` files should be committed to your repository so you don't have to emit again in production. This is what your build script should look like  in your `package.json`:
 
 ```json
 "scripts": {

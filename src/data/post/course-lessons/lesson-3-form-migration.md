@@ -419,9 +419,9 @@ The command for executing migrations is `npx prisma db migrate`
 
 Notice ***how it is a different command than the one we ran in development***, this is because in production you omit `--advance-ref db` (there is no local dev ref to advance). This is because `--advance-ref` only create a small file locally that helps you plan the next migration without connecting to the db. You only plan migrations on dev, therefore you only advance ref on dev.
 
-We also need to change how we start the app on Render.
+We also need to change how we build the app on Render.
 
-The command for starting is: `npx prisma db migrate && npm run start`
+The command for building is: `npm install && npx prisma db migrate`
 
 ---
 

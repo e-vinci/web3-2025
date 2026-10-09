@@ -290,7 +290,7 @@ import { z } from 'zod';
 const ExpenseSchema = z.object({
   description: z.string().min(1, 'Description required').max(100, 'Max 100 chars'),
   amount: z.number().min(0.01, 'Amount must be positive'),
-  payer: z.enum(['Alice', 'Bob'], { errorMap: () => ({ message: 'Payer must be Alice or Bob' }) }),
+  payer: z.enum(['Alice', 'Bob'],  'Payer must be Alice or Bob' ) }),
   date: z.string().optional(),
 });
 

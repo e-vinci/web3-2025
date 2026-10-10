@@ -1,0 +1,58 @@
+@server = http://localhost:3000
+@expenses = {{server}}/api/expenses
+
+### Get all expenses
+GET {{expenses}}
+
+### Filter: amount is a MINIMUM (greater than or equal)
+GET {{expenses}}?amount=45
+
+### Filter: by payer
+GET {{expenses}}?payerId=1
+
+### Filter: by category
+GET {{expenses}}?categoryId=1
+
+### Filter: combined
+GET {{expenses}}?payerId=2&amount=10&categoryId=1
+
+### Filter: unknown payer -> 404
+GET {{expenses}}?payerId=999
+
+### Filter: not a number -> 400
+GET {{expenses}}?amount=abc
+
+### Add a new expense
+POST {{expenses}}
+Content-Type: application/json
+
+{
+  "date": "2026-10-20",
+  "description": "Team lunch",
+  "payerId": 1,
+  "participants": [1, 2],
+  "amount": 45.50,
+  "categoryId": 1
+}
+
+### Add a new expense without a category or participants
+POST {{expenses}}
+Content-Type: application/json
+
+{
+  "date": "2026-10-20T12:30:00Z",
+  "description": "Solo coffee",
+  "payerId": 2,
+  "amount": 3.20
+}
+
+### Invalid expense (negative amount) -> 400
+POST {{expenses}}
+Content-Type: application/json
+
+{
+  "date": "2026-10-20",
+  "description": "Nope",
+  "payerId": 1,
+  "amount": -5
+}

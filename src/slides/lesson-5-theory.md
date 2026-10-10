@@ -1,1118 +1,588 @@
 ---
 marp: true
 theme: default
-class: lead
 paginate: true
-header: 'Web 3 2025 - Lesson 5'
-footer: 'Web 3 2025 - Vinci'
-backgroundColor: #fff
-backgroundImage: url('https://marp.app/assets/hero-background.svg')
+header: 'Web 3 2026 - Routing and GraphQL'
+footer: 'Web 3 2026 - Vinci'
 ---
 
-# Lesson 5: GraphQL
+# Lesson 5: Routing and GraphQL
 
-**A Modern Approach to API Design**
+## From one page to many — and why that changes the API
 
 <!--
-Speaker Notes:
-• Welcome to Lesson 5 - GraphQL
-• Moving beyond traditional REST APIs
-• Learning industry-standard query language
-• Building flexible, efficient APIs
+Speaker notes:
+• Two topics, but they are one story: routing creates the problem GraphQL solves.
+• Order matters today. Don't jump ahead to GraphQL.
+• Ask: who has used a site where the back button did nothing? That's today's starting point.
 -->
 
 ---
 
-## The Problem with REST APIs
+## Where we left off
 
-**Scenario:** Display expense details with payer and participant names
+**Laptops closed.** Last week's `useExpenses` hook.
 
-**REST API:**
+1. Besides the expenses themselves, **what state does it hold?**
+2. What happens, **in order**, from "component renders" to "data on screen"?
 
-```
-GET /api/expenses/1          → Returns: id, description, amount, date, payerId
-GET /api/users/2             → Returns: id, name, email, bankAccount, ...
-GET /api/users/3             → Returns: id, name, email, bankAccount, ...
-GET /api/users/4             → Returns: id, name, email, bankAccount, ...
-```
-
-**Problems:**
-
-- ❌ Multiple HTTP requests (N+1 problem)
-- ❌ Over-fetching: Getting data we don't need (bankAccount, etc.)
-- ❌ Under-fetching: Need multiple requests to get related data
+*60 seconds. Talk to the person next to you.*
 
 <!--
-Speaker Notes:
-• REST forces us to make multiple round trips
-• Each request has latency overhead
-• We get all user fields even though we only need names
-• N+1 problem: 1 query for expense + N queries for participants
-• This becomes worse with nested data
+Speaker notes — RETRIEVAL, not revision. Do not answer it for them.
+Answers: (1) a `loading` flag, usually an error too.
+(2) component renders with an empty list → useEffect fires → fetch → setState → re-render.
+Make someone say the ORDER out loud — "renders first, data second" is the whole point.
+
+Why open this way: in twenty minutes we delete every piece of this. They can only notice
+what vanished if the old pattern is active in their head right now. Show them a loader
+cold and they will nod and learn nothing.
 -->
 
 ---
 
-## The GraphQL Solution
+## ...and what that costs us
 
-**Same scenario with GraphQL:**
+Our app works. It is also **one single page**.
 
-```graphql
-query {
-  expense(id: 1) {
-    id
-    description
-    amount
-    date
-    payer {
-      name
-    }
-    participants {
-      name
-    }
-  }
-}
-```
+- Everything lives in `Home.tsx`: the form, the search, the list
+- You cannot link to one expense
+- The back button does nothing
+- Refresh always lands on the same screen
+- Every component fetches its own data with `useEffect`
 
-**One request. Exactly the data you need. Nothing more, nothing less.**
+> A technical proof of concept, not a product.
+
+---
+
+## Today
+
+1. **React Router** — split into real pages, fetch with **loaders**
+2. Feel a problem: several pages need several **shapes** of the same data
+3. **GraphQL** — one endpoint, each page asks for what it needs
 
 <!--
-Speaker Notes:
-• Single HTTP request to get everything
-• Client specifies exactly what fields it needs
-• No over-fetching - only name, not email or bankAccount
-• Server knows relationships and fetches efficiently
-• Solves both over-fetching and under-fetching
+Speaker notes:
+• Emphasise step 2. Students who skip it think GraphQL is just "REST with extra steps".
+• The pain is the point.
 -->
 
 ---
 
-# Today's Topics
+# Part 1 — React Router
 
-1. **GraphQL Fundamentals** - What is GraphQL?
-2. **Query Language** - How to ask for data
-3. **Queries vs Mutations** - Read vs Write operations
-4. **Apollo** - GraphQL implementation for Node.js and React
-5. **Pothos** - Type-safe schema builder
-6. **Tooling** - Ruru playground and development tools
+A router maps a **URL** to a **component**. That one idea gives you, for free:
+
+- shareable and bookmarkable links
+- a working back/forward button
+- refresh that lands where you were
+- a place to hang **per-page data loading**
+
+---
+
+## Install: read this carefully
+
+```bash
+npm install react-router
+```
+
+**Not `react-router-dom`.**
+
+- `react-router-dom` was merged into `react-router` in **v8**
+- It is frozen at v7 on npm — installing it gives you a stale version
+- Every tutorial, blog post and AI answer still says `-dom`
 
 <!--
-Speaker Notes:
-• Comprehensive introduction to GraphQL
-• Theory and practical implementation
-• Industry-standard tools and libraries
-• Building production-ready GraphQL APIs
+Speaker notes:
+• This WILL bite people. Say it twice.
+• If a student has weird import errors, this is the first thing to check.
 -->
 
 ---
 
-# What is GraphQL?
-
-GraphQL is a **query language for APIs** and a **runtime for executing those queries**.
-
-**Key Characteristics:**
-
-- 🎯 **Declarative**: Ask for exactly what you need
-- 📝 **Strongly typed**: Schema defines what's possible
-- 🔗 **Hierarchical**: Queries mirror the data structure
-- 🎨 **Introspective**: Self-documenting API
-
-**Created by Facebook in 2012, open-sourced in 2015**
-
-<!--
-Speaker Notes:
-• GraphQL is both a specification and a runtime
-• Query language lets clients describe their data needs
-• Runtime executes queries against your schema
-• Not tied to any specific database or programming language
-• Works with your existing code and data
--->
-
----
-
-# GraphQL vs REST
-
-| Aspect             | REST                             | GraphQL                        |
-| ------------------ | -------------------------------- | ------------------------------ |
-| **Endpoints**      | Multiple (`/users`, `/expenses`) | Single (`/graphql`)            |
-| **Data Fetching**  | Fixed responses                  | Flexible, client-specified     |
-| **Over-fetching**  | Common                           | Eliminated                     |
-| **Under-fetching** | Requires multiple requests       | Single request                 |
-| **Versioning**     | URL versioning (`/v1`, `/v2`)    | Schema evolution               |
-| **Documentation**  | Manual (OpenAPI/Swagger)         | Auto-generated (introspection) |
-
-<!--
-Speaker Notes:
-• REST uses multiple endpoints, GraphQL uses one
-• REST returns fixed data structure, GraphQL returns what you ask for
-• REST often requires multiple requests for related data
-• GraphQL schema is self-documenting through introspection
-• Both have their place - not one-size-fits-all
--->
-
----
-
-# When to Use GraphQL vs REST
-
-**Use GraphQL when:**
-
-- ✅ Complex data relationships
-- ✅ Mobile apps (bandwidth matters)
-- ✅ Multiple clients with different needs
-
-**Use REST when:**
-
-- ✅ Simple CRUD operations
-- ✅ File uploads/downloads
-- ✅ Legacy compatibility is critical
-
-**Both:** It's fine to use both in the same app!
-
-<!--
-Speaker Notes:
-• GraphQL excels with complex, interconnected data
-• REST is simpler for basic operations
-• Can use both together - GraphQL for complex queries, REST for uploads
-• Consider team experience and project requirements
-• Not an either/or decision
--->
-
----
-
-# GraphQL Query Language Basics
-
-## Query Structure
-
-```graphql
-{
-  expense(id: 1) {
-    id
-    description
-    amount
-    payer {
-      name
-      email
-    }
-  }
-}
-```
-
----
-
-**Components:**
-
-- **Operation**: `expense` (the query name)
-- **Arguments**: `(id: 1)` (input parameters)
-- **Selection Set**: `{ id, description, ... }` (fields to return)
-
-<!--
-Speaker Notes:
-• Queries look similar to JSON but without values
-• Curly braces define what fields you want
-• Arguments in parentheses filter or specify data
-• Nested objects let you traverse relationships
-• Response mirrors the query structure
--->
-
----
-
-# Fields and Arguments
-
-```graphql
-{
-  # Simple field
-  hello
-
-  # Field with argument
-  expense(id: 1) {
-    description
-  }
-```
-
----
-
-```graphql
-  # Multiple arguments
-  expenses(limit: 10, offset: 0) {
-    id
-    description
-  }
-
-  # Nested fields
-  expense(id: 1) {
-    payer {
-      name
-      email
-    }
-  }
-}
-```
-
-<!--
-Speaker Notes:
-• Fields are the basic unit - properties you want to fetch
-• Arguments filter or customize the query
-• Can have multiple arguments (limit, offset, etc.)
-• Nested fields traverse relationships
-• Server resolves each field independently
--->
-
----
-
-# Query Response
-
-**Query:**
-
-```graphql
-{
-  expense(id: 1) {
-    description
-    amount
-    payer {
-      name
-    }
-  }
-}
-```
-
----
-
-**Response:**
-
-```json
-{
-  "data": {
-    "expense": {
-      "description": "Team Lunch",
-      "amount": 42.5,
-      "payer": {
-        "name": "Alice"
-      }
-    }
-  }
-}
-```
-
-**Response mirrors query structure exactly!**
-
-<!--
-Speaker Notes:
-• Response JSON structure matches query structure
-• Only requested fields are included
-• Null if field doesn't exist or is null
-• Errors separate from data in errors array
-• Predictable response format
--->
-
----
-
-# Query vs Mutation
-
-## Query: Read Operations
-
-```graphql
-query GetExpense {
-  expense(id: 1) {
-    description
-    amount
-  }
-}
-```
-
----
-
-## Mutation: Write Operations
-
-```graphql
-mutation CreateExpense {
-  createExpense(description: "Lunch", amount: 42.5, payerId: 1) {
-    id
-    description
-  }
-}
-```
-
-<!--
-Speaker Notes:
-• Queries are for reading data (like GET in REST)
-• Mutations are for changing data (like POST, PUT, DELETE)
-• Semantic distinction helps with caching and optimization
-• Mutations run sequentially, queries can run in parallel
-• Both can return data - mutations often return created/updated object
--->
-
----
-
-# Query vs Mutation Principles
-
-**Query:**
-
-- 🔍 Read-only operations, No side effects
-- ⚡ Can be executed in parallel
-- 💾 Cacheable
-
-**Mutation:**
-
-- ✏️ Create, update, delete operations
-- 🔄 Executed sequentially
-- 🚫 Not cacheable
-
-**Both return data!**
-
-<!--
-Speaker Notes:
-• Clear semantic distinction
-• Queries should be side-effect free
-• Mutations change state
-• GraphQL guarantees mutations run one after another
-• Queries can be optimized and cached
-• Return data helps avoid additional queries
--->
-
----
-
-# Variables in GraphQL
-
-**Without variables:**
-
-```graphql
-mutation {
-  createExpense(description: "Lunch", amount: 42.5, payerId: 1) {
-    id
-  }
-}
-```
-
----
-
-**With variables (better):**
-
-```graphql
-mutation CreateExpense($description: String!, $amount: Float!, $payerId: Int!) {
-  createExpense(description: $description, amount: $amount, payerId: $payerId) {
-    id
-    description
-  }
-}
-```
-
-**Variables (sent separately):**
-
-```json
-{
-  "description": "Lunch",
-  "amount": 42.5,
-  "payerId": 1
-}
-```
-
-<!--
-Speaker Notes:
-• Variables separate query structure from values
-• Reusable queries with different inputs
-• Better for client-side code
-• Type-safe with validation
-• $ prefix denotes variables
-• ! suffix means required (non-nullable)
--->
-
----
-
-# Apollo: The GraphQL Ecosystem
-
-**Apollo** is the most popular GraphQL implementation for JavaScript.
-
-**Two main components:**
-
-1. **Apollo Server** (Backend)
-   - GraphQL server for Node.js
-   - Works with Express, Fastify, etc.
-   - Schema-first or code-first approach
-
----
-
-2. **Apollo Client** (Frontend)
-   - GraphQL client for React, Vue, Angular
-   - Intelligent caching
-   - State management
-
-<!--
-Speaker Notes:
-• Apollo is to GraphQL what Express is to REST
-• Not the only implementation but most popular
-• Server and client work together but can be used separately
-• Production-ready with great documentation
-• Active community and ecosystem
--->
-
----
-
-# Apollo Server
-
-```typescript
-const typeDefs = `#graphql
-  type Query {
-    hello: String
-  }
-`;
-
-const resolvers = {
-  Query: {
-    hello: () => 'Hello GraphQL!',
-  },
-};
-
-const server = new ApolloServer({ typeDefs, resolvers });
-await server.start();
-
-const graphqlMiddleware = expressMiddleware(server);
-app.use('/graphql', graphqlMiddleware);
-```
-
-<!--
-Speaker Notes:
-• Apollo Server integrates with Express as middleware
-• typeDefs define the schema (what's possible)
-• resolvers implement the logic (how to fetch data)
-• Single /graphql endpoint handles all queries
-• Works alongside existing REST routes
--->
-
----
-
-# Apollo Server Components
-
-**Type Definitions (typeDefs):**
-
-- GraphQL schema definition language
-- Defines types, queries, mutations
-- The "contract" between client and server
-
-**Resolvers:**
-
-- Functions that fetch the data
-- Map to each field in the schema
-- Can call databases, APIs, other services
-
----
-
-```typescript
-const resolvers = {
-  Query: {
-    expense: (_parent, args, context) => {
-      return expenseRepository.getExpenseById(args.id);
-    },
-  },
-};
-```
-
-<!--
-Speaker Notes:
-• Schema defines what's possible
-• Resolvers define how to get the data
-• Each field can have its own resolver
-• Resolvers receive parent, args, context, info
-• Can call existing code - no need to rewrite everything
--->
-
----
-
-# Apollo Client
-
-```typescript
-import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
-const client = new ApolloClient({
-  link: new HttpLink({ uri: 'http://localhost:3000/graphql' }),
-  cache: new InMemoryCache(),
-});
-```
-
-**In React:**
+## Declaring routes
 
 ```tsx
-import { ApolloProvider } from '@apollo/client/react';
-function App() {
+import { createBrowserRouter, RouterProvider } from 'react-router';
+
+const router = createBrowserRouter([
+  {
+    Component: Layout,          // no path: a layout route
+    children: [
+      { index: true, Component: Welcome },
+      { path: 'expenses', Component: ExpenseList },
+      { path: 'expenses/new', Component: ExpenseNew },
+      { path: 'expenses/:id', Component: ExpenseShow },
+    ],
+  },
+]);
+
+createRoot(root).render(<RouterProvider router={router} />);
+```
+
+---
+
+## Layout routes and `Outlet`
+
+A layout route has **no path**. It exists to wrap its children.
+
+```tsx
+function Layout() {
   return (
-    <ApolloProvider client={client}>
-      <RouterProvider router={router} />
-    </ApolloProvider>
+    <div>
+      <nav>{/* stays on screen between pages */}</nav>
+      <main>
+        <Outlet />   {/* the matching child renders here */}
+      </main>
+    </div>
   );
 }
 ```
 
-<!--
-Speaker Notes:
-• Apollo Client handles GraphQL requests
-• Intelligent caching reduces requests
-• Works with React hooks
-• Similar to React Query but GraphQL-specific
-• Provider makes client available to all components
--->
+`index: true` = what `/` renders.
 
 ---
 
-# Querying with Apollo Client
+## Links
 
-```typescript
-const EXPENSE_QUERY = gql`
-  query ExpenseDetail($id: Int!) {
-    expense(id: $id) {
-      id
-      description
-      amount
-      payer {
-        name
-      }
-    }
-  }
-`;
-export async function loader({ params }) {
-  const { data } = await graphqlClient.query({
-    query: EXPENSE_QUERY,
-    variables: { id: Number(params.id) },
-  });
-  return { expense: data.expense };
+```tsx
+<Link to="/expenses">Expenses</Link>
+
+<NavLink to="/expenses" end
+  className={({ isActive }) => (isActive ? 'active' : '')}>
+  Expenses
+</NavLink>
+```
+
+- `Link` — navigate without reloading the page
+- `NavLink` — a `Link` that knows if it is active
+- **`end`** — match exactly; without it `/expenses` stays "active" on `/expenses/new`
+
+---
+
+## The old way: `useEffect`
+
+```tsx
+const [expenses, setExpenses] = useState([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  fetch('/api/expenses')
+    .then((r) => r.json())
+    .then(setExpenses)
+    .finally(() => setLoading(false));
+}, []);
+
+if (loading) return <p>Loading…</p>;
+```
+
+Render first, **then** fetch. Every component repeats this.
+
+---
+
+## The new way: a loader
+
+```ts
+export async function expenseListLoader() {
+  const res = await fetch(`${API}/api/expenses`);
+  if (!res.ok) throw new Response('Failed', { status: res.status });
+  return res.json();
 }
 ```
 
-<!--
-Speaker Notes:
-• gql tag parses GraphQL strings at build time
-• Type-safe with TypeScript
-• Integrates with React Router loaders
-• Cache automatically manages results
-• Same data from cache if queried again
--->
-
----
-
-# Mutations with Apollo Client
-
-```typescript
-const CREATE_EXPENSE_GQL = gql`
-  mutation CreateExpense($description: String!, $amount: Float!) {
-    createExpense(description: $description, amount: $amount) {
-      id
-      description
-    }
-  }
-`;
-const onSubmit = async (data) => {
-  await graphqlClient.mutate({
-    mutation: CREATE_EXPENSE_GQL,
-    variables: {
-      description: data.description,
-      amount: data.amount,
-    },
-  });
-};
+```tsx
+{ path: 'expenses', Component: ExpenseList, loader: expenseListLoader }
 ```
 
+```tsx
+const expenses = useLoaderData() as Expense[];
+```
+
+No `useState`. No `useEffect`. No `loading` flag.
+
+A route with a dynamic segment (`expenses/:id`) passes it to the loader
+in **`params`** — `({ params }) => ...`, then `params.id`.
+
 <!--
-Speaker Notes:
-• Mutations similar to queries but use mutate method
-• Returns created/updated object
-• Can specify what fields to return
-• Cache automatically updates with results
-• Consistent pattern across app
+Speaker notes:
+• The router knows which page it is about to render, so it can fetch BEFORE rendering.
+• The component becomes a pure function of its data. That is the real win.
 -->
 
 ---
 
-# Ruru: GraphQL Playground
+## Errors: throw, don't return
 
-**Ruru** is a modern GraphQL IDE for testing and exploring your API.
+```ts
+if (!res.ok) throw new Response('Not found', { status: 404 });
+```
 
-```typescript
-import { ruruHTML } from 'ruru/server';
+A loader answers one of two things: **here is the data**, or **this route failed**.
+Throwing is how you say the second without inventing a convention.
 
-if (env.isDevelopment) {
-  app.get('/ruru', (req, res) => {
-    res.send(ruruHTML({ endpoint: '/graphql' }));
-  });
+- Returning `undefined` pushes the problem into the component —
+  every `.map` becomes a null check
+- `Response` is a **web standard**, not a React Router type
+- React Router catches it and shows a built-in error screen
+
+---
+
+## Put your filters in the URL
+
+```tsx
+const [searchParams, setSearchParams] = useSearchParams();
+
+setSearchParams(new URLSearchParams({ payerId: '2' }));
+```
+
+The loader reads them back:
+
+```ts
+export async function expenseListLoader({ request }) {
+  const params = new URL(request.url).searchParams;
+  // ...
 }
 ```
 
+**The URL changes → the router re-runs the loader.** No state to manage.
+
+`/expenses?payerId=2&amount=10` is bookmarkable, shareable, survives refresh.
+
+> Any filter, tab or page cursor living only in `useState`
+> is state your users cannot share and you cannot reproduce.
+
 ---
 
-**Features:**
+## Check: what runs?
 
-- 🎨 Syntax highlighting and autocomplete
-- 📚 Schema documentation
-- 📝 Query history
-- 🔍 Schema explorer
+You are on `/expenses`. The user picks a payer and submits,
+so the URL becomes `/expenses?payerId=2`. **What runs?**
 
-**Visit: http://localhost:3000/ruru**
+**A.** The component re-renders; the loader does not run again
+**B.** The loader runs again, then the component re-renders
+**C.** Nothing, until you call a refetch function yourself
+**D.** A `useEffect` inside the component fires
 
 <!--
-Speaker Notes:
-• Essential development tool
-• Interactive query editor with autocomplete
-• Explore schema and types
-• Test queries before implementing in code
-• Like Postman but for GraphQL
-• Only enable in development!
+HINGE QUESTION — all hands up at once, fingers 1-4. 60 seconds.
+Answer: B.
+Diagnosis:
+• A or D → still on the useEffect model: the loader is "mount-only" in their head.
+  Re-show "Put your filters in the URL" and demo it live in the browser.
+• C → thinks fetching is manual (react-query habit). Say: the ROUTER owns the trigger,
+  the URL is the input.
+• Mostly B → move on, the key idea of Part 1 has landed.
+Do not take hands-up volunteers — you will only hear from the three who already know.
 -->
 
 ---
 
-# Pothos: Type-Safe Schema Builder
-
-**The Problem:**
-
-```typescript
-// typeDefs as string - no TypeScript validation
-const typeDefs = `#graphql
-  type User {
-    id: ID!
-    name: Strnig  # Typo! No error until runtime
-  }
-`;
-```
+# Part 2 — The problem
 
 ---
 
-**The Solution: Pothos**
+## One endpoint, two screens
 
-```typescript
-builder.prismaObject('User', {
-  fields: (t) => ({
-    id: t.exposeID('id'),
-    name: t.exposeString('name'), // TypeScript catches typos!
-  }),
+`GET /api/expenses` returns, for **every** row:
+
+- the full payer — email, **bank account**
+- every participant — emails, bank accounts
+- the full category
+
+The **list** screen shows: description, amount, date, payer *name*, category *name*.
+
+> We ship bank details to a screen that never renders them.
+> A performance problem and a privacy problem at once.
+
+---
+
+## So you trim it
+
+Make `/api/expenses` light. ~2.3 kB → ~0.8 kB. 
+
+But the **detail** page needs all of it.
+
+So now you have:
+
+| Endpoint | Shape |
+|---|---|
+| `GET /api/expenses` | light |
+| `GET /api/expenses/:id` | full |
+
+Two routes, two mappings, two TypeScript types, one resource.
+
+---
+
+## And it keeps going
+
+- A screen needs expenses **with participants but no category** → a third endpoint?
+- Add `?include=participants,category` → you are writing a query language, badly, one `if` at a time
+- Add a field to `Expense` → how many files do you touch?
+
+<!--
+Speaker notes:
+• Ask the room for the ?include= answer before showing it. Someone always proposes it.
+• That instinct is correct AND it is the smell. Name it.
+-->
+
+---
+
+## Check: what does the new screen cost?
+
+Your REST API: `GET /api/expenses` (light) and `GET /api/expenses/:id` (full).
+A new screen needs expenses **with participants but without categories**.
+**What is the smallest change that works?**
+
+**A.** Nothing — `/api/expenses` already returns those fields
+**B.** Add a third endpoint, or an `?include=` parameter
+**C.** Put participants back into `/api/expenses` — the list page won't mind
+**D.** Call `/api/expenses/:id` once per row
+
+<!--
+HINGE QUESTION — 60 seconds, everyone answers. Answer: B.
+This one decides whether Part 3 will mean anything, so do not skip it.
+Diagnosis:
+• A → never registered that we trimmed the list endpoint. Re-show "So you trim it".
+• C → has not felt the over-fetching cost; would happily re-create the original problem.
+  Re-run the network-tab demo: 2.3 kB vs 0.8 kB, bank accounts on a list screen.
+• D → right instinct about shapes, hasn't costed it. Name the N+1 problem, move on.
+• Mostly B → the motivation has landed. Go straight to Part 3.
+-->
+
+---
+
+# Part 3 — GraphQL
+
+**REST:** the server publishes **shapes**. One URL, one response shape.
+
+**GraphQL:** the server publishes **capabilities** — a schema of everything that *can* be asked.
+The client sends a **query** for what it needs *this time*.
+
+> One endpoint. Any number of shapes.
+> No backend change when a screen's needs change.
+
+---
+
+## Mounting it (GraphQL Yoga)
+
+```bash
+npm install graphql-yoga graphql
+```
+
+```ts
+const yoga = createYoga({
+  schema,
+  graphqlEndpoint: '/graphql',
+  maskedErrors: process.env.NODE_ENV === 'production',
 });
+app.use(yoga.graphqlEndpoint, yoga);
 ```
 
+Open `http://localhost:3000/graphql` **in a browser** → GraphiQL IDE.
+
 <!--
-Speaker Notes:
-• Raw GraphQL schema is strings - no type safety
-• Pothos builds schema with TypeScript
-• Catch errors at compile time, not runtime
-• Better IDE support with autocomplete
-• Integrates with Prisma for automatic types
+Speaker notes:
+• maskedErrors: without it every resolver error is "Unexpected error." and they will be lost for an hour.
+• Demo GraphiQL live: the Docs panel is the selling point. The API documents itself.
 -->
 
 ---
 
-# Why Pothos?
+## The schema (SDL)
 
-**Benefits:**
+```graphql
+type User {
+  id: Int!
+  name: String!
+  email: String!
+  bankAccount: String      # nullable
+}
 
-- ✅ **Type Safety**: Catch errors at compile time
-- 🔗 **Prisma Integration**: Auto-generate from database schema
-- 🧩 **Modular**: Build schema piece by piece
-- 🎯 **Code-First**: Define schema in TypeScript, not strings
-- 📦 **Plugin Ecosystem**: Validation, auth, complexity, etc.
-
----
-
-```typescript
-import SchemaBuilder from '@pothos/core';
-import PrismaPlugin from '@pothos/plugin-prisma';
-
-const builder = new SchemaBuilder({
-  plugins: [PrismaPlugin],
-  prisma: { client: prisma },
-});
-```
-
-<!--
-Speaker Notes:
-• Pothos is code-first vs schema-first approach
-• Better developer experience with TypeScript
-• Catches errors early in development
-• Plugins add powerful features
-• Prisma plugin generates types from database
--->
-
----
-
-# Pothos + Prisma Integration
-
-**Prisma Schema:**
-
-```prisma
-model User {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String @unique
+type Expense {
+  id: Int!
+  description: String!
+  amount: Float!
+  payer: User!             # never null
+  participants: [User!]!   # list always present, no holes
+  category: Category       # may be absent
 }
 ```
 
-**Pothos Schema (auto-typed!):**
-
-```typescript
-builder.prismaObject('User', {
-  fields: (t) => ({
-    id: t.exposeID('id'), // TypeScript knows 'id' exists
-    name: t.exposeString('name'), // and knows 'name' is a string
-    email: t.exposeString('email'),
-  }),
-});
-```
-
-**Pothos knows all Prisma types automatically!**
-
-<!--
-Speaker Notes:
-• Prisma generates TypeScript types from database
-• Pothos uses those types for GraphQL schema
-• End-to-end type safety: Database → API → Frontend
-• Change database schema, TypeScript catches GraphQL issues
-• No manual type duplication
--->
+`!` = non-nullable. The schema is a **contract**.
 
 ---
 
-# Pothos Schema Builder
-
-```typescript
-// builder.ts
-import SchemaBuilder from '@pothos/core';
-import PrismaPlugin from '@pothos/plugin-prisma';
-import type PrismaTypes from '../generated/pothos-prisma-types';
-
-const builder = new SchemaBuilder<{
-  PrismaTypes: PrismaTypes;
-}>({
-  plugins: [PrismaPlugin],
-  prisma: { client: prisma },
-});
-
-export default builder;
-```
-
-**Single builder instance shared across all schema definitions**
-
-<!--
-Speaker Notes:
-• Builder is central to Pothos
-• Configure once, use everywhere
-• PrismaTypes generated automatically
-• Plugins extend functionality
-• Export and reuse in all schema files
--->
-
----
-
-# Defining Types with Pothos
-
-```typescript
-const ExpenseRef = builder.prismaObject('Expense', {
-  fields: (t) => ({
-    id: t.exposeID('id'),
-    description: t.exposeString('description'),
-    amount: t.exposeFloat('amount'),
-    date: t.string({ resolve: (parent) => parent.date.toISOString() }),
-    payer: t.relation('payer'),
-    participants: t.relation('participants'),
-  }),
-});
-```
-
-**Exposes:**
-
-- Prisma fields directly (`exposeID`, `exposeString`, etc.)
-- Relations automatically (`t.relation`)
-
-<!--
-Speaker Notes:
-• prismaObject maps GraphQL type to Prisma model
-• t.expose methods for simple fields
-• t.relation for relationships - Pothos handles joins
-• Type parameter ensures type safety
-• Can add computed fields not in database
--->
-
----
-
-# Adding Queries with Pothos
-
-```typescript
-builder.queryType({
-  fields: (t) => ({
-    expense: t.field({
-      type: ExpenseRef,
-      args: {
-        id: t.arg.int({ required: true }),
-      },
-      resolve: async (_root, args, _ctx) => {
-        return expenseRepository.getExpenseById(args.id);
-      },
-    }),
-  }),
-});
-```
-
----
-
-**Creates:**
+## Queries and resolvers
 
 ```graphql
 type Query {
+  expenses(filter: ExpenseFilter): [Expense!]!
   expense(id: Int!): Expense
 }
 ```
 
-<!--
-Speaker Notes:
-• queryType adds to Query type
-• t.field defines individual query
-• args define input parameters with types
-• resolve function fetches the data
-• Can call existing repository code
--->
+```ts
+Query: {
+  expenses: (_p, args) => ExpensesService.getExpenses(args.filter ?? {}),
+  expense: (_p, args) => ExpensesService.getExpenseById(args.id),
+}
+```
+
+Resolvers delegate to the **services you already have**.
+
+> Clean layering is what makes a second API cheap.
 
 ---
 
-# Adding Mutations with Pothos
+## Same endpoint, two shapes
 
-```typescript
-builder.mutationType({
-  fields: (t) => ({
-    createExpense: t.field({
-      type: ExpenseRef,
-      args: {
-        description: t.arg.string({ required: true }),
-        amount: t.arg.float({ required: true }),
-        date: t.arg({ type: 'DateTime', required: true }),
-        payerId: t.arg.int({ required: true }),
-      },
-      resolve: async (_parent, args) => {
-        return expenseRepository.createExpense(args);
-      },
-    }),
-  }),
-});
+**List page** — a little:
+
+```graphql
+{
+  expenses {
+    description
+    amount
+    payer { name }
+    category { name colour }
+  }
+}
 ```
 
-<!--
-Speaker Notes:
-• mutationType adds to Mutation type
-• Same pattern as queries
-• Multiple arguments with types
-• Returns created object
-• Type-safe args object
--->
-
----
-
-# Schema Organization
-
-## Feature-Based Structure
-
-```
-backend/src/
-├── graphql/
-│   ├── builder.ts        # Shared builder instance
-│   ├── schema.ts         # Combines all schemas
-│   └── server.ts         # Apollo Server setup
-└── api/
-    ├── expense/
-    │   ├── expenseRepository.ts
-    │   ├── expenseController.ts
-    │   └── augmentGraphqlSchema.ts  # Expense GraphQL types
-    └── user/
-        ├── userRepository.ts
-        └── augmentGraphqlSchema.ts   # User GraphQL types
-```
-
-<!--
-Speaker Notes:
-• Organize by feature, not by layer
-• Each feature defines its own GraphQL types
-• Keeps related code together
-• Easy to find and modify
-• Scales better than one large schema file
--->
-
----
-
-# GraphQL + Prisma Relations
-
-**Prisma handles the joins automatically!**
-
-```typescript
-builder.prismaObject('Expense', {
-  fields: (t) => ({
-    id: t.exposeID('id'),
-    description: t.exposeString('description'),
-    // Relations - Pothos + Prisma handle the joins!
-    payer: t.relation('payer'),
-    participants: t.relation('participants'),
-  }),
-});
-```
-
----
-
-**Query:**
+**Detail page** — a lot:
 
 ```graphql
 {
   expense(id: 1) {
     description
-    payer {
-      name
-    }
-    participants {
-      name
-    }
+    payer { name email bankAccount }
+    participants { name email }
   }
 }
 ```
 
-**Pothos automatically includes relations when queried!**
-(except if you integrate it properly ... which we don't)
-
-<!--
-Speaker Notes:
-• t.relation leverages Prisma relationships
-• Pothos generates efficient database queries
-• Only fetches relations when requested in query
-• Includes necessary joins automatically
-• No N+1 queries - optimized by default
--->
+Zero backend code between these two.
 
 ---
 
-# GraphQL Best Practices
+## A type checks kind, not meaning
 
-✅ **DO:**
+Our business object holds a real `Date`. The schema says `date: String!`:
 
-- Use variables instead of inline values
-- Keep resolvers thin - call repository/service layer
-- Organize schema by feature/domain
-- Use Pothos or similar for type safety
-
----
-
-❌ **DON'T:**
-
-- Put business logic in resolvers
-- Return too much data by default
-- Ignore N+1 query problems
-
-<!--
-Speaker Notes:
-• Resolvers should delegate to business logic
-• Schema organization matters as it grows
-• Type safety prevents entire classes of bugs
-• Documentation helps frontend developers
-• Security and performance are ongoing concerns
--->
-
----
-
-# GraphQL + REST Together
-
-**You don't have to choose!**
-
-```typescript
-// REST endpoints
-app.use('/api/users', userRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/upload', uploadRouter);
-
-// GraphQL endpoint
-app.use('/graphql', graphqlMiddleware);
+```json
+{ "id": 1, "date": "1792051200000" }
 ```
 
-**Use each for what it does best:**
+**No error.** GraphQL coerced the Date via `valueOf()`. That *is* a String,
+so the contract is satisfied — and the frontend gets `Invalid Date`.
 
-- GraphQL: Complex queries, related data
-- REST: File uploads, simple CRUD, webhooks
-
-<!--
-Speaker Notes:
-• Both can coexist in same application
-• Use GraphQL for complex data fetching
-• Keep REST for file uploads, downloads, webhooks
-• Gradual migration possible
-• Start with GraphQL for new features
-• No need to rewrite everything at once
--->
+- `!` catches **missing** data: `Cannot return null for non-nullable field`
+- Nothing catches **wrong** data
 
 ---
 
-# Common GraphQL Patterns
+## Validation belongs to the service boundary
 
-**Pagination:**
+A resolver that skips validation and calls the service directly fails like this:
+
+```
+date.toISOString is not a function
+```
+
+GraphQL checked the **shape** (`date` is a `String`). It never checked the
+**meaning** (is it a real date?). That is a business rule, and it lives in
+one place:
+
+```ts
+const newExpense = parseNewExpense(args.input); // same Zod parser as REST
+```
+
+**REST route and GraphQL resolver call the same parser.** A second way
+into your services needs the same guard as the first — the schema cannot
+do that job for you.
+
+---
+
+## Mutations
 
 ```graphql
-expenses(first: 10, after: "cursor") {
-  edges {
-    node { id, description }
-    cursor
-  }
-  pageInfo {
-    hasNextPage
-    endCursor
-  }
+type Mutation {
+  createExpense(input: CreateExpenseInput!): Expense!
 }
 ```
 
+One **input type per mutation**, named `<MutationName>Input`.
+Adding a field later never changes the mutation's signature.
+
+`input` ≠ `type`: a `type` describes what the server **returns**,
+an `input` describes what the client **sends**. `Expense` has
+`payer: User!`; `CreateExpenseInput` has `payerId: Int!` — an id in,
+an object out.
+
+- `Query` → reads, may run in parallel
+- `Mutation` → writes, run in sequence
+
+A mutation also returns a **selection set**: you choose what you get back
+about the thing you just created.
+
 ---
 
-**Filtering:**
+## Calling it — from a loader, or from a form
 
-```graphql
-expenses(where: { amount: { gt: 10 } }) {
-  id
-  description
-}
+```ts
+await fetch(`${API}/graphql`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query, variables }),
+});
 ```
 
-<!--
-Speaker Notes:
-• Cursor-based pagination for large datasets
-• Relay-style connections common pattern
-• Filtering through where argument
-• Can build complex query capabilities
-• GraphQL specification doesn't mandate these
-• Community conventions for consistency
--->
+That is the whole protocol, for a query **or** a mutation. **No client library needed.**
+
+```ts
+// a submit handler, not a loader — same shape, one variable
+await graphqlRequest(CREATE_EXPENSE, { input: formValues });
+```
+
+- Apollo Client / urql add a normalised cache + `useQuery`
+- The router's loader already owns fetching for a page
+- Use variables, never string concatenation — same reason as SQL
 
 ---
 
-# Key Takeaways
+## Honest trade-offs
 
-1. **GraphQL eliminates over/under-fetching** - Ask for exactly what you need
-2. **Single endpoint, flexible queries** - Client controls response shape
-3. **Strong typing** - Schema defines API contract
-4. **Apollo** - Industry-standard implementation
-5. **Pothos + Prisma** - End-to-end type safety
-6. **Queries vs Mutations** - Semantic distinction for read vs write
-7. **Coexist with REST** - Use both where appropriate
+GraphQL is **not** automatically faster. The *response* shrinks; the
+**database work does not**, unless you make it. Field resolvers fix that —
+and introduce **N+1 queries**, which is what **DataLoader** exists for.
+REST also gets HTTP caching for free; GraphQL POSTs do not.
 
-<!--
-Speaker Notes:
-• GraphQL solves real problems with REST
-• Not a replacement but a complement
-• Type safety from database to frontend
-• Tools and ecosystem are mature
-• Production-ready for most use cases
-• Consider team experience and project needs
--->
+**Reach for GraphQL when:** many clients want different data, the data is
+deeply related, or the frontend iterates faster than the backend.
+
+**REST is still right when:** one client, stable shapes, file uploads,
+HTTP caching, simple public APIs.
+
+> Most real systems run both. We did today.
 
 ---
 
-# When GraphQL Shines
+## Key takeaways — Questions?
 
-**Perfect for:**
+1. A router makes pages **addressable**: shareable URLs, back button, refresh
+2. `react-router`, **not** `react-router-dom`
+3. **Loaders** fetch before render and delete most `useEffect` + `loading` code
+4. Filters belong **in the URL**
+5. REST publishes shapes → N screens grow N endpoints
+6. GraphQL publishes **capabilities** → the client picks the shape
+7. A schema with `!` is an **executable contract** that catches real bugs
 
-- 📱 Mobile apps with limited bandwidth
-- 🚀 Internal API (between server & mobile or web app)
-- 🔗 Complex, interconnected data
-
-**The flexibility pays off as your application grows**
+Exercise: build the four pages, move to loaders, feel the two-endpoint pain,
+then collapse it into one GraphQL schema.
 
 <!--
-Speaker Notes:
-• Mobile benefits from reduced data transfer
-• Different clients can request different fields
-• Natural fit for graph-like data structures
-• Frontend can evolve without backend changes
-• GraphQL can aggregate multiple services
-• Initial setup overhead worth it for complex apps
+Speaker notes:
+• Remind them: do the exercise IN ORDER. The REST step is not busywork.
+• Watch out for: react-router-dom, missing `end` on NavLink, maskedErrors,
+  the silent date coercion, and the resolver that skips parseNewExpense.
 -->

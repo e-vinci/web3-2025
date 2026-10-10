@@ -38,11 +38,11 @@ category: 'course-lesson'
 
 ### Backend
 
-The backend should be modified to handle the query parameter `amount` and return the expenses that have an amount greater than the value entered in the input field.
+The backend should be modified to handle the query parameter `amount` and return the expenses that have an amount greater than or equal to the value entered in the input field. In other words `amount` is a *minimum*, so searching for 10 also returns an expense of exactly 10.
 
-In the file `src/routes/expense.router.ts`, modify the route returning all expenses to handle the query parameter `amount`. Do the necessary checks to ensure that the parameter is a valid number (use zod preferably)
+In the file `src/routes/expenses.router.ts`, modify the route returning all expenses to handle the query parameter `amount`. Do the necessary checks to ensure that the parameter is a valid number (use zod preferably)
 
-In the service `src/services/expense.service.ts`, modify the `getExpenses` method to accept an optional parameter `filter` that is an object with a key `amount` and the value entered in the input field.
+In the service `src/services/expenses.service.ts`, modify the `getExpenses` method to accept an optional parameter `filter` that is an object with a key `amount` and the value entered in the input field.
 
 Modify the prisma call to filter the expenses by the amount. See official [prisma documentation](https://www.prisma.io/docs/orm/fundamentals/reading-data) for filtering.
 
@@ -121,12 +121,16 @@ export function expenseFromDBO(dbo: any): Expense {
 ### Backend
 
 #### New ressources: Users
-Create a new router `user.router.ts` in the `src/routers` directory. This router should have a route `/api/users` that returns all users. Create a service to handle the logic of fetching users from the database.
+Create a new router `users.router.ts` in the `src/routes` directory. This router should have a route `/api/users` that returns all users. Create a service to handle the logic of fetching users from the database.
 
 ***Verify*** with `.http` file that your backend works as expected.
 
 #### Search Expenses by payerId
 Modify the backend to handle the query parameter `payerId` and return the expenses that have a payer equal to the given value.
+
+> Name your files after the **resource, in the plural**: `expenses.router.ts`, `users.router.ts`,
+> `expenses.service.ts`, `users.service.ts`. A router serves a collection of things, and consistent naming is
+> one less decision to make every time you add a resource.
 
 ***Verify*** with `.http` file that your backend works as expected.
 
@@ -157,7 +161,7 @@ A category should have:
 
 Each expense can have one category. The category is optional.
 
-Define a new prisma model `Category` in the `schema.prisma` file. Then define the relation between `Expense` and `Category` as a many-to-one relationship (see [Prisma documentation](https://www.prisma.io/docs/orm/fundamentals/relations-and-joins#one-to-many)).
+Define a new prisma model `Category` in the `src/prisma/contract.prisma` file. Then define the relation between `Expense` and `Category` as a many-to-one relationship (see [Prisma documentation](https://www.prisma.io/docs/orm/fundamentals/relations-and-joins#one-to-many)).
 
 ## 2.2 Migration
 
@@ -179,9 +183,14 @@ While in production, use the following command:
 npx prisma db migrate
 ```
 
-Create a script to populate the database with some categories. ***Do not delete existing data.*** You try to reproduce your production environment as much as possible: so you try to migrate without dropping the database.
+Create a script to populate the database with some categories. ***Do not delete existing data.*** You try to reproduce your production environment as much as possible: so you try to migrate without dropping the database. That constraint is the whole exercise: adding a feature to a system that already holds data people care about.
 
 Using some VSC extension, modify some existing expenses to have a category assigned to them.
+
+> **A note on the reference solution.** Our published solution ships a *single baseline migration* that builds
+> the whole schema at once, and a `db-populate.ts` that wipes and refills the demo data. That is a convenience
+> for someone adopting the solution on a fresh database — not a model of how to add a column to a live system.
+> The migration you write here, on top of existing rows, is the realistic one.
 
 ## 2.3 BE + UI
 

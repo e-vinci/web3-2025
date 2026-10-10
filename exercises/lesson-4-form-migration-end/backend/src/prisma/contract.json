@@ -4,16 +4,16 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
-    "_ParticipantExpenses": {
-      "model": "ExpenseUser",
-      "namespace": "public"
-    },
     "category": {
       "model": "Category",
       "namespace": "public"
     },
     "expense": {
       "model": "Expense",
+      "namespace": "public"
+    },
+    "participations": {
+      "model": "Participations",
       "namespace": "public"
     },
     "transfer": {
@@ -89,7 +89,7 @@
               "date": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
               },
@@ -133,7 +133,7 @@
                 }
               },
               "participants": {
-                "cardinality": "1:N",
+                "cardinality": "N:M",
                 "on": {
                   "localFields": [
                     "id"
@@ -142,8 +142,21 @@
                     "expenseId"
                   ]
                 },
+                "through": {
+                  "childColumns": [
+                    "userId"
+                  ],
+                  "namespaceId": "public",
+                  "parentColumns": [
+                    "expenseId"
+                  ],
+                  "table": "participations",
+                  "targetColumns": [
+                    "id"
+                  ]
+                },
                 "to": {
-                  "model": "ExpenseUser",
+                  "model": "User",
                   "namespace": "public"
                 }
               },
@@ -189,7 +202,7 @@
               "table": "expense"
             }
           },
-          "ExpenseUser": {
+          "Participations": {
             "fields": {
               "expenseId": {
                 "nullable": false,
@@ -250,7 +263,7 @@
                 }
               },
               "namespaceId": "public",
-              "table": "_ParticipantExpenses"
+              "table": "participations"
             }
           },
           "Transfer": {
@@ -265,7 +278,7 @@
               "date": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
               },
@@ -395,7 +408,7 @@
                 }
               },
               "participatedExpenses": {
-                "cardinality": "1:N",
+                "cardinality": "N:M",
                 "on": {
                   "localFields": [
                     "id"
@@ -404,8 +417,21 @@
                     "userId"
                   ]
                 },
+                "through": {
+                  "childColumns": [
+                    "expenseId"
+                  ],
+                  "namespaceId": "public",
+                  "parentColumns": [
+                    "userId"
+                  ],
+                  "table": "participations",
+                  "targetColumns": [
+                    "id"
+                  ]
+                },
                 "to": {
-                  "model": "ExpenseUser",
+                  "model": "Expense",
                   "namespace": "public"
                 }
               },
@@ -468,81 +494,6 @@
       "public": {
         "entries": {
           "table": {
-            "_ParticipantExpenses": {
-              "columns": {
-                "expenseId": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "userId": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [
-                {
-                  "onDelete": "cascade",
-                  "source": {
-                    "columns": [
-                      "expenseId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "_ParticipantExpenses"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "expense"
-                  }
-                },
-                {
-                  "onDelete": "cascade",
-                  "source": {
-                    "columns": [
-                      "userId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "_ParticipantExpenses"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "user"
-                  }
-                }
-              ],
-              "indexes": [
-                {
-                  "columns": [
-                    "expenseId"
-                  ],
-                  "name": "_ParticipantExpenses_expenseId_idx_69d413fa",
-                  "prefix": "_ParticipantExpenses_expenseId_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
-                    "userId"
-                  ],
-                  "name": "_ParticipantExpenses_userId_idx_a489d58a",
-                  "prefix": "_ParticipantExpenses_userId_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "expenseId",
-                  "userId"
-                ]
-              },
-              "uniques": []
-            },
             "category": {
               "columns": {
                 "colour": {
@@ -593,7 +544,7 @@
                   "nullable": true
                 },
                 "date": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-string@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -680,6 +631,81 @@
               },
               "uniques": []
             },
+            "participations": {
+              "columns": {
+                "expenseId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "expenseId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "participations"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "expense"
+                  }
+                },
+                {
+                  "onDelete": "cascade",
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "participations"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "expenseId"
+                  ],
+                  "name": "participations_expenseId_idx_69d413fa",
+                  "prefix": "participations_expenseId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "participations_userId_idx_a489d58a",
+                  "prefix": "participations_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "expenseId",
+                  "userId"
+                ]
+              },
+              "uniques": []
+            },
             "transfer": {
               "columns": {
                 "amount": {
@@ -688,7 +714,7 @@
                   "nullable": false
                 },
                 "date": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-string@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -823,7 +849,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e04c207a49a2c453ab3b941d75e6f4502a58b5441dd401d99832a3d33f95f686"
+    "storageHash": "95f37b9b12fec5762ac676ab11c49cdd4c278d51c361c943fdefb78b8a34c160"
   },
   "capabilities": {
     "postgres": {

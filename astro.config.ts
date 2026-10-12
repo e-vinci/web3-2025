@@ -12,6 +12,8 @@ import compress from 'astro-compress';
 import tailwindcss from '@tailwindcss/vite';
 import type { AstroIntegration } from 'astro';
 
+import mermaid from 'astro-mermaid';
+
 import astrowind from './vendor/integration';
 
 import { readingTimeRemarkPlugin, responsiveTablesRehypePlugin, lazyImagesRehypePlugin } from './src/utils/frontmatter';
@@ -26,6 +28,10 @@ export default defineConfig({
   output: 'static',
 
   integrations: [
+    // Must come before mdx() so that ```mermaid blocks are transformed before
+    // the markdown pipeline turns them into ordinary code blocks.
+    mermaid({ theme: 'neutral', autoTheme: true }),
+
     sitemap(),
     mdx(),
     icon({

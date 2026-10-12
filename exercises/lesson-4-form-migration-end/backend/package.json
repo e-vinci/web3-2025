@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "node --watch app.ts",
-    "build": "npm install && npm run contract:emit && npx prisma db update",
+    "build": "npm install && npm run contract:emit && npx prisma db migrate",
     "start": "node app.ts",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma skills sync || exit 0",
@@ -20,7 +20,7 @@
     "dotenv": "^18.0.1",
     "express": "^5.2.1",
     "morgan": "^1.12.1",
-    "temporal-polyfill": "^1.0.5"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@prisma/cli-engine": "0.6.2",

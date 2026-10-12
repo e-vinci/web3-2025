@@ -21,8 +21,8 @@ import type { Expense, NewExpense } from "../types/Expense";
 
 export interface ExpenseFilter {
   amount?: number;
-  payerId?: string;
-  categoryId?: number;
+  payerId?: number | string;
+  categoryId?: number | string;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -81,27 +81,6 @@ async function postExpense(newExpense: NewExpense): Promise<Expense | null> {
     });
 }
 
-/**
- * Asks the backend to delete all expenses (HTTP POST to /reset).
- * The backend responds with an empty list, which we return.
- * Returns an empty array if the request fails.
- */
-async function postResetExpenses(): Promise<Expense[]> {
-  return fetch(`${API_BASE_URL}/api/expenses/reset`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: "{}",
-  })
-    .then((res) => res.json())
-    .then((data) => (Array.isArray(data) ? (data as Expense[]) : []))
-    .catch((error) => {
-      console.error("Error resetting expenses:", error);
-      return [] as Expense[];
-    });
-}
-
 // =============================================================================
 // Part 2 — The hook
 // =============================================================================
@@ -112,10 +91,10 @@ async function postResetExpenses(): Promise<Expense[]> {
  * This hook bundles together:
  *   • the data  (`expenses`) — the current list, kept in React state
  *   • the status (`loading`) — true while the first fetch is in progress
- *   • the actions (`addExpense`, `resetExpenses`) — functions the UI can call
+ *   • the actions (`addExpense`, `searchExpenses`) — functions the UI can call
  *
  * Usage in a component:
- *   const { expenses, loading, addExpense, resetExpenses } = useExpenses();
+ *   const { expenses, loading, addExpense, searchExpenses } = useExpenses();
  *
  * React re-renders the component automatically every time `expenses` or
  * `loading` changes, so the UI always stays in sync with the data.
@@ -124,7 +103,7 @@ async function postResetExpenses(): Promise<Expense[]> {
  *   - expenses       — the current list of Expense objects
  *   - loading        — true while the initial fetch is running
  *   - addExpense     — call this with an Expense to add it and refresh the list
- *   - resetExpenses  — call this to delete all expenses and refresh the list
+ *   - searchExpenses — call this with a filter to reload the list
  */
 function useExpenses() {
   /**
@@ -183,16 +162,6 @@ function useExpenses() {
   }, []);
 
   /**
-   * resetExpenses: asks the backend to wipe all expenses, then updates the
-   * local list to the empty list the server returns.
-   * Same memoisation pattern as addExpense.
-   */
-  const resetExpenses = useCallback(async (): Promise<void> => {
-    const updated = await postResetExpenses();
-    setExpenses(updated); // triggers a re-render with an empty list
-  }, []);
-
-  /**
    * searchExpenses: fetches expenses matching the given filter, then stores
    * the results in state so the UI re-renders with the filtered list.
    */
@@ -206,7 +175,7 @@ function useExpenses() {
    * The component destructures what it needs:
    *   const { expenses, addExpense } = useExpenses();
    */
-  return { expenses, loading, addExpense, resetExpenses, searchExpenses };
+  return { expenses, loading, addExpense, searchExpenses };
 }
 
 export default useExpenses;

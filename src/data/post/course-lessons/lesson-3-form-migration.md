@@ -191,25 +191,30 @@ model Expense {
   id           Int      @id @default(autoincrement())
   description  String
   amount       Float
-  date         DateTime @default(now())
+  date         TimestamptzString @default(now())
   payer        User     @relation("PayerExpenses", fields: [payerId], references: [id])
   payerId      Int
-  participants User[]
+  participants User[]   @relation("ParticipantExpenses")
 }
 ```
 
 Changes made:
 - `payer` is now a **relation** to the User model (with a foreign key `payerId`). This replaces the old `payer` string field.
-- `participants` is a **many-to-many relation** to `User`. In Prisma 8, implicit join tables are not supported — you must write the join table as an explicit model. 
+- `participants` is a **many-to-many relation** to `User`. In Prisma 8, implicit join tables are not supported — you must write the join table as an explicit model.
+- `date` is a `TimestamptzString`, not a `DateTime`. Both store a real PostgreSQL `timestamptz`; they differ in
+  what the ORM hands back to your code. `DateTime` returns a `Temporal.Instant`, and `Temporal` only exists on
+  Node 26.8.2 and later — on the Node 24 we use it throws `RUNTIME.TEMPORAL_UNAVAILABLE` unless you install a
+  polyfill. `TimestamptzString` returns PostgreSQL's own text instead, with no extra dependency. Converting
+  that text into a real `Date` is a job for our types module, and we will do it there.
 
 ---
 
-#### 3b. **Define `ExpenseUser` Join Table**:
+#### 3b. **Define the `Participations` Join Table**:
 
 In Prisma 8, many-to-many relations require an explicit join-table model. Add it directly after the `Expense` model:
 
 ```prisma
-model ExpenseUser {
+model Participations {
   expenseId Int
   userId    Int
   expense   Expense @relation("ParticipantExpenses", fields: [expenseId], references: [id], onDelete: Cascade)
@@ -218,6 +223,10 @@ model ExpenseUser {
   @@id([expenseId, userId])
 }
 ```
+
+Note that you declare the join model, but you do **not** navigate through it: `Expense.participants` is
+`User[]` and `User.participatedExpenses` is `Expense[]`. Prisma walks the join table for you, so
+`.include('participants')` returns users, and `connect` writes the join rows.
 
 ---
 
@@ -229,7 +238,7 @@ Add a new model for transfers:
 model Transfer {
   id        Int    @id @default(autoincrement())
   amount    Float
-  date      DateTime @default(now())
+  date      TimestamptzString @default(now())
   source    User   @relation("UserTransfersSource", fields: [sourceId], references: [id])
   sourceId  Int
   target    User   @relation("UserTransfersTarget", fields: [targetId], references: [id])
@@ -421,13 +430,22 @@ Notice ***how it is a different command than the one we ran in development***, t
 
 We also need to change how we build the app on Render.
 
-The command for building is: `npm install && npx prisma db migrate`
+The command for building is: `npm install && npm run contract:emit && npx prisma db migrate`
+
+`contract:emit` regenerates `contract.json`, which the running app reads at startup; `db migrate` then applies
+any migration the database has not seen yet. Together they mean a deploy can never start an app whose code and
+database disagree.
+
+> **&#9888; Never put `prisma db update` in a build command.** It is the prototyping command: it inspects the
+> live database and reshapes it until it matches the contract, which can mean silently dropping a column — and
+> with it, the data in that column. `db migrate` only ever applies steps you wrote down and reviewed. This is
+> the single most important operational habit in this lesson.
 
 ---
 
 ### 8 Update your code
 
-Your Expense creation and getter in your `src/app/modules/expense/expense.service.ts` file need to be updated to reflect the new schema.
+Your Expense creation and getter in your `src/services/expenses.service.ts` file need to be updated to reflect the new schema.
 
 > Read the [documentation](https://www.prisma.io/docs/orm/fundamentals/writing-data) and more particularly the section about [creating a record and its related records](https://www.prisma.io/docs/orm/fundamentals/writing-data#create-a-record-and-its-related-records)
 

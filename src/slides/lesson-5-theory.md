@@ -119,7 +119,12 @@ const router = createBrowserRouter([
 
 createRoot(root).render(<RouterProvider router={router} />);
 ```
-
+<!--
+Speaker notes:
+• Notice how we pass the component function but we do not call nor render it.
+• The router will decide when and which component to render.
+• Notice the *Provider suffix. Ring a bell? Yes, it's a context provider.
+-->
 ---
 
 ## Layout routes and `Outlet`
@@ -254,7 +259,7 @@ export async function expenseListLoader({ request }) {
 
 ## Check: what runs?
 
-You are on `/expenses`. The user picks a payer and submits,
+You are on `/expenses`. The user picks a payer in filter and submits,
 so the URL becomes `/expenses?payerId=2`. **What runs?**
 
 **A.** The component re-renders; the loader does not run again
@@ -433,9 +438,7 @@ Resolvers delegate to the **services you already have**.
 
 ---
 
-## Same endpoint, two shapes
-
-**List page** — a little:
+## Same endpoint, two shapes (List vs Details page)
 
 ```graphql
 {
@@ -448,7 +451,6 @@ Resolvers delegate to the **services you already have**.
 }
 ```
 
-**Detail page** — a lot:
 
 ```graphql
 {
@@ -460,7 +462,10 @@ Resolvers delegate to the **services you already have**.
 }
 ```
 
-Zero backend code between these two.
+<!--
+Speaker notes:
+• We never had to adapt the backend which only shows the maximal capabilities.
+-->
 
 ---
 
@@ -505,14 +510,18 @@ type Mutation {
 }
 ```
 
-One **input type per mutation**, named `<MutationName>Input`. Adding a field later never changes the mutation's signature.
+One **input type per mutation**, named `<MutationName>Input`.
 
 `input` ≠ `type`: a `type` describes what the server **returns**, an `input` describes what the client **sends**. `Expense` has `payer: User!`; `CreateExpenseInput` has `payerId: Int!` — an id in, an object out.
 
 - `Query` → reads, may run in parallel
 - `Mutation` → writes, run in sequence
 
-A mutation also returns a **selection set**: you choose what you get back about the thing you just created.
+<!--
+Speaker notes:
+-  Adding a field later to an input never changes the mutation's signature.
+-  A mutation also returns a **selection set**: you choose what you get back about the thing you just created.
+-->
 
 ---
 
@@ -554,9 +563,8 @@ GraphQL is **not** automatically faster. The *response* shrinks; the **database 
 ## Key takeaways — Questions?
 
 1. A router makes pages **addressable**: shareable URLs, back button, refresh
-2. `react-router`, **not** `react-router-dom`
-3. **Loaders** fetch before render and delete most `useEffect` + `loading` code
-4. Filters belong **in the URL**
+2. **Loaders** fetch before render and delete most `useEffect` + `loading` code
+3. Filters belong **in the URL**
 5. REST publishes shapes → N screens grow N endpoints
 6. GraphQL publishes **capabilities** → the client picks the shape
 7. A schema with `!` is an **executable contract** that catches real bugs

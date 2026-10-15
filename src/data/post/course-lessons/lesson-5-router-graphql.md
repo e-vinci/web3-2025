@@ -21,83 +21,56 @@ category: 'course-lesson'
 
 ## Introduction
 
-Our application works, but it is still **one single page**. Everything — the add form, the search form, the
-list — is stacked in `Home.tsx`. You cannot link to a specific expense, you cannot use the browser's back
-button, and refreshing always drops you back to the same screen.
+Our application works, but it is still **one single page**. Everything — the add form, the search form, the list — is stacked in `Home.tsx`. You cannot link to a specific expense, you cannot use the browser's back button, and refreshing always drops you back to the same screen.
 
 This week we fix that in two steps, and the second step only makes sense because of the first.
 
-**Step 1 — React Router.** We split the app into real pages (`/`, `/expenses`, `/expenses/:id`, `/expenses/new`)
-and we move data fetching out of `useEffect` and into **route loaders**. A loader is a plain function attached
-to a route: React Router calls it *before* rendering the page and hands you the result. This removes a
-surprising amount of code, no more `if(loading)` in your component. 
+**Step 1 — React Router.** We split the app into real pages (`/`, `/expenses`, `/expenses/:id`, `/expenses/new`) and we move data fetching out of `useEffect` and into **route loaders**. A loader is a plain function attached to a route: React Router calls it *before* rendering the page and hands you the result. This removes a surprising large amount of code, no more `if(loading)` in your component. 
 
-**Step 2 — GraphQL.** Once we have several pages, each page needs a *different shape* of the same data. The
-list needs a little. The detail page needs a lot. We will first try to solve this with REST, feel the problem,
-and only then introduce GraphQL as the thing that solves it.
+**Step 2 — GraphQL.** Once we have several pages, each page needs a *different shape* of the same data. The list needs a little. The detail page needs a lot. We will first try to solve this with REST, feel the problem, and only then introduce GraphQL as the thing that solves it.
 
-> **From the trenches:** this is the honest order in which these tools get adopted in real teams. Nobody wakes
-> up wanting GraphQL. They wake up with eleven endpoints that all return *almost* the same object in *almost*
-> the same shape, and a mobile team asking for a twelfth.
+> **From the trenches:** this is the honest order in which these tools get adopted in real teams. Nobody wakes up wanting GraphQL. They wake up with eleven endpoints that all return *almost* the same object in *almost* the same shape, and a mobile team asking for a twelfth.
 
 ## Objectives
 
 By the end of this lesson you can:
-
-- **Split a single-page app into addressable pages** with React Router, so every screen has a URL you can
-  share, bookmark and reach with the back button.
-- **Replace `useEffect` + `useState` + `loading` with a route loader**, and say why the component gets
-  simpler.
+- **Split a single-page app into addressable pages** with React Router, so every screen has a URL you can share, bookmark and reach with the back button.
+- **Replace `useEffect` + `useState` + `loading` with a route loader**, and say why the component gets simpler.
 - **Put a filter in the URL** with `useSearchParams`, and say what re-runs when the URL changes.
-- **Explain, using your own app**, why one REST endpoint per resource forces you to choose between
-  over-fetching and writing a second endpoint.
-- **Expose your existing services through a GraphQL schema**, and write a query returning exactly the fields
-  one screen renders — no more, no less.
+- **Explain, using your own app**, why one REST endpoint per resource forces you to choose between over-fetching and writing a second endpoint.
+- **Expose your existing services through a GraphQL schema**, and write a query returning exactly the fields one screen renders — no more, no less.
 - **Write a mutation that takes an `input` type**, and reuse the same Zod validation your REST route uses.
 
-If you can do those six things on Friday without looking anything up, the lesson worked. The last two are the
-ones that matter most: everything before them exists to make the problem they solve visible.
+If you can do those six things on Friday without looking anything up, the lesson worked. The last two are the ones that matter most: everything before them exists to make the problem they solve visible.
 
 ## If you fall behind
 
-Everything in Part 3 — exercises 4, 5 and 6 — carries the last two objectives, and they are the reason the
-lesson exists. So if you are running short, do not trade them away to polish Part 1.
+Everything in Part 3 — exercises 4, 5 and 6 — carries the last two objectives, and they are the reason the lesson exists. So if you are running short, do not trade them away to polish Part 1.
 
-Two things are safe to postpone: **the tidying in 1.5** (deleting `Home.tsx`, `App.tsx` and the unused
-components — nothing depends on them being gone) and **the optional challenges**, which sit after the summary
-for exactly that reason. One thing is not: **Exercise 3**. It is short, and it is where the problem GraphQL
-solves stops being a claim and becomes something you have watched break.
+Two things are safe to postpone: **the tidying in 1.5** (deleting `Home.tsx`, `App.tsx` and the unused components — nothing depends on them being gone) and **the optional challenges**, which sit after the summary for exactly that reason. One thing is not: **Exercise 3**. It is short, and it is where the problem GraphQL solves stops being a claim and becomes something you have watched break.
 
 ## Recommended Reading
 
 Read the first two before you start. The others are references to come back to during the exercises.
 
-1. [React Router – Data mode routing (Official Docs)](https://reactrouter.com/start/data/routing) – how
-   `createBrowserRouter`, nested routes and `Outlet` fit together.
-2. [React Router – Data loading (Official Docs)](https://reactrouter.com/start/data/data-loading) – `loader`
-   and `useLoaderData`, the replacement for `useEffect` + `useState`.
-3. [Full Stack Open – Part 8: GraphQL](https://fullstackopen.com/en/part8) – a second, slower explanation of
-   everything in part 2 of this lesson. Read section 8a if GraphQL does not click.
-4. [GraphQL – Schemas and Types (Official Docs)](https://graphql.org/learn/schema/) – the type system you will
-   write in the SDL.
+1. [React Router – Data mode routing (Official Docs)](https://reactrouter.com/start/data/routing) – how `createBrowserRouter`, nested routes and `Outlet` fit together.
+2. [React Router – Data loading (Official Docs)](https://reactrouter.com/start/data/data-loading) – `loader` and `useLoaderData`, the replacement for `useEffect` + `useState`.
+3. [Full Stack Open – Part 8: GraphQL](https://fullstackopen.com/en/part8) – a second, slower explanation of    everything in part 2 of this lesson. Read section 8a if GraphQL does not click.
+4. [GraphQL – Schemas and Types (Official Docs)](https://graphql.org/learn/schema/) – the type system you will write in the SDL.
 5. [GraphQL Yoga – Express integration (Official Docs)](https://the-guild.dev/graphql/yoga-server/docs/integrations/integration-with-express)
    – the three lines that mount a GraphQL server on our existing Express app.
 
 ## Setup (~15 min)
 
-Start from [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-4-form-migration-end),
-or from your own code if you got lesson 4 working.
+Start from [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-4-form-migration-end), or from your own code if you got lesson 4 working.
 
-Make sure the backend and the frontend both still run before you change anything. You should be able to list
-expenses, filter them, and add one.
+Make sure the backend and the frontend both still run before you change anything. You should be able to list expenses, filter them, and add one.
 
 ### Starting from our solution: reset your database
 
-If you switch to our solution rather than continuing with your own code, its data model will not match the
-database you already have. The fastest fix is to throw the database away and build a fresh one.
+If you switch to our solution rather than continuing with your own code, its data model will not match the database you already have. The fastest fix is to throw the database away and build a fresh one.
 
-**Locally**, your PostgreSQL lives in a Docker volume stored in `backend/data/postgres`. Delete the folder and
-Docker recreates an empty database:
+**Locally**, your PostgreSQL lives in a Docker volume stored in `backend/data/postgres`. Delete the folder and Docker recreates an empty database:
 
 ```bash
 # from backend/
@@ -116,31 +89,20 @@ node scripts/db-populate.ts           # insert demo data
 
 
 **On Render**, delete your PostgreSQL instance and create a new one. Copy its connection string into the backend service's `DATABASE_URL` environment variable and redeploy — the build command is `npm install && npx prisma db migrate`, so the migrations run as part of the deploy and the tables are created for you.
-If you want demo data up there too, point `DATABASE_URL` in
-your local `.env` at the production database, run `db-populate.ts` once, then put your local string back.
 
-> **&#9888; Deleting the database is the course shortcut here — the migration is not.** Throwing the database
-> away is only acceptable because this is a course and the only thing in there is demo data. On a real product
-> those rows are someone's money, orders or medical records, and you cannot get them back. What you would do
-> instead is write a **migration** that transforms the existing data in place, and that is exactly why the
-> solution ships one: `prisma db migrate` is the command you will still be running after you graduate, and
-> `prisma db update` — which inspects your database and reshapes it to match the contract, dropping columns if
-> that is what it takes — is a prototyping convenience you should leave behind with your student projects.
+If you want demo data up there too, point `DATABASE_URL` in your local `.env` at the production database, run `db-populate.ts` once, then put your local string back.
+
+> **&#9888; Deleting the database is the course shortcut here — the migration is not.** Throwing the database away is only acceptable because this is a course and the only thing in there is demo data. On a ***real product*** those rows are someone's money, orders or medical records, and you cannot get them back. What you would do instead is write a **migration** (see last weeks exercises) that transforms the existing data in place, and that is exactly why the solution ships one: `prisma db migrate` is the command you will still be running after you graduate, and `prisma db update` — which inspects your database and reshapes it to match the contract, dropping columns if that is what it takes — is a prototyping convenience you should leave behind with your student projects.
 
 ### What you are starting from
 
-If you start from last week's solution, look at the files in `src/types/`. Each one uses Zod to group
-everything about one kind of data: its shape, its validation rules, and the functions that convert a database
-row into it.
+If you start from last week's solution, look at the files in `src/types/`. Each one uses Zod to group everything about one kind of data: its shape, its validation rules, and the functions that convert a database row into it.
 
-Today you will add a second way into the application — a GraphQL endpoint next to the REST routes — and you
-will reuse those same validation functions without changing them.
+Today you will add a second way into the application — a GraphQL endpoint next to the REST routes — and you will reuse those same validation functions without changing them.
 
 ### Your demo data
 
-Re-run `node scripts/db-populate.ts` whenever you want a clean slate; it wipes and refills everything in
-dependency order, so it is safe to run twice. Two details in that data are deliberate and show up later: one
-of the four users has **no bank account**, and one expense has **no category**.
+Re-run `node scripts/db-populate.ts` whenever you want a clean slate; it wipes and refills everything in dependency order, so it is safe to run twice. Two details in that data are deliberate and show up later: one of the four users has **no bank account**, and one expense has **no category**.
 
 ---
 
@@ -159,14 +121,11 @@ npm install react-router
 > you will find says `npm install react-router-dom`. **That package is frozen at v7 on npm** — its code was
 > merged into `react-router` for v8, and it no longer receives updates. If you install it you will silently get
 > an outdated v7 next to your v8 and your imports will not line up. Everything we need this week —
-> `createBrowserRouter`, `RouterProvider`,
-> `useLoaderData`, `Outlet`, `NavLink`, `useNavigate`, `useSearchParams`, `useParams` — comes from the single
-> package `react-router`.
+> `createBrowserRouter`, `RouterProvider`, `useLoaderData`, `Outlet`, `NavLink`, `useNavigate`, `useSearchParams`, `useParams` — comes from the single package `react-router`.
 
 ### 1.2 Create the page components
 
-You already have a `src/pages/` folder — it holds `Home.tsx`. Create these four files inside it, each
-returning nothing but an `<h1>` for now, so you can see which page you are on:
+You already have a `src/pages/` folder — it holds `Home.tsx`. Create these four files inside it, each returning nothing but an `<h1>` for now, so you can see which page you are on:
 
 ```
 src/pages/
@@ -177,9 +136,7 @@ src/pages/
     ExpenseShow.tsx           /expenses/:id
 ```
 
-The right-hand column is the URL each file will answer. Copy the layout as given — why the folders and the
-names look like this is worth a conversation, but not before you have a router running. We come back to it in
-1.5.
+The right-hand column is the URL each file will answer. Copy the layout as given — why the folders and the names look like this is worth a conversation, but not before you have a router running. We come back to it in 1.5.
 
 ### 1.3 A layout route
 
@@ -208,8 +165,6 @@ export default Layout;
 
 - `Outlet` is the hole in which React Router renders the *child* route. Anything you put around it is rendered once and stays on screen while the user moves between child pages.
 - `NavLink` is a `Link` that knows whether it is the active route. It gives you an `isActive` flag you can use for styling.
-
-
 
 ### 1.4 Declare the routes
 
@@ -250,13 +205,9 @@ createRoot(document.getElementById('root')!).render(
 Two things worth noticing:
 
 - `index: true` means "this is what `/` renders", i.e. the default child of the layout.
-- `expenses/new` is declared **before** `expenses/:id`. Order does not actually matter in React Router (it
-  ranks routes by specificity, and a static segment always beats a dynamic one), but writing it in this order
-  makes the intent obvious to the next human reading the file.
+- `expenses/new` is declared **before** `expenses/:id`. Order does not actually matter in React Router (it ranks routes by specificity, and a static segment always beats a dynamic one), but writing it in this order makes the intent obvious to the next human reading the file.
 
-Check that you can click through the three links and that the URL changes, the back button works, and a refresh
-keeps you on the same page. That is already more than we had five minutes ago. (`App.tsx` is now unused, but
-leave it for a moment — you will delete it alongside `Home.tsx` in the next step.)
+Check that you can click through the three links and that the URL changes, the back button works, and a refresh keeps you on the same page. That is already more than we had five minutes ago. (`App.tsx` is now unused, but leave it for a moment — you will delete it alongside `Home.tsx` in the next step.)
 
 ### 1.5 Move the content
 
@@ -284,18 +235,13 @@ routing structure and meaningless outside it.
 
 #### Why those folders and those names
 
-Now look back at the structure you created in 1.2. Two conventions are at work, and both exist so the app
+Now look back at the structure you created in 1.2. ***Two conventions are at work***, and both exist so the app
 stays readable at twenty pages rather than four:
 
-- **Folders mirror the URL.** Everything under `/expenses` lives in `pages/expenses/`. To find the page behind
-  a URL, walk the same path in the file tree.
-- **Files are named `<Resource><Action>`**, using the standard CRUD actions: `List` (all of them), `Show` (one
-  of them), `New` (the create form) and `Edit` (the update form). We build no `ExpenseEdit.tsx` this week, but
-  you can already see where it would go — and `Delete` never gets a page, because deleting is a button, not a
-  screen.
+- **Folders mirror the URL.** Everything under `/expenses` lives in `pages/expenses/`. To find the page behind a URL, walk the same path in the file tree.
+- **Files are named `<Resource><Action>`**, using the standard CRUD actions: `List` (all of them), `Show` (one of them), `New` (the create form) and `Edit` (the update form). We build no `ExpenseEdit.tsx` this week, but you can already see where it would go — and `Delete` never gets a page, because deleting is a button, not a screen.
 
-Applied to another resource it reads the same way, which is the whole point: `pages/users/UserList.tsx`,
-`pages/categories/CategoryEdit.tsx`.
+Applied to another resource it reads the same way, which is the whole point: `pages/users/UserList.tsx`, `pages/categories/CategoryEdit.tsx`.
 
 > **&#10067; Does React Router care about any of this?** No. Unlike Next.js, Remix or TanStack Router — which
 > *derive* your routes from the filenames — React Router in data mode makes you write the route table by hand,
@@ -305,20 +251,17 @@ Applied to another resource it reads the same way, which is the whole point: `pa
 #### Two components we are dropping
 
 - **`ExpenseSorter`** — sorting is client-side state, and this lesson is about moving that kind of state into  the URL. Delete it for now; you will get the chance to put sorting back as a `?sort=` parameter at the end of  Exercise 2a.
-- **`ExpenseReset`**, if your project still has it — some earlier versions of the lesson 4 solution did. It calls
-  `POST /api/expenses/reset`; delete both the component and that backend route if you find them, since neither
-  is used anywhere in this lesson.
+- **`ExpenseReset`**, if your project still has it — some earlier versions of the lesson 4 solution did. It calls `POST /api/expenses/reset`; delete both the component and that backend route if you find them, since neither is used anywhere in this lesson.
+
 ---
 
 ## Exercise 2a: Replace useEffect with loaders (~40 min)
 
-Our pages still fetch with `useEffect` inside `useExpenses`. That pattern has a flaw you have probably already
-felt: the component renders **first**, with an empty list, and the data arrives later. Every component that
-fetches needs its own `loading` flag, and the request only starts once React has mounted the component.
+<!--Idea: to make this more obvious we could add a delay on the BE in order to show the loading state-->
 
-React Router can do better, because it knows which page it is about to render *before* rendering it. A
-**loader** is a function attached to a route; the router calls it, waits for it, and only then renders the
-component with the data already available.
+Our pages still fetch with `useEffect` inside `useExpenses`. That pattern has a flaw you have probably already felt: the component renders **first**, with an empty list, and the data arrives later. Every component that fetches needs its own `loading` flag, and the request only starts once React has mounted the component.
+
+React Router can do better, because it knows which page it is about to render *before* rendering it. A **loader** is a function attached to a route; the router calls it, waits for it, and only then renders the component with the data already available.
 
 ### 2.1 A first loader
 
@@ -343,11 +286,8 @@ export async function expenseListLoader(): Promise<Expense[]> {
 
 Read it line by line, because you are about to write two more of these and the shape never changes:
 
-- **`export async function`** — a loader is a plain async function. Not a hook, not a component. It can be
-  imported and tested without rendering anything.
-- **`if (!response.ok)`** — `fetch` only rejects when the network itself fails. A 404 or a 500 arrives as a
-  perfectly successful promise, so a loader that skips this check returns an error page's HTML as if it were
-  data.
+- **`export async function`** — a loader is a plain async function. Not a hook, not a component. It can be imported and tested without rendering anything.
+- **`if (!response.ok)`** — `fetch` only rejects when the network itself fails. A 404 or a 500 arrives as a perfectly successful promise, so a loader that skips this check returns an error page's HTML as if it were data.
 - **`return response.json()`** — returning the promise is enough; React Router awaits it before rendering.
 
 Attach it to the route in `main.tsx`:
@@ -371,13 +311,9 @@ function ExpenseList() {
 
 Notice what disappeared: no `useState`, no `useEffect`, no `loading`. The component is now a pure function of its data.
 
-> You may see `No 'HydrateFallback' element provided to render during initial hydration` in the console. Ignore
-> it — it is React Router being cautious about a server-rendering feature we are not using, not a sign that
-> something is wrong.
+> You may see `No 'HydrateFallback' element provided to render during initial hydration` in the web browser console. Ignore it — it is React Router being cautious about a server-rendering feature we are not using, not a sign that something is wrong.
 
-> **Explain it to yourself before moving on.** The old `useExpenses` needed a `loading` flag and this does
-> not. Say out loud *why* — what does React Router do that `useEffect` could not? If the answer does not come
-> easily, re-read when each one runs. This is the whole idea of the exercise; everything after it is detail.
+> **Explain it to yourself before moving on.** The old `useExpenses` needed a `loading` flag and this does not. Say out loud *why* — what does React Router do that `useEffect` could not? If the answer does not come easily, re-read when each one runs. This is the whole idea of the exercise; everything after it is detail.
 
 Here is the whole idea in one picture. Every loader you write today follows these four steps:
 
@@ -393,35 +329,26 @@ flowchart TD
     D -. "the URL changes" .-> A
 ```
 
-Read the order carefully. Step 3 finishes **before** step 4 starts. The page never waits for data, so it
-never needs a `loading` flag.
+Read the order carefully. Step 3 finishes **before** step 4 starts. The page never waits for data, so it never needs a `loading` flag.
 
-Now look at the dotted arrow. When the URL changes, the four steps run again from the top. That is why your
-search filter works without you storing anything.
+Now look at the dotted arrow. When the URL changes, the four steps run again from the top. That is why your search filter works without you storing anything.
 
 
-> **&#10067; Why `throw new Response(...)` instead of returning an error?** Because the loader has to answer
-> one question — "here is the data" or "this route failed" — and a thrown value is how you say the second one
-> without inventing a convention. Returning `undefined` would push the problem into the component, where every
-> `.map` becomes a null check.
+> **&#10067; Why `throw new Response(...)` instead of returning an error?** Because the loader has to answer one question — "here is the data" or "this route failed" — and a thrown value is how you say the second one without inventing a convention. Returning `undefined` would push the problem into the component, where every `.map` becomes a null check.
 >
-> Try it: visit `/expenses/9999` once you have built the detail page. React Router catches what you threw and
-> renders a built-in error screen showing **404** — which is also, politely, a message telling you to build a
-> nicer one when you care about the UX. That is a job for another day; we have a GraphQL endpoint to write.
+> Try it: visit `/expenses/9999` ***once you have built the detail page***. React Router catches what you threw and renders a built-in error screen showing **404** — which is also, politely, a message telling you to build a nicer one when you care about the UX. That is a job for another day; we have a GraphQL endpoint to write.
+
+<!-- WARNING: at this step, the details page is not working yet -->
 
 ### 2.2 The search form drives the URL
 
-Right now the search form keeps its filter in React state and calls `searchExpenses()`. That means the filtered
-list cannot be bookmarked, shared or reached with the back button — the same problem we had with pages.
+Right now the search form keeps its filter in React state and calls `searchExpenses()`. That means the filtered list cannot be bookmarked, shared or reached with the back button — the same problem we had with pages.
 
-The fix is to put the filter **in the URL** as query parameters, and let the loader read it. React Router
-re-runs the loader whenever the URL changes, so the list updates by itself.
+The fix is to put the filter **in the URL** as query parameters, and let the loader read it. React Router re-runs the loader whenever the URL changes, so the list updates by itself.
 
 In `ExpenseSearch.tsx`, replace the call to `searchExpenses` with `useSearchParams`.
 
-> **&#9888; One import is about to break.** `ExpenseSearch` currently imports its `ExpenseFilter` type from
-> `hooks/useExpenses`. That hook is on its way out (the loader replaces it), so declare the form's own type
-> locally instead — the shape of a search form is the form's business, not the data layer's:
+> **&#9888; One import is about to break.** `ExpenseSearch` currently imports its `ExpenseFilter` type from `hooks/useExpenses`. That hook is on its way out (the loader replaces it), so declare the form's own type locally instead — the shape of a search form is the form's business, not the data layer's:
 >
 > ```ts
 > interface SearchFormValues {
@@ -483,24 +410,19 @@ export async function expenseListLoader({ request }: LoaderFunctionArgs): Promis
 
 Because the frontend filter names (`amount`, `payerId`, `categoryId`) are already the names the backend expects, we can forward the query string untouched.
 
-Check it: filter by payer, copy the URL, open it in a new tab. You should land on the filtered list. Press back.
-The previous filter returns.
+Check it: filter by payer, copy the URL, open it in a new tab. You should land on the filtered list. Press back. The previous filter returns.
 
-> **If you finish early:** bring back the sorting we deleted in Exercise 1, as a `?sort=date-asc` parameter
-> the loader reads. A sorted list then becomes a shareable link, exactly like a filtered one. 
+> **If you finish early:** bring back the sorting we deleted in Exercise 1, as a `?sort=date-asc` parameter the loader reads. A sorted list then becomes a shareable link, exactly like a filtered one. 
 
-> **From the trenches:** "put it in the URL" is one of the highest-value habits in frontend work. The URL is
-> free, shareable, persistent state that every browser already knows how to manage. Any filter, tab or pagination
-> cursor that lives only in a `useState` is state your users cannot bookmark and your support team cannot
-> reproduce.
+> **From the trenches:** "put it in the URL" is one of the highest-value habits in frontend work. The URL is free, shareable, persistent state that every browser already knows how to manage. Any filter, tab or pagination cursor that lives only in a `useState` is state your users cannot bookmark and your support team cannot reproduce.
 
 ## Exercise 2b: The detail page and a shared API client (~50 min)
 
+---
+
 ### 2.3 A second loader, with a route parameter
 
-Now write the second one yourself. It is the same four steps as `expenseListLoader`, with one addition:
-React Router hands a loader the dynamic segments of the matched route in **`params`**, so the `:id` in
-`/expenses/:id` arrives as `params.id`.
+Now write the second one yourself. It is the same four steps as `expenseListLoader`, with one addition: React Router hands a loader the dynamic segments of the matched route in **`params`**, so the `:id` in `/expenses/:id` arrives as `params.id`.
 
 Fill in the body:
 
@@ -520,9 +442,7 @@ export async function expenseShowLoader({ params }: LoaderFunctionArgs): Promise
 
 Then attach it in `main.tsx` the same way you attached the first one.
 
-That endpoint does not exist yet. It is the same service-plus-route pattern you wrote twice in lesson 4, so
-take it rather than retype it — there is nothing new to learn in these twenty lines, and you need the minutes
-later.
+That endpoint does not exist yet. It is the same service-plus-route pattern you wrote twice in lesson 4, so take it rather than retype it — there is nothing new to learn in these twenty lines, and you need the minutes later.
 
 ```ts
 // backend/src/services/expenses.service.ts — alongside getExpenses
@@ -531,6 +451,8 @@ public static async getExpenseById(id: number): Promise<Expense | undefined> {
   return row ? expenseFromDBO(row) : undefined;
 }
 ```
+
+<!-- We don not include the payer nor the category ? -->
 
 ```ts
 // backend/src/routes/expenses.router.ts — after the GET "/" route
@@ -551,8 +473,7 @@ expensesRouter.get('/:id', async (req, res) => {
 });
 ```
 
-Check it with your `.http` file before touching the frontend — `GET /api/expenses/1` should return one expense
-with its payer and participants, and `GET /api/expenses/9999` should return a 404.
+Check it with your `.http` file before touching the frontend — `GET /api/expenses/1` should return one expense with its payer and participants, and `GET /api/expenses/9999` should return a 404.
 
 In `ExpenseItem.tsx`, make each row link to its detail page:
 
@@ -560,15 +481,11 @@ In `ExpenseItem.tsx`, make each row link to its detail page:
 <Link to={`/expenses/${expense.id}`}>{expense.description}</Link>
 ```
 
-On the detail page, show everything we know: description, amount, date, the payer's **name, email and bank
-account**, the full list of participants with their names, and the category with its colour.
+On the detail page, show everything we know: description, amount, date, the payer's **name, email and bank account**, the full list of participants with their names, and the category with its colour.
 
 ### 2.4 One place for every request (~15 min)
 
-Look at the two loaders you have now, plus `useUsers` and `useCategories`. Four files, and every one of them
-repeats the same three things: stick `API_BASE_URL` in front of the path, check `response.ok`, call
-`response.json()`. That is a copy-paste pattern, and copy-paste patterns are where bugs go to hide — forget one
-`response.ok` check and a 500 error silently becomes `undefined` three components later.
+Look at the two loaders you have now, plus `useUsers` and `useCategories`. Four files, and every one of them repeats the same three things: stick `API_BASE_URL` in front of the path, check `response.ok`, call `response.json()`. That is a copy-paste pattern, and copy-paste patterns are where bugs go to hide — forget one `response.ok` check and a 500 error silently becomes `undefined` three components later.
 
 Pull it into one function. Create `src/lib/rest.ts`:
 
@@ -599,32 +516,19 @@ export async function expenseShowLoader({ params }: LoaderFunctionArgs): Promise
 }
 ```
 
-Do the same in `useUsers` and `useCategories` — they each hold their own copy of `API_BASE_URL` today. One
-more copy is left: `useExpenses.ts`. Exercise 2.5 removes its last caller, and Exercise 6 deletes the file —
-once that happens, `API_BASE_URL` exists in exactly one place in the whole frontend.
+Do the same in `useUsers` and `useCategories` — they each hold their own copy of `API_BASE_URL` today. One more copy is left: `useExpenses.ts`. Exercise 2.5 removes its last caller, and Exercise 6 deletes the file — once that happens, `API_BASE_URL` exists in exactly one place in the whole frontend.
 
 Three things are worth noticing about this small file.
 
-**It is an API client, and that is a concept worth having.** Right now it only prefixes a URL and checks a
-status code. But it is the one place every request passes through, so it is where you will later add an
-`Authorization` header, a request id for tracing, a timeout, a retry, or logging. Without it, "add an auth
-header to every call" means editing every `fetch` in the codebase and missing one.
+**It is an API client, and that is a concept worth having.** Right now it only prefixes a URL and checks a status code. But it is the one place every request passes through, so it is where you will later add an `Authorization` header, a request id for tracing, a timeout, a retry, or logging. Without it, "add an auth header to every call" means editing every `fetch` in the codebase and missing one.
 
-**It throws a `Response`, and `Response` is a web standard** — part of the fetch API, not something React
-Router invented. That is why `rest.ts` imports nothing from `react-router` and still produces errors the
-router renders. The router simply recognises a thrown `Response`; the dependency runs one way only.
+**It throws a `Response`, and `Response` is a web standard** — part of the fetch API, not something React Router invented. That is why `rest.ts` imports nothing from `react-router` and still produces errors the router renders. The router simply recognises a thrown `Response`; the dependency runs one way only.
 
-**It lives in `lib/`, not in `components/` or `pages/`, because none of this is React.** There is no JSX here,
-no hook, no component — it is plain TypeScript that would work unchanged in a Node script. That is easy to
-forget about loaders too: a loader is an ordinary `async` function that React Router happens to call, which is
-why it can be tested without rendering anything. We keep loaders beside their page because that is where you
-look for them, not because they are React.
+**It lives in `lib/`, not in `components/` or `pages/`, because none of this is React.** There is no JSX here, no hook, no component — it is plain TypeScript that would work unchanged in a Node script. That is easy to forget about loaders too: a loader is an ordinary `async` function that React Router happens to call, which is why it can be tested without rendering anything. We keep loaders beside their page because that is where you look for them, not because they are React.
 
 ### 2.5 The add-expense page (~5 min)
 
-`ExpenseAdd` does not change at all — it keeps react-hook-form, `zodResolver` and its existing `expenseAdd`
-prop. What changes is the **page** that wraps it. The page decides what to send and where to go afterwards;
-the component only knows how to be a form:
+`ExpenseAdd` does not change at all — it keeps react-hook-form, `zodResolver` and its existing `expenseAdd` prop. What changes is the **page** that wraps it. The page decides what to send and where to go afterwards; the component only knows how to be a form:
 
 ```tsx
 // src/pages/expenses/ExpenseNew.tsx
@@ -648,11 +552,7 @@ function ExpenseNew() {
 }
 ```
 
-> **&#9888; Your new expense will not appear in the list, and that is expected.** Submitting the form logs the
-> expense to the browser console and sends you back to `/expenses`, which reloads from a backend that never
-> heard about it. We are stopping here on purpose: writing is a different problem from reading, and it is the
-> subject of Exercise 6. Open the console, submit the form, and check that the object you see has the right
-> shape — that is what this step is verifying.
+> **&#9888; Your new expense will not appear in the list, and that is expected.** Submitting the form logs the expense to the browser console and sends you back to `/expenses`, which reloads from a backend that never heard about it. We are stopping here on purpose: writing is a different problem from reading, and it is the subject of Exercise 6. Open the console, submit the form, and check that the object you see has the right shape — that is what this step is verifying.
 
 - `useNavigate` is how you move the user programmatically — after a submit, after a login, after a delete.
 - `Link`/`NavLink` are for navigation the user clicks on. Use the one that matches who is deciding.

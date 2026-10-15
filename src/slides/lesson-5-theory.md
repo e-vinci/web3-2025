@@ -197,6 +197,7 @@ export async function expenseListLoader() {
 ```tsx
 const expenses = useLoaderData() as Expense[];
 ```
+<!--Shouldn't be expenseListLoader ??-->
 
 No `useState`. No `useEffect`. No `loading` flag.
 
@@ -220,8 +221,7 @@ if (!res.ok) throw new Response('Not found', { status: 404 });
 A loader answers one of two things: **here is the data**, or **this route failed**.
 Throwing is how you say the second without inventing a convention.
 
-- Returning `undefined` pushes the problem into the component —
-  every `.map` becomes a null check
+- Returning `undefined` pushes the problem into the component — every `.map` becomes a null check
 - `Response` is a **web standard**, not a React Router type
 - React Router catches it and shows a built-in error screen
 
@@ -248,8 +248,7 @@ export async function expenseListLoader({ request }) {
 
 `/expenses?payerId=2&amount=10` is bookmarkable, shareable, survives refresh.
 
-> Any filter, tab or page cursor living only in `useState`
-> is state your users cannot share and you cannot reproduce.
+> Any filter, tab or page cursor living only in `useState` is state your users cannot share and you cannot reproduce.
 
 ---
 
@@ -473,8 +472,7 @@ Our business object holds a real `Date`. The schema says `date: String!`:
 { "id": 1, "date": "1792051200000" }
 ```
 
-**No error.** GraphQL coerced the Date via `valueOf()`. That *is* a String,
-so the contract is satisfied — and the frontend gets `Invalid Date`.
+**No error.** GraphQL coerced the Date via `valueOf()`. That *is* a String, so the contract is satisfied — and the frontend gets `Invalid Date`.
 
 - `!` catches **missing** data: `Cannot return null for non-nullable field`
 - Nothing catches **wrong** data
@@ -489,17 +487,13 @@ A resolver that skips validation and calls the service directly fails like this:
 date.toISOString is not a function
 ```
 
-GraphQL checked the **shape** (`date` is a `String`). It never checked the
-**meaning** (is it a real date?). That is a business rule, and it lives in
-one place:
+GraphQL checked the **shape** (`date` is a `String`). It never checked the **meaning** (is it a real date?). That is a business rule, and it lives in one place:
 
 ```ts
 const newExpense = parseNewExpense(args.input); // same Zod parser as REST
 ```
 
-**REST route and GraphQL resolver call the same parser.** A second way
-into your services needs the same guard as the first — the schema cannot
-do that job for you.
+**REST route and GraphQL resolver call the same parser.** A second way into your services needs the same guard as the first — the schema cannot do that job for you.
 
 ---
 
@@ -511,19 +505,14 @@ type Mutation {
 }
 ```
 
-One **input type per mutation**, named `<MutationName>Input`.
-Adding a field later never changes the mutation's signature.
+One **input type per mutation**, named `<MutationName>Input`. Adding a field later never changes the mutation's signature.
 
-`input` ≠ `type`: a `type` describes what the server **returns**,
-an `input` describes what the client **sends**. `Expense` has
-`payer: User!`; `CreateExpenseInput` has `payerId: Int!` — an id in,
-an object out.
+`input` ≠ `type`: a `type` describes what the server **returns**, an `input` describes what the client **sends**. `Expense` has `payer: User!`; `CreateExpenseInput` has `payerId: Int!` — an id in, an object out.
 
 - `Query` → reads, may run in parallel
 - `Mutation` → writes, run in sequence
 
-A mutation also returns a **selection set**: you choose what you get back
-about the thing you just created.
+A mutation also returns a **selection set**: you choose what you get back about the thing you just created.
 
 ---
 
@@ -552,16 +541,11 @@ await graphqlRequest(CREATE_EXPENSE, { input: formValues });
 
 ## Honest trade-offs
 
-GraphQL is **not** automatically faster. The *response* shrinks; the
-**database work does not**, unless you make it. Field resolvers fix that —
-and introduce **N+1 queries**, which is what **DataLoader** exists for.
-REST also gets HTTP caching for free; GraphQL POSTs do not.
+GraphQL is **not** automatically faster. The *response* shrinks; the **database work does not**, unless you make it. Field resolvers fix that — and introduce **N+1 queries**, which is what **DataLoader** exists for. REST also gets HTTP caching for free; GraphQL POSTs do not.
 
-**Reach for GraphQL when:** many clients want different data, the data is
-deeply related, or the frontend iterates faster than the backend.
+**Reach for GraphQL when:** many clients want different data, the data is deeply related, or the frontend iterates faster than the backend.
 
-**REST is still right when:** one client, stable shapes, file uploads,
-HTTP caching, simple public APIs.
+**REST is still right when:** one client, stable shapes, file uploads, HTTP caching, simple public APIs.
 
 > Most real systems run both. We did today.
 
@@ -577,8 +561,7 @@ HTTP caching, simple public APIs.
 6. GraphQL publishes **capabilities** → the client picks the shape
 7. A schema with `!` is an **executable contract** that catches real bugs
 
-Exercise: build the four pages, move to loaders, feel the two-endpoint pain,
-then collapse it into one GraphQL schema.
+Exercise: build the four pages, move to loaders, feel the two-endpoint pain, then collapse it into one GraphQL schema.
 
 <!--
 Speaker notes:

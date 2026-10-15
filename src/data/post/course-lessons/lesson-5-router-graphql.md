@@ -338,8 +338,6 @@ Now look at the dotted arrow. When the URL changes, the four steps run again fro
 >
 > Try it: visit `/expenses/9999` ***once you have built the detail page***. React Router catches what you threw and renders a built-in error screen showing **404** — which is also, politely, a message telling you to build a nicer one when you care about the UX. That is a job for another day; we have a GraphQL endpoint to write.
 
-<!-- WARNING: at this step, the details page is not working yet -->
-
 ### 2.2 The search form drives the URL
 
 Right now the search form keeps its filter in React state and calls `searchExpenses()`. That means the filtered list cannot be bookmarked, shared or reached with the back button — the same problem we had with pages.
@@ -676,8 +674,6 @@ app.use(yoga.graphqlEndpoint, yoga);
 ```
 
 > **&#9888; Do not skip `cors: false`.** Without it, `/graphql` accepts requests from *any* origin, regardless of the allowlist you set up for the REST routes. Try it yourself: `curl -i -X POST http://localhost:3000/graphql -H "Origin: http://evil.example.com" -d '{"query":"{ __typename }"}'` — without `cors: false` you get back `Access-Control-Allow-Origin: http://evil.example.com`; with it, nothing. One library, two CORS implementations, and they disagree unless you tell one of them to stand down.
-
-<!--Tried and I got the following message : "{"errors":[{"message":"Must provide query string.","extensions":{"code":"BAD_REQUEST"}}]}%"-->
 
 Start the backend and open **<http://localhost:3000/graphql> in your browser**. You get GraphiQL, an IDE for your API: a query editor on the left, results on the right, and — most importantly — a **Docs** panel listing everything your schema exposes.
 

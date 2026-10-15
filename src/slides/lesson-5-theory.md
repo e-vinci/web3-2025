@@ -202,7 +202,6 @@ export async function expenseListLoader() {
 ```tsx
 const expenses = useLoaderData() as Expense[];
 ```
-<!--Shouldn't be expenseListLoader ??-->
 
 No `useState`. No `useEffect`. No `loading` flag.
 

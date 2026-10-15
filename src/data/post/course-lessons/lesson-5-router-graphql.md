@@ -563,8 +563,7 @@ function ExpenseNew() {
 
 ## Exercise 3: Make the list page lean (~25 min)
 
-Open your browser's dev tools, Network tab, and load `/expenses`. Look at the response of
-`GET /api/expenses` and at its size.
+Open your browser's dev tools, Network tab, and load `/expenses`. Look at the response of `GET /api/expenses` and at its size.
 
 For every single expense in the list, the backend is sending you:
 
@@ -572,13 +571,9 @@ For every single expense in the list, the backend is sending you:
 - the full `participants` array — every participant, with their emails and bank accounts too
 - the full `category` object
 
-And the list page displays almost none of it. It shows a description, an amount, a date, a payer *name* and a
-category *name*. We are shipping a user's bank details to a screen that never renders them — which is a
-performance problem and a privacy problem at the same time.
+And the list page displays almost none of it. It shows a description, an amount, a date, a payer *name* and a category *name*. We are shipping a user's bank details to a screen that never renders them — which is a performance problem and a privacy problem at the same time.
 
-> **Predict first.** You are about to remove `participants` from the list response. Something on screen will
-> break. Write down *what* — which component, and which line of it — before you make the change. Then make it
-> and see whether you were right.
+> **Predict first.** You are about to remove `participants` from the list response. Something on screen will break. Write down *what* — which component, and which line of it — before you make the change. Then make it and see whether you were right.
 
 **Fix it the REST way.** Change `GET /api/expenses` so it returns only what the list needs:
 
@@ -601,9 +596,7 @@ Reload the list. With the seed data, the response goes from roughly **2.3 kB to 
 
 Sit with that error for a second, because it is the most important one in this lesson.
 
-TypeScript was *perfectly happy*: the loader is declared to return `Expense[]`, and `response.json()` returns
-`any`, so the compiler cheerfully accepted a promise of a shape the server had stopped sending. **The type
-said one thing, the server did another, and nothing in between checked.**
+TypeScript was *perfectly happy*: the loader is declared to return `Expense[]`, and `response.json()` returns `any`, so the compiler cheerfully accepted a promise of a shape the server had stopped sending. **The type said one thing, the server did another, and nothing in between checked.**
 
 Fix it properly rather than by adding `?.`:
 
@@ -612,9 +605,7 @@ Fix it properly rather than by adding `?.`:
 - Update `ExpenseList.loader.ts`'s return type to `Promise<ExpenseListItem[]>`.
 - Update `ExpenseList.tsx`'s cast to `useLoaderData() as ExpenseListItem[]`.
 
-That last pair is the step that actually closes the gap you just hit: a type nobody reads from is decoration,
-not a contract. Only once the loader itself is declared `ExpenseListItem[]` does TypeScript have something to
-check `expense.participants` against.
+That last pair is the step that actually closes the gap you just hit: a type nobody reads from is decoration, not a contract. Only once the loader itself is declared `ExpenseListItem[]` does TypeScript have something to check `expense.participants` against.
 
 Now TypeScript enforces the boundary: the list screen cannot accidentally read a field the list query does not fetch. You have **two types and two endpoints** describing one resource — `GET /api/expenses` (light) and `GET /api/expenses/:id` (full).
 
@@ -632,10 +623,7 @@ Look at what you have written and answer these honestly:
 
 # Part 3 – GraphQL
 
-GraphQL turns that relationship around. Instead of the backend publishing a fixed shape per endpoint, the
-backend publishes a **schema** — everything that *can* be asked — and each client sends a **query** describing
-exactly what it wants this time. One endpoint, any number of shapes, no backend change when a screen's needs
-change.
+GraphQL turns that relationship around. Instead of the backend publishing a fixed shape per endpoint, the backend publishes a **schema** — everything that *can* be asked — and each client sends a **query** describing exactly what it wants this time. One endpoint, any number of shapes, no backend change when a screen's needs change.
 
 ## Exercise 4: A GraphQL endpoint on the existing server (~35 min)
 
@@ -665,10 +653,7 @@ export const schema = createSchema({
 });
 ```
 
-> The `/* GraphQL */` comment before the template literal is not decoration — it tells VS Code (with the
-> [GraphQL extension](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql)) to syntax
-> highlight the string as GraphQL. Keep the schema as an inline template literal: our backend runs TypeScript
-> directly through Node, and Node cannot `import` a `.graphql` file natively, so we can't easily store it in its own file for benefitting syntax highlighting from the file extension.
+> The `/* GraphQL */` comment before the template literal is not decoration — it tells VS Code (with the [GraphQL extension](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql)) to syntax highlight the string as GraphQL. Keep the schema as an inline template literal: our backend runs TypeScript directly through Node, and Node cannot `import` a `.graphql` file natively, so we can't easily store it in its own file for benefitting syntax highlighting from the file extension.
 
 Mount it in `app.ts`:
 
@@ -690,20 +675,13 @@ const yoga = createYoga({
 app.use(yoga.graphqlEndpoint, yoga);
 ```
 
-> **&#9888; Do not skip `cors: false`.** Without it, `/graphql` accepts requests from *any* origin, regardless
-> of the allowlist you set up for the REST routes. Try it yourself: `curl -i -X POST
-> http://localhost:3000/graphql -H "Origin: http://evil.example.com" -d '{"query":"{ __typename }"}'` — without
-> `cors: false` you get back `Access-Control-Allow-Origin: http://evil.example.com`; with it, nothing. One
-> library, two CORS implementations, and they disagree unless you tell one of them to stand down.
+> **&#9888; Do not skip `cors: false`.** Without it, `/graphql` accepts requests from *any* origin, regardless of the allowlist you set up for the REST routes. Try it yourself: `curl -i -X POST http://localhost:3000/graphql -H "Origin: http://evil.example.com" -d '{"query":"{ __typename }"}'` — without `cors: false` you get back `Access-Control-Allow-Origin: http://evil.example.com`; with it, nothing. One library, two CORS implementations, and they disagree unless you tell one of them to stand down.
 
-Start the backend and open **<http://localhost:3000/graphql> in your browser**. You get GraphiQL, an IDE for
-your API: a query editor on the left, results on the right, and — most importantly — a **Docs** panel listing
-everything your schema exposes.
+<!--Tried and I got the following message : "{"errors":[{"message":"Must provide query string.","extensions":{"code":"BAD_REQUEST"}}]}%"-->
 
-> **One more thing to turn off before a real deploy.** `maskedErrors` is now production-safe, but GraphiQL and
-> schema introspection are still on at `/graphql` in production — anyone can open that URL on your deployed app
-> and browse your whole schema. That is fine for this course; in a real product you would disable introspection
-> once the API is live, the same way we masked errors.
+Start the backend and open **<http://localhost:3000/graphql> in your browser**. You get GraphiQL, an IDE for your API: a query editor on the left, results on the right, and — most importantly — a **Docs** panel listing everything your schema exposes.
+
+> **One more thing to turn off before a real deploy.** `maskedErrors` is now production-safe, but GraphiQL and schema introspection are still on at `/graphql` in production — anyone can open that URL on your deployed app and browse your whole schema. That is fine for this course; in a real product you would disable introspection once the API is live, the same way we masked errors.
 
 Run your first query:
 
@@ -760,43 +738,39 @@ typeDefs: /* GraphQL */ `
 
 Read that carefully — the type system is doing real work:
 
-- `!` means **non-nullable**. `payer: User!` says an expense always has a payer; `category: Category` says it
-  may not have one. Your frontend types can be generated from this.
+- `!` means **non-nullable**. `payer: User!` says an expense always has a payer; `category: Category` says it may not have one. Your frontend types can be generated from this.
 - `[User!]!` is a non-null list of non-null users: the list is always there, and never contains a hole.
 - `input` is a type used for *arguments*. GraphQL keeps input and output types separate.
-- Every type eventually reduces to a primitive, called a **Scalar**, that can be serialized as JSON. That is
-  why GraphQL has no `Date` type: a `Date` cannot be serialized as JSON natively, so you always pick a scalar
-  to represent it as — here, `String`.
+- Every type eventually reduces to a primitive, called a **Scalar**, that can be serialized as JSON. That is why GraphQL has no `Date` type: a `Date` cannot be serialized as JSON natively, so you always pick a scalar to represent it as — here, `String`.
 
 ### 4.3 Resolvers
 
-A resolver is the function that produces the value for a field. We already have services that do exactly this
-work, so the resolvers are thin:
+A resolver is the function that produces the value for a field. We already have services that do exactly this work, so the resolvers are thin:
 
 Here are two of the four. A resolver receives `(parent, args)` — `args` being whatever the query passed in:
 
 ```ts
+// /src/graphql/schema.ts
 import { ExpensesService } from '../services/expenses.service.ts';
 import { UsersService } from '../services/users.service.ts';
 import { CategoriesService } from '../services/categories.service.ts';
 
-resolvers: {
-  Query: {
-    expenses: (_parent, args) => ExpensesService.getExpenses(args.filter ?? {}),
-    users: () => UsersService.getUsers(),
-    // expense: ...    ← one expense, by id. Which service method, and what is in args?
-    // categories: ... ← the same shape as users
+export const schema = createSchema({
+  //...
+  resolvers: {
+    Query: {
+      expenses: (_parent, args) => ExpensesService.getExpenses(args.filter ?? {}),
+      users: () => UsersService.getUsers(),
+      // expense: ...    ← one expense, by id. Which service method, and what is in args?
+      // categories: ... ← the same shape as users
+    },
   },
-},
+});
 ```
 
-**Write the other two.** `categories` is `users` with a different service. `expense` takes an argument, like
-`expenses` does — look at your schema to see what that argument is called, and remember `args` is an object
-whose keys are the argument names.
+**Write the other two.** `categories` is `users` with a different service. `expense` takes an argument, like `expenses` does — look at your schema to see what that argument is called, and remember `args` is an object whose keys are the argument names.
 
-Note that we are **reusing the services, not the routers**. This is the payoff for the layering you built in
-lesson 4: the business logic does not care whether it is called by a REST route or a GraphQL resolver. If your
-service layer were mixed into your Express handlers, you would be copy-pasting it right now.
+Note that we are **reusing the services, not the routers**. This is the payoff for the layering you built in lesson 4: the business logic does not care whether it is called by a REST route or a GraphQL resolver. If your service layer were mixed into your Express handlers, you would be copy-pasting it right now.
 
 
 ### 4.3b Two things the schema will teach you
@@ -812,8 +786,7 @@ Run `{ expenses { id description } }` in GraphiQL. That works. Now add `date`:
 }
 ```
 
-> **Predict first.** Our business object holds a JavaScript `Date`. The schema says `date: String!`. Write
-> down what you expect to come back — and whether you expect an error at all.
+> **Predict first.** Our business object holds a JavaScript `Date`. The schema says `date: String!`. Write down what you expect to come back — and whether you expect an error at all.
 
 You get no error — you get this:
 
@@ -821,17 +794,11 @@ You get no error — you get this:
 { "id": 1, "date": "1792051200000" }
 ```
 
-Stop and look at that. Our business object carries a real `Date`. The schema says `date: String!`. GraphQL
-coerced the `Date` the only way it knows how, through `valueOf()`, and got a Unix timestamp in milliseconds.
-That **is** a string, so the schema is satisfied, and the server reports success. The frontend then calls
-`new Date("1792051200000")` and gets `Invalid Date`.
+Stop and look at that. Our business object carries a real `Date`. The schema says `date: String!`. GraphQL coerced the `Date` the only way it knows how, through `valueOf()`, and got a Unix timestamp in milliseconds. That **is** a string, so the schema is satisfied, and the server reports success. The frontend then calls `new Date("1792051200000")` and gets `Invalid Date`.
 
-> **A non-null type checks that a value is present and of the right kind. It does not check that it means what
-> you intended.** `String!` is happy with any string at all. This is the single most useful thing to understand
-> about schema validation — in GraphQL, in Zod, and in your database constraints.
+> **A non-null type checks that a value is present and of the right kind. It does not check that it means what you intended.** `String!` is happy with any string at all. This is the single most useful thing to understand about schema validation — in GraphQL, in Zod, and in your database constraints.
 
-Fix it by choosing the wire format explicitly, with your first **field resolver** — a function that produces
-one field of one type:
+Fix it by choosing the wire format explicitly, with your first **field resolver** — a function that produces one field of one type:
 
 ```ts
 import type { Expense } from '../types/expense.ts';
@@ -857,16 +824,13 @@ Next, the opposite case. Ask for every user's bank account:
 }
 ```
 
-One of our seeded users has none. Try declaring the field as non-nullable — change `bankAccount: String` to
-`bankAccount: String!` in the schema and run the query again:
+One of our seeded users has none. Try declaring the field as non-nullable — change `bankAccount: String` to `bankAccount: String!` in the schema and run the query again:
 
 ```
 Cannot return null for non-nullable field User.bankAccount.
 ```
 
-The server refuses to send a response that contradicts its own schema, and names the exact field and path. Put
-the `!` back. **Nullability is a design decision, not a formality**: `String` says "this user may not have
-given us one", `String!` says "every user always has one". Only one of those is true here.
+The server refuses to send a response that contradicts its own schema, and names the exact field and path. Put the `!` back. **Nullability is a design decision, not a formality**: `String` says "this user may not have given us one", `String!` says "every user always has one". Only one of those is true here.
 
 ### 4.4 Feel the difference
 
@@ -919,12 +883,9 @@ Then the query the **detail page** needs, for one expense:
 }
 ```
 
-**The number you wrote down was zero**, or it should have been. Same endpoint, same schema, no backend file
-touched between the two queries. Compare that with Exercise 3, where the second shape cost you a second type
-and a second mapping step, on top of the route and service method you'd already written in Exercise 2.3.
+**The number you wrote down was zero**, or it should have been. Same endpoint, same schema, no backend file touched between the two queries. Compare that with Exercise 3, where the second shape cost you a second type and a second mapping step, on top of the route and service method you'd already written in Exercise 2.3.
 
-With the seed data, the first query's response is around **0.8 kB** — the same as the hand-tuned light REST
-endpoint you wrote, except nobody had to write or maintain it.
+With the seed data, the first query's response is around **0.8 kB** — the same as the hand-tuned light REST endpoint you wrote, except nobody had to write or maintain it.
 
 
 The same idea in four steps:
@@ -939,30 +900,19 @@ flowchart TD
     A --> B --> C --> D
 ```
 
-Compare step 1 and step 4 in your own code. The schema offers `participants`, and it offers the payer's
-`email` and `bankAccount`. Your list query never names them, so they never travel. You did not write a second
-endpoint to get that.
+Compare step 1 and step 4 in your own code. The schema offers `participants`, and it offers the payer's `email` and `bankAccount`. Your list query never names them, so they never travel. You did not write a second endpoint to get that.
 
-Now read step 3 again, because it is the honest part. The database still returned every column. Our
-`getExpenses` still joins payer, participants and category every time — we wrote it that way in lesson 4, and
-GraphQL did not change it. GraphQL made the **answer** smaller. It did not make the **database query**
-smaller.
+Now read step 3 again, because it is the honest part. The database still returned every column. Our `getExpenses` still joins payer, participants and category every time — we wrote it that way in lesson 4, and GraphQL did not change it. GraphQL made the **answer** smaller. It did not make the **database query** smaller.
 
-> **So be precise about what we gained.** Less data on the wire, no bank accounts leaking into a list screen,
-> and no backend work when a screen's needs change. What we did **not** automatically gain is less database
-> work. Making the database work follow the query too is a real technique, and it is the optional challenge at
-> the end of this lesson.
+> **So be precise about what we gained.** Less data on the wire, no bank accounts leaking into a list screen, and no backend work when a screen's needs change. What we did **not** automatically gain is less database work. Making the database work follow the query too is a real technique, and it is the optional challenge at the end of this lesson.
 
 ---
 
 ## Exercise 5: Query GraphQL from your loaders (~30 min)
 
-Here is where part 1 pays off. All of our data fetching already lives in loaders — four small functions, each
-describing what one page needs. Swapping REST for GraphQL means editing those four functions and nothing else.
+Here is where part 1 pays off. All of our data fetching already lives in loaders — four small functions, each describing what one page needs. Swapping REST for GraphQL means editing those four functions and nothing else.
 
-We do **not** need a GraphQL client library. A GraphQL request is an ordinary HTTP POST with a JSON body of
-`{ query, variables }`. Create `src/lib/graphql.ts`, **next to the `rest.ts` you wrote in 2.3** — a second API
-client, same job, different protocol:
+We do **not** need a GraphQL client library. A GraphQL request is an ordinary HTTP POST with a JSON body of `{ query, variables }`. Create `src/lib/graphql.ts`, **next to the `rest.ts` you wrote in 2.3** — a second API client, same job, different protocol:
 
 ```ts
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -985,9 +935,7 @@ export async function graphqlRequest<T>(query: string, variables?: Record<string
 
 Note what stays the same as `rest.ts`: it owns the base URL, it decides what counts as a failure, and it throws a web-standard `Response` so the router can render it. What changes is only *how* a failure is detected — GraphQL answers `200 OK` with an `errors` array rather than using an HTTP status code, which is one of the genuine oddities of the protocol.
 
-> **Do not delete `rest.ts`.** The two expense loaders move to GraphQL, but `useUsers` and `useCategories`
-> keep calling the REST endpoints — which is realistic: real systems run both for years. Your `lib/` folder
-> now holds one client per protocol, and nothing outside it knows a URL.
+> **Do not delete `rest.ts`.** The two expense loaders move to GraphQL, but `useUsers` and `useCategories` keep calling the REST endpoints — which is realistic: real systems run both for years. Your `lib/` folder now holds one client per protocol, and nothing outside it knows a URL.
 
 Now rewrite the list loader:
 
@@ -1024,14 +972,9 @@ export async function expenseListLoader({ request }: LoaderFunctionArgs): Promis
 }
 ```
 
-This is a **named query with variables** (`query Expenses($filter: ExpenseFilter)`). Never build a query by
-string concatenation with user input — pass variables, exactly like prepared statements in SQL, and for the
-same reason.
+This is a **named query with variables** (`query Expenses($filter: ExpenseFilter)`). Never build a query by string concatenation with user input — pass variables, exactly like prepared statements in SQL, and for the same reason.
 
-Do the same for the detail loader, asking for the larger set of fields. One thing is different here and easy to
-miss: `expense(id: Int!): Expense` is nullable. A missing id is not a GraphQL *error* — it is just `null` in
-`data`, with no `errors` array at all. Your old REST loader turned a 404 status into a thrown `Response`; this
-loader has to do the equivalent itself, by checking the data:
+Do the same for the detail loader, asking for the larger set of fields. One thing is different here and easy to miss: `expense(id: Int!): Expense` is nullable. A missing id is not a GraphQL *error* — it is just `null` in `data`, with no `errors` array at all. Your old REST loader turned a 404 status into a thrown `Response`; this loader has to do the equivalent itself, by checking the data:
 
 ```ts
 const data = await graphqlRequest<{ expense: Expense | null }>(EXPENSE_QUERY, { id: Number(params.id) });
@@ -1042,12 +985,9 @@ if (!data.expense) {
 return data.expense;
 ```
 
-Try `/expenses/9999` again once this is in place — the 404 page from Exercise 2.1 should still show up. Without
-this check, the page crashes trying to read a field off `null` instead.
+Try `/expenses/9999` again once this is in place — the 404 page from Exercise 2.1 should still show up. Without this check, the page crashes trying to read a field off `null` instead.
 
-**Then delete `GET /api/expenses/:id` from your Express router.** It has no users left. That deletion is the
-point of the whole lesson: the second endpoint you wrote in Exercise 2.3 existed only to serve a second shape,
-and shapes are now the frontend's business.
+**Then delete `GET /api/expenses/:id` from your Express router.** It has no users left. That deletion is the point of the whole lesson: the second endpoint you wrote in Exercise 2.3 existed only to serve a second shape, and shapes are now the frontend's business.
 
 > **&#10067; Could the queries live in their own `.graphql` files?** On the frontend, yes.
 >
@@ -1057,16 +997,13 @@ and shapes are now the frontend's business.
 >
 > No plugin, no dependency, and TypeScript already knows the import is a `string` because `vite/client` is in your `tsconfig`. You also get real syntax highlighting and schema checking from the GraphQL editor extension.
 >
-> **Why can the frontend do this and the backend cannot?** Because the frontend has a **bundler** and the
-> backend does not. 
+> **Why can the frontend do this and the backend cannot?** Because the frontend has a **bundler** and the backend does not. 
 >
-> We keep the queries inline anyway this week: the point of Exercise 5 is seeing the small query and the large
-> one sitting next to the two fetches that send them. Reach for a separate file once a query outgrows a screen.
+> We keep the queries inline anyway this week: the point of Exercise 5 is seeing the small query and the large one sitting next to the two fetches that send them. Reach for a separate file once a query outgrows a screen.
 
 ### The real test
 
-Your product owner walks in with a change: *"on the detail page, also show the payer's bank account; and in the
-list, show the category colour as a dot."*
+Your product owner walks in with a change: *"on the detail page, also show the payer's bank account; and in the list, show the category colour as a dot."*
 
 Do it. Notice that you opened **zero backend files**. Both fields were already in the schema — they were simply not being asked for. This is the strength of graphQL.
 
@@ -1074,8 +1011,7 @@ Do it. Notice that you opened **zero backend files**. Both fields were already i
 
 ## Exercise 6: A mutation for the add form (~25 min)
 
-Reads are `Query`. Writes are `Mutation`. The split is a convention GraphQL enforces: queries may be run in
-parallel, mutations run in sequence.
+Reads are `Query`. Writes are `Mutation`. The split is a convention GraphQL enforces: queries may be run in parallel, mutations run in sequence.
 
 Add to your schema (in backend):
 
@@ -1094,10 +1030,7 @@ type Mutation {
 }
 ```
 
-You already met an `input` type in Exercise 4 — `ExpenseFilter`, the argument of the `expenses` query. The same
-idea applies here, and for mutations it is close to universal: **one input type per mutation, named
-`<MutationName>Input`.** `createExpense` takes a `CreateExpenseInput`, an `updateExpense` would take an
-`UpdateExpenseInput`.
+You already met an `input` type in Exercise 4 — `ExpenseFilter`, the argument of the `expenses` query. The same idea applies here, and for mutations it is close to universal: **one input type per mutation, named `<MutationName>Input`.** `createExpense` takes a `CreateExpenseInput`, an `updateExpense` would take an `UpdateExpenseInput`.
 
 Note that `input` types are a separate kind from `type`: a `type` describes what the server *returns*, an `input` what the client *sends*. GraphQL keeps them apart because they genuinely differ.
 
@@ -1134,9 +1067,7 @@ mutation {
 date.toISOString is not a function
 ```
 
-GraphQL did its job: it checked that `date` is a `String`, and `"2026-10-17"` is one. But `addExpense` does not
-want a string — it wants a `NewExpense`, whose `date` is a real `Date`. That conversion is done by
-`parseNewExpense`, which the REST route has been calling all along and which our resolver skipped.
+GraphQL did its job: it checked that `date` is a `String`, and `"2026-10-17"` is one. But `addExpense` does not want a string — it wants a `NewExpense`, whose `date` is a real `Date`. That conversion is done by `parseNewExpense`, which the REST route has been calling all along and which our resolver skipped.
 
 So call it here too:
 
@@ -1155,21 +1086,13 @@ Mutation: {
 },
 ```
 
-> **The rule this illustrates:** validation belongs to the *service boundary*, not to one transport. GraphQL
-> checks shapes; your Zod schema checks business rules — amount positive, description under 200 characters,
-> date actually a date — and converts types on the way in. A second way into the same services needs the same
-> guard. Try `amount: -5` through GraphQL now and watch it be refused, by the very same schema that refuses it
-> over REST.
+> **The rule this illustrates:** validation belongs to the *service boundary*, not to one transport. GraphQL checks shapes; your Zod schema checks business rules — amount positive, description under 200 characters, date actually a date — and converts types on the way in. A second way into the same services needs the same guard. Try `amount: -5` through GraphQL now and watch it be refused, by the very same schema that refuses it over REST.
 
-Run the mutation again and it succeeds. Notice that a mutation also returns a selection set — you choose what
-you get back about the thing you just created. Here we ask for `id` and `description`; since we redirect
-straight to the list afterwards, asking for `id` alone would do.
+Run the mutation again and it succeeds. Notice that a mutation also returns a selection set — you choose what you get back about the thing you just created. Here we ask for `id` and `description`; since we redirect straight to the list afterwards, asking for `id` alone would do.
 
-Now wire it into the form. `ExpenseAdd` stays untouched — react-hook-form and `zodResolver` and all. Only
-`ExpenseNew.tsx` changes.
+Now wire it into the form. `ExpenseAdd` stays untouched — react-hook-form and `zodResolver` and all. Only `ExpenseNew.tsx` changes.
 
-First write the mutation document, next to the component, exactly the way you wrote `EXPENSES_QUERY` for the
-list. The literal values you typed in GraphiQL become **variables**, because the values now come from a form:
+First write the mutation document, next to the component, exactly the way you wrote `EXPENSES_QUERY` for the list. The literal values you typed in GraphiQL become **variables**, because the values now come from a form:
 
 ```tsx
 // src/pages/expenses/ExpenseNew.tsx
@@ -1197,29 +1120,17 @@ const createExpense = async (expense: NewExpenseInput) => {
 ```
 
 `{ input: expense }` works unchanged because `NewExpense` already has exactly the field names
-`CreateExpenseInput` declares — `description`, `amount`, `date`, `payerId`, `participants`, `categoryId`. That
-is not luck: we wrote the input type to match the type the form already produces.
+`CreateExpenseInput` declares — `description`, `amount`, `date`, `payerId`, `participants`, `categoryId`. That is not luck: we wrote the input type to match the type the form already produces.
 
-Submit the form now and the new expense is there when you land back on the list — the loader re-runs and asks
-the server again.
+Submit the form now and the new expense is there when you land back on the list — the loader re-runs and asks the server again.
 
-**`hooks/useExpenses.ts` now has no callers at all** — the list loader replaced its fetching, and this page
-replaced its `addExpense`. Delete it.
+**`hooks/useExpenses.ts` now has no callers at all** — the list loader replaced its fetching, and this page replaced its `addExpense`. Delete it.
 
-Submit a valid expense and confirm it appears in the list. The client-side Zod errors you built in lesson 3
-still display, because they run before `createExpense` is ever called.
+Submit a valid expense and confirm it appears in the list. The client-side Zod errors you built in lesson 3 still display, because they run before `createExpense` is ever called.
 
-What does **not** display is a server-side rejection — try sending a 250-character description (past Zod's
-`max(200)`) and watch the form go quiet instead of showing anything. `graphqlRequest` throws a `Response`,
-which is exactly what a route **loader** turns into a nice error page; but this call happens inside a form's
-submit handler, not a loader, so nothing is listening for that throw. Making server errors visible from a
-submit handler takes a `try`/`catch` and somewhere to show the message — worth doing in a real app, and a fair
-thing to skip for one lesson. Keep it in mind; do not leave it this way in your own projects.
+What does **not** display is a server-side rejection — try sending a 250-character description (past Zod's `max(200)`) and watch the form go quiet instead of showing anything. `graphqlRequest` throws a `Response`, which is exactly what a route **loader** turns into a nice error page; but this call happens inside a form's submit handler, not a loader, so nothing is listening for that throw. Making server errors visible from a submit handler takes a `try`/`catch` and somewhere to show the message — worth doing in a real app, and a fair thing to skip for one lesson. Keep it in mind; do not leave it this way in your own projects.
 
-**That is the whole lesson working end to end.** You started with one page that fetched everything it could
-think of, and you finish with four addressable pages, each asking the server for exactly what it renders, over
-a single endpoint you can extend without writing a new route. That is a real architecture, and you built it in
-an afternoon — well done.
+**That is the whole lesson working end to end.** You started with one page that fetched everything it could think of, and you finish with four addressable pages, each asking the server for exactly what it renders, over a single endpoint you can extend without writing a new route. That is a real architecture, and you built it in a morning — well done.
 
 ---
 

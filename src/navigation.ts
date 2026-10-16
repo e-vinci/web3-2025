@@ -46,10 +46,10 @@ export const headerData = {
           text: 'Lesson 4: Search and more migrations',
           href: getPermalink('course-lessons/lesson-4-search-migration2', 'post'),
         },
-        //     {
-        //       text: 'Lesson 5: GraphQL',
-        //       href: getPermalink('course-lessons/lesson-5-graphql', 'post'),
-        //     },
+        {
+          text: 'Lesson 5: Routing andGraphQL',
+          href: getPermalink('course-lessons/lesson-5-router-graphql', 'post'),
+        },
         //     {
         //       text: 'Lesson 6: When things go wrong',
         //       href: getPermalink('course-lessons/lesson-6-when-things-go-wrong', 'post'),

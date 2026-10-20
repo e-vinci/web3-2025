@@ -62,6 +62,10 @@ Speaker Notes:
 
 ---
 
+# Part 1: JWT Authentication
+
+---
+
 # JWT (JSON Web Tokens)
 
 ## What is a JWT?
@@ -108,6 +112,13 @@ Speaker Notes:
 }
 ```
 
+<!--
+Speaker Notes:
+• Header specifies signing algorithm
+• Payload contains claims - user data we want to transmit
+• exp is expiration timestamp - tokens should expire
+-->
+
 ---
 
 ## Signature
@@ -121,9 +132,6 @@ HMACSHA256(
 
 <!--
 Speaker Notes:
-• Header specifies signing algorithm
-• Payload contains claims - user data we want to transmit
-• exp is expiration timestamp - tokens should expire
 • Signature verifies token authenticity using secret key
 • Only server with secret key can create valid signatures
 -->
@@ -255,7 +263,7 @@ const graphqlMiddleware = expressMiddleware(server, {
 
 <!--
 Speaker Notes:
-• Runs before every GraphQL request
+• Runs _before_ every GraphQL request
 • Extracts JWT from Authorization header
 • Verifies token and decodes payload
 • Adds user to context if valid token
@@ -287,6 +295,10 @@ Speaker Notes:
 • Separation of authentication (who are you) and authorization (what can you do)
 • Context makes this pattern clean and reusable
 -->
+
+---
+
+# Part 2: Security - Helmet, CSP and route protection
 
 ---
 
@@ -465,6 +477,10 @@ Speaker Notes:
 • Always authenticate and authorize on backend
 • Frontend routes just provide nice UX
 -->
+
+---
+
+# Part 3: Custom Error Management
 
 ---
 
@@ -779,6 +795,10 @@ Speaker Notes:
 • Place at strategic points in component tree
 • User can recover without losing all work
 -->
+
+---
+
+# Summary
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: 'Lesson 6: When Things Go Wrong'
 description: 'Secure your expense-sharing application with authentication, authorization, proper error handling, and security best practices.'
-publishDate: 2025-10-31T00:00:00Z
+publishDate: 2026-10-23T00:00:00Z
 excerpt: 'Learn how to implement JWT authentication, permission-based authorization, Helmet security headers, and comprehensive error management for both backend and frontend.'
 tags:
 - security
@@ -51,7 +51,7 @@ By the end of this lesson, your app will be production-ready with proper securit
 
 ## Exercises
 
-> **Starting Point:** These exercises build upon the code from Lesson 5. You should have a working Express backend with GraphQL (using Pothos) and a React frontend with Apollo Client. If you haven't completed Lesson 5, you can use the code in `exercises/lesson-5-graphql/` as your starting point.
+> **Starting Point:** These exercises build upon the code from Lesson 5. You should have a working Express backend with GraphQL and a React frontend. If you haven't completed Lesson 5, you can use the code in `exercises/lesson-5-router-graphql/` as your starting point.
 
 ### 1. Set Up User Authentication Backend
 
@@ -84,10 +84,11 @@ model User {
 
 4. Run migration:
 ```bash
-npx prisma migrate dev --name add-user-password
+npx prisma migration plan --name add-user-password
+npx prisma db migrate --advance-ref db
 ```
 
-5. Create `src/types/AuthTypes.ts` for shared types:
+5. Create `src/types/auth.ts` for shared types:
 ```ts
 export interface RegisterInput {
   name: string;
@@ -110,149 +111,138 @@ export interface AuthResponse {
 }
 ```
 
-6. Create `src/api/auth/authService.ts` to handle authentication logic:
+6. Create `src/services/auth.service.ts` to handle authentication logic:
 ```ts
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '../../generated/prisma';
-import type { RegisterInput, LoginInput, AuthResponse } from '@/types/AuthTypes';
+import { db } from '../prisma/db.ts';
+import { AuthResponse, LoginInput, RegisterInput } from '../types/auth.ts';
 
-const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-do-not-use';
 const SALT_ROUNDS = 10;
 
-export async function register(input: RegisterInput): Promise<AuthResponse> {
-  // Check if user already exists
-  const existingUser = await prisma.user.findUnique({
-    where: { email: input.email }
-  });
+export class AuthService {
+  static async register(input: RegisterInput): Promise<AuthResponse> {
+    // Check if user already exists
+    const existingUser = await db.orm.public.User.where({ email: input.email }).first();
 
-  if (existingUser) {
-    throw new Error('User with this email already exists');
-  }
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
 
-  // Create user
-  const user = await prisma.user.create({
-    data: {
+    // Create user
+    const user = await db.orm.public.User.create({
       name: input.name,
       email: input.email,
       password: hashedPassword,
-    },
-  });
+    });
 
-  // Generate JWT
-  const token = jwt.sign(
-    { userId: user.id, email: user.email },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-  return {
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    },
-  };
-}
-
-export async function login(input: LoginInput): Promise<AuthResponse> {
-  // Find user
-  const user = await prisma.user.findUnique({
-    where: { email: input.email }
-  });
-
-  if (!user) {
-    throw new Error('Invalid email or password');
+    return {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    };
   }
 
-  // Verify password
-  const validPassword = await bcrypt.compare(input.password, user.password);
+  static async login(input: LoginInput): Promise<AuthResponse> {
+    // Find user
+    const user = await db.orm.public.User.where({ email: input.email }).first();
 
-  if (!validPassword) {
-    throw new Error('Invalid email or password');
+    if (!user) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Verify password
+    const validPassword = await bcrypt.compare(input.password, user.password);
+
+    if (!validPassword) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    };
   }
 
-  // Generate JWT
-  const token = jwt.sign(
-    { userId: user.id, email: user.email },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  return {
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    },
-  };
-}
-
-export function verifyToken(token: string): { userId: number; email: string } {
-  try {
-    return jwt.verify(token, JWT_SECRET) as { userId: number; email: string };
-  } catch (error) {
-    throw new Error('Invalid or expired token');
+  static verifyToken(token: string): { userId: number; email: string } {
+    try {
+      return jwt.verify(token, JWT_SECRET) as { userId: number; email: string };
+    } catch (error) {
+      throw new Error('Invalid or expired token');
+    }
   }
 }
 ```
 
-7. Create REST endpoints for auth in `src/api/auth/authController.ts`:
+7. Create REST endpoints for auth in `src/routes/auth.router.ts`:
 ```ts
-import type { Request, Response } from 'express';
-import * as authService from './authService';
-import type { RegisterInput, LoginInput } from '@/types/AuthTypes';
+import { Router, type Request, type Response } from 'express';
+import { AuthService } from '../services/auth.service.ts';
+import type { RegisterInput, LoginInput } from '../types/auth.ts';
+import { UsersService } from '../services/users.service.ts';
 
-export async function register(req: Request, res: Response) {
+const authRouter = Router();
+
+authRouter.post('/register', async (req: Request, res: Response) => {
   try {
     const input: RegisterInput = req.body;
-    const result = await authService.register(input);
+    const result = await AuthService.register(input);
     res.status(201).json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Registration failed';
     res.status(400).json({ error: message });
   }
-}
+});
 
-export async function login(req: Request, res: Response) {
+authRouter.post('/login', async (req: Request, res: Response) => {
   try {
     const input: LoginInput = req.body;
-    const result = await authService.login(input);
+    const result = await AuthService.login(input);
     res.status(200).json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Login failed';
     res.status(401).json({ error: message });
   }
-}
+});
+
+export default authRouter;
 ```
 
-8. Create `src/api/auth/authRouter.ts`:
+8. Create `src/app.ts`:
 ```ts
-import { Router } from 'express';
-import * as authController from './authController';
-
-const router = Router();
-
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-
-export default router;
-```
-
-9. Register the auth router in `src/server.ts`:
-```ts
-import authRouter from './api/auth/authRouter';
-// ...
 app.use('/auth', authRouter);
 ```
 
-10. Test with curl or Postman:
+9. Test your API with `auth.http` file
+
+Create a new user route test and a login route test.
+
+10. Test with curl or Postman (optinal):
 ```bash
 # Register
 curl -X POST http://localhost:3000/auth/register \

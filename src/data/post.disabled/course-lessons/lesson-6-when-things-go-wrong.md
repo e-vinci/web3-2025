@@ -84,8 +84,7 @@ model User {
 
 4. Run migration:
 ```bash
-npx prisma migration plan --name add-user-password
-npx prisma db migrate --advance-ref db
+npx prisma migrate dev --name add-user-password
 ```
 
 5. Create `src/types/auth.ts` for shared types:
@@ -111,107 +110,110 @@ export interface AuthResponse {
 }
 ```
 
-6. Create `src/services/auth.service.ts` to handle authentication logic:
+6. Create `src/api/auth/authService.ts` to handle authentication logic:
 ```ts
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { db } from '../prisma/db.ts';
-import { AuthResponse, LoginInput, RegisterInput } from '../types/auth.ts';
+import prisma from '@/prisma/client';
+import type { AuthResponse, LoginInput, RegisterInput } from '@/types/auth';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-do-not-use';
 const SALT_ROUNDS = 10;
 
-export class AuthService {
-  static async register(input: RegisterInput): Promise<AuthResponse> {
-    // Check if user already exists
-    const existingUser = await db.orm.public.User.where({ email: input.email }).first();
+export async function register(input: RegisterInput): Promise<AuthResponse> {
+  // Check if user already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: input.email },
+  });
 
-    if (existingUser) {
-      throw new Error('User with this email already exists');
-    }
+  if (existingUser) {
+    throw new Error('User with this email already exists');
+  }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
+  // Hash password
+  const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
 
-    // Create user
-    const user = await db.orm.public.User.create({
+  // Create user
+  const user = await prisma.user.create({
+    data: {
       name: input.name,
       email: input.email,
       password: hashedPassword,
-    });
+    },
+  });
 
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+  // Generate JWT
+  const token = jwt.sign(
+    { userId: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
 
-    return {
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    };
+  return {
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    },
+  };
+}
+
+export async function login(input: LoginInput): Promise<AuthResponse> {
+  // Find user
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+  });
+
+  if (!user) {
+    throw new Error('Invalid email or password');
   }
 
-  static async login(input: LoginInput): Promise<AuthResponse> {
-    // Find user
-    const user = await db.orm.public.User.where({ email: input.email }).first();
+  // Verify password
+  const validPassword = await bcrypt.compare(input.password, user.password);
 
-    if (!user) {
-      throw new Error('Invalid email or password');
-    }
-
-    // Verify password
-    const validPassword = await bcrypt.compare(input.password, user.password);
-
-    if (!validPassword) {
-      throw new Error('Invalid email or password');
-    }
-
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    return {
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    };
+  if (!validPassword) {
+    throw new Error('Invalid email or password');
   }
 
-  static verifyToken(token: string): { userId: number; email: string } {
-    try {
-      return jwt.verify(token, JWT_SECRET) as { userId: number; email: string };
-    } catch (error) {
-      throw new Error('Invalid or expired token');
-    }
+  // Generate JWT
+  const token = jwt.sign(
+    { userId: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    },
+  };
+}
+
+export function verifyToken(token: string): { userId: number; email: string } {
+  try {
+    return jwt.verify(token, JWT_SECRET) as { userId: number; email: string };
+  } catch (error) {
+    throw new Error('Invalid or expired token');
   }
 }
 ```
 
-7. Create REST endpoints for auth in `src/routes/auth.router.ts`:
+7. Create REST endpoints for auth in `src/api/auth/authController.ts`:
 ```ts
 import { Router, type Request, type Response } from 'express';
-import { AuthService } from '../services/auth.service.ts';
-import type { RegisterInput, LoginInput } from '../types/auth.ts';
-import { UsersService } from '../services/users.service.ts';
+import { register, login } from './authService';
+import type { RegisterInput, LoginInput } from '@/types/auth';
 
 const authRouter = Router();
 
 authRouter.post('/register', async (req: Request, res: Response) => {
   try {
     const input: RegisterInput = req.body;
-    const result = await AuthService.register(input);
+    const result = await register(input);
     res.status(201).json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Registration failed';
@@ -222,7 +224,7 @@ authRouter.post('/register', async (req: Request, res: Response) => {
 authRouter.post('/login', async (req: Request, res: Response) => {
   try {
     const input: LoginInput = req.body;
-    const result = await AuthService.login(input);
+    const result = await login(input);
     res.status(200).json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Login failed';
@@ -233,8 +235,10 @@ authRouter.post('/login', async (req: Request, res: Response) => {
 export default authRouter;
 ```
 
-8. Create `src/app.ts`:
+8. Register the auth router in `src/app.ts`:
 ```ts
+import authRouter from './api/auth/authController';
+// ...
 app.use('/auth', authRouter);
 ```
 
@@ -434,7 +438,7 @@ const augmentSchema = (builder: typeof SchemaBuilder) => {
           date: t.arg({ type: 'String', required: true }),
           payerId: t.arg.int({ required: true }),
           participantIds: t.arg({ type: ['Int'], required: true }),
-        },,
+        },
         resolve: async (_parent, args, ctx, _info) => {
           // Require authentication
           const user = requireAuth(ctx);
@@ -1008,7 +1012,7 @@ const onSubmit = async (data: ExpenseFormData) => {
 
 ---
 
-### 8. Configure Authenticated Apollo Client
+### 7. Configure Authenticated Apollo Client
 
 **Goal:** Automatically include JWT token in all GraphQL requests.
 
@@ -1074,7 +1078,7 @@ export default client;
 
 ---
 
-### 9. Create Protected Routes
+### 8. Create Protected Routes
 
 **Goal:** Redirect unauthenticated users to login page when accessing protected routes.
 

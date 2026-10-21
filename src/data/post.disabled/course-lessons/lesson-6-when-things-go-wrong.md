@@ -966,8 +966,6 @@ const createExpense = async (data: NewExpenseInput) => {
 
 **Goal:** Automatically include the JWT token in all GraphQL requests, and redirect to the login page when a request is rejected as unauthenticated.
 
-Since Lesson 5 uses a plain `graphqlRequest()` fetch function rather than Apollo Client, adding auth is a two-line change: read the token from `localStorage` and add an `Authorization` header.
-
 **Steps:**
 
 1. Update `src/lib/graphql.ts`:

@@ -511,15 +511,19 @@ FRONTEND_URL=http://localhost:5173
 
 **Steps:**
 
-1. Create `src/errors/AppErrors.ts`:
+1. Create `src/errors/app.error.ts`:
 ```ts
 export class AppError extends Error {
+  public statusCode = 500;
+  public code = 'INTERNAL_SERVER_ERROR';
   constructor(
     message: string,
-    public statusCode: number = 500,
-    public code: string = 'INTERNAL_SERVER_ERROR'
+     statusCode: number = 500,
+     code: string = 'INTERNAL_SERVER_ERROR'
   ) {
     super(message);
+    this.statusCode = statusCode;
+    this.code = code;
     this.name = this.constructor.name;
     Error.captureStackTrace(this, this.constructor);
   }
@@ -588,43 +592,29 @@ static async login(input: LoginInput): Promise<AuthResponse> {
 
 3. Create error formatter for GraphQL in `src/graphql/errorFormatter.ts`:
 
-> **Note:** graphql-yoga's `formatError` receives `(formattedError, error)` — two arguments, not one. `formattedError` is the already-sanitised error object (with `maskedErrors` applied); `error` is the original thrown value. This differs from Apollo Server's single-argument version.
+> **Note:** graphql-yoga's `formatError` receives two arguments `(formattedError, error)`. `formattedError` is the already-sanitised error object (with `maskedErrors` applied); `error` is the original thrown value.
 
 ```ts
 import type { GraphQLFormattedError } from 'graphql';
-import { AppError } from '../errors/AppErrors.ts';
+import { AppError } from '../errors/app.error.ts';
 
-export function formatError(
-  formattedError: GraphQLFormattedError,
-  error: unknown
-): GraphQLFormattedError {
-  // Log for debugging (use a proper logging library in production)
-  console.error('GraphQL Error:', error);
-
-  // Unwrap the original error from Yoga's wrapper
+export function maskError(error: unknown, message: string, isDev?: boolean): Error {
   const originalError = (error as any)?.originalError ?? error;
 
-  // Handle our custom AppErrors
   if (originalError instanceof AppError) {
-    return {
-      ...formattedError,
-      message: originalError.message,
+    return new GraphQLError(originalError.message, {
       extensions: {
         code: originalError.code,
         statusCode: originalError.statusCode,
       },
-    };
+    });
   }
 
-  // Don't expose internal errors in production
-  if (process.env.NODE_ENV === 'production') {
-    return {
-      message: 'An unexpected error occurred',
-      extensions: { code: 'INTERNAL_SERVER_ERROR' },
-    };
+  if (isDev) {
+    return error as Error;
   }
 
-  return formattedError;
+  return new Error(message);
 }
 ```
 
@@ -637,8 +627,10 @@ const yoga = createYoga({
   schema,
   graphqlEndpoint: '/graphql',
   cors: false,
-  maskedErrors: process.env.NODE_ENV === 'production',
-  formatError, // Add this
+  maskedErrors: {
+    maskError,
+    isDev: process.env.NODE_ENV !== 'production',
+  },
   context: async ({ request }) => {
     // ... same context extraction as before
   },
@@ -647,7 +639,7 @@ const yoga = createYoga({
 
 5. Update `src/graphql/authHelpers.ts` to use custom errors:
 ```ts
-import { AuthenticationError, AuthorizationError } from '../errors/AppErrors.ts';
+import { AuthenticationError, AuthorizationError } from '../errors/app.error.ts';
 import type { GraphQLContext } from '../types/GraphQLContext.ts';
 
 export function requireAuth(context: GraphQLContext): { userId: number; email: string } {
@@ -683,7 +675,7 @@ npm install jwt-decode
 
 2. Create `src/contexts/AuthContext.tsx`:
 ```tsx
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 interface User {
@@ -796,8 +788,7 @@ createRoot(document.getElementById('root')!).render(
 ```tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -805,13 +796,15 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -824,11 +817,9 @@ export default function Login() {
 
       const data = await response.json();
       login(data.token);
-      toast.success('Logged in successfully!');
       navigate('/');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed';
-      toast.error(message);
     } finally {
       setIsLoading(false);
     }

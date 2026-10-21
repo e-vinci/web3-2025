@@ -1093,6 +1093,7 @@ In this lesson, you've transformed your expense-sharing application into a produ
 
 Your application now follows security best practices and provides a professional user experience with proper error handling and validation.
 
+<!-- 
 # The PR
 
-Adding some statistics - check it [here](https://github.com/e-vinci/web3-2025/pull/14)
+Adding some statistics - check it [here](https://github.com/e-vinci/web3-2025/pull/14) -->

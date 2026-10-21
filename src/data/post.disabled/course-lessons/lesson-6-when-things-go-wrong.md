@@ -452,7 +452,7 @@ export const schema = createSchema<GraphQLContext>({
 
 **Steps:**
 
-1. Helmet should already be installed from previous lessons. If not:
+1. Install Helmet:
 ```bash
 npm install helmet
 ```

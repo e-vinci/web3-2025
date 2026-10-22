@@ -1,0 +1,76 @@
+@server = http://localhost:3000
+@auth = {{server}}/api/auth
+
+### Register a new user
+# @name register
+POST {{auth}}/register
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "password": "secret123"
+}
+
+### Register the same email twice -> 409
+POST {{auth}}/register
+Content-Type: application/json
+
+{
+  "name": "Alice again",
+  "email": "alice@example.com",
+  "password": "secret123"
+}
+
+### Register with no password -> 400
+POST {{auth}}/register
+Content-Type: application/json
+
+{
+  "name": "Bob",
+  "email": "bob@example.com"
+}
+
+### Log in as a seeded demo user
+# @name login
+POST {{auth}}/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Wrong password -> 401
+POST {{auth}}/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "not-the-password"
+}
+
+### Unknown email -> 401 (same message as a wrong password, on purpose)
+POST {{auth}}/login
+Content-Type: application/json
+
+{
+  "email": "nobody@example.com",
+  "password": "password123"
+}
+
+### Copy the token out of the login response above and use it here.
+@token = {{login.response.body.token}}
+
+### A GraphQL query WITHOUT a token
+POST {{server}}/graphql
+Content-Type: application/json
+
+{ "query": "{ expenses { id description } }" }
+
+### The same query WITH a token
+POST {{server}}/graphql
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{ "query": "{ expenses { id description } }" }

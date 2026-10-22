@@ -109,6 +109,55 @@ function add(a: number, b: number): number {
 
 ---
 
+## We run TypeScript. We never build it.
+
+```json
+"scripts": { "start": "node app.ts" }
+```
+
+No build step. No `dist/`. Node reads your `.ts` file, **deletes the types**, and runs the JavaScript that is left.
+
+- `let age: number = 30` → `let age         = 30`
+- Types become spaces, so every line stays on its line — a stack trace points at your real source
+- `tsc` is still there, but only to **check** (`npm run typecheck`). It never makes the file you run.
+
+<!--
+Speaker notes:
+• Running .ts directly is recent in Node, and it is why there is no build step in this course.
+  Students who have seen older tutorials will go looking for one.
+• "Deletes the types" is literal — point at the before/after line. Replaced by whitespace, which
+  is why line numbers in errors are always right.
+• Related consequence, covered in the lesson text: relative imports need the real `.ts` extension.
+  Leave it off and you get ERR_MODULE_NOT_FOUND at runtime, with no build step to catch it first.
+-->
+
+---
+
+## What that costs us
+
+Deleting is not rewriting. A few TypeScript features need Node to **write new code**, so they do not run:
+
+- `enum`
+- `namespace`
+- parameter properties — `constructor(private x: number)`
+- decorators — `@Injectable()`
+
+Everything you will use this year works: types, interfaces, generics, `as`, unions.
+
+> **&#9888; `npm run typecheck` will not warn you** — that is all valid TypeScript. It fails only when you *run* the file.
+
+<!--
+Speaker notes:
+• Do not drill the list. Land the RULE: erasing works, generating does not. With the rule they can
+  predict the list.
+• The warning is the practical half — tsc compiles all four happily, because tsc has a build step.
+  Node does not.
+• If anyone asks about enums: a union of string literals does the same job and is more idiomatic
+  TypeScript anyway — `type Level = 'info' | 'warn' | 'error'`.
+-->
+
+---
+
 ## Express: Main Concepts
 
 - **Minimalist HTTP server for Node.js**

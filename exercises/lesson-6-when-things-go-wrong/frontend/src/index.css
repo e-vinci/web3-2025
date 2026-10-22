@@ -1,0 +1,11 @@
+/* Tailwind v4: one import, no config file, no content globbing.
+   Everything else in this project is styled with utility classes in the JSX. */
+@import 'tailwindcss';
+
+/* The only global rule we keep: a readable page background and text colour,
+   so that every screen starts from the same place. */
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+}

@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: expenso
+      POSTGRES_PASSWORD: expenso
+      POSTGRES_DB: expenso
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data

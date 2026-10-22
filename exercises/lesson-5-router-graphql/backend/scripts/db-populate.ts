@@ -14,16 +14,25 @@
 import { db } from "../src/prisma/db.ts";
 
 const categories = [
-  { id: 1, name: "Groceries", colour: "#16a34a" },
-  { id: 2, name: "House Expenses", colour: "#2563eb" },
-  { id: 3, name: "Entertainment", colour: "#db2777" },
+  { name: "Groceries", colour: "#16a34a" },
+  { name: "House Expenses", colour: "#2563eb" },
+  { name: "Entertainment", colour: "#db2777" },
 ];
 
+// No explicit `id` anywhere in this file. PostgreSQL allocates ids from a
+// sequence, and that sequence only moves forward when PostgreSQL does the
+// allocating. Seeding with hand-written ids leaves the sequence parked at 1, so
+// the first row the *application* inserts collides with a seeded row — which
+// surfaces much later as "duplicate key value violates unique constraint" from
+// code that looks completely innocent.
+//
+// The numbers used by `expenses` and `transfers` below are therefore slot
+// numbers into these arrays, translated to real ids after the inserts.
 const users = [
-  { id: 1, name: "John Doe", email: "john.doe@example.com", bankAccount: "BE12 3456 7890 1234" },
-  { id: 2, name: "Jane Doe", email: "jane.doe@example.com", bankAccount: "BE13 3456 7890 1234" },
-  { id: 3, name: "Abdallah Doe", email: "abdallah.doe@example.com", bankAccount: "BE14 3456 7890 1234" },
-  { id: 4, name: "Soufiane Doe", email: "soufiane.doe@example.com", bankAccount: null },
+  { name: "John Doe", email: "john.doe@example.com", bankAccount: "BE12 3456 7890 1234" },
+  { name: "Jane Doe", email: "jane.doe@example.com", bankAccount: "BE13 3456 7890 1234" },
+  { name: "Abdallah Doe", email: "abdallah.doe@example.com", bankAccount: "BE14 3456 7890 1234" },
+  { name: "Soufiane Doe", email: "soufiane.doe@example.com", bankAccount: null },
 ];
 
 const expenses = [
@@ -88,20 +97,36 @@ async function populate() {
 
   console.log("Creating categories...");
   await db.orm.public.Category.createAll(categories);
+  const categoryRows = await db.orm.public.Category.all();
+  // slot number (1-based, as written above) -> the id PostgreSQL actually gave us
+  const categoryId = (slot: number) =>
+    categoryRows.find((row) => row.name === categories[slot - 1]!.name)!.id;
 
   console.log("Creating users...");
   await db.orm.public.User.createAll(users);
+  const userRows = await db.orm.public.User.all();
+  const userId = (slot: number) =>
+    userRows.find((row) => row.email === users[slot - 1]!.email)!.id;
 
   console.log("Creating expenses...");
-  for (const { participants, ...expense } of expenses) {
+  for (const { participants, payerId, categoryId: categorySlot, ...expense } of expenses) {
     await db.orm.public.Expense.create({
       ...expense,
-      participants: (mutator) => mutator.connect(participants.map((id) => ({ id }))),
+      payerId: userId(payerId),
+      categoryId: categorySlot === undefined ? null : categoryId(categorySlot),
+      participants: (mutator) =>
+        mutator.connect(participants.map((slot) => ({ id: userId(slot) }))),
     });
   }
 
   console.log("Creating transfers...");
-  await db.orm.public.Transfer.createAll(transfers);
+  await db.orm.public.Transfer.createAll(
+    transfers.map((transfer) => ({
+      ...transfer,
+      sourceId: userId(transfer.sourceId),
+      targetId: userId(transfer.targetId),
+    }))
+  );
 
   console.log("Done.");
 }

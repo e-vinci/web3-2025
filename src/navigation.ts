@@ -50,10 +50,10 @@ export const headerData = {
           text: 'Lesson 5: Routing andGraphQL',
           href: getPermalink('course-lessons/lesson-5-router-graphql', 'post'),
         },
-        //     {
-        //       text: 'Lesson 6: When things go wrong',
-        //       href: getPermalink('course-lessons/lesson-6-when-things-go-wrong', 'post'),
-        //     },
+        {
+          text: 'Lesson 6: When things go wrong',
+          href: getPermalink('course-lessons/lesson-6-when-things-go-wrong', 'post'),
+        },
         //     {
         //       text: 'Lesson 7: Async',
         //       href: getPermalink('course-lessons/lesson-7-async-pub-sub', 'post'),

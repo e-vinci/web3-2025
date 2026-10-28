@@ -44,7 +44,7 @@ export const headerData = {
         },
         {
           text: 'Lesson 4: Search and more migrations',
-          href: getPermalink('course-lessons/lesson-4-search-migration2', 'post'),
+          href: getPermalink('course-lessons/lesson-4-search-and-categories', 'post'),
         },
         {
           text: 'Lesson 5: Routing andGraphQL',

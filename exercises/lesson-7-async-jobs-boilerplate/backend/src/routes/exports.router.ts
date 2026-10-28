@@ -46,26 +46,22 @@ router.post('/', async (_req, res) => {
     //
     // Three things, and then stop:
     //
-    //  1. `const record = await ExportsService.create(userId)` — the receipt
-    //     row, so the user has something to come back to.
-    //  2. Add the job:
-    //       await exportsQueue.add(
-    //         'export-expenses',
-    //         { exportId: record.id, requesterId: userId },
-    //         { jobId: jobIdForExport(record.id) }
-    //       );
-    //     Pass only those two numbers. The worker reads the expenses itself.
-    //     The `jobId` matters: there is one socket server for everybody, so
-    //     when an event arrives the code needs to know which export it is
-    //     about. A predictable id is how.
-    //  3. Reply with the record and the right status code. It is NOT 200.
-    //     200 means "here is what you asked for"; nothing has been exported
-    //     yet. Look up the one that means "I have taken this on, it is not
-    //     finished".
+    //  1. Write the receipt row, so the user has something to come back to.
+    //     `ExportsService` has a method for exactly this.
+    //  2. Put a job on `exportsQueue`. Give it the two numbers the worker
+    //     needs and nothing else — the worker reads the expenses itself,
+    //     because a copy taken now would be stale by the time it runs.
     //
-    // Do NOT await the job here, and do not build the CSV here. If this
-    // handler takes more than a few milliseconds, you have missed the point
-    // of the lesson.
+    //     Also give the job a predictable id, using `jobIdForExport` below.
+    //     There is one socket server for everybody, so when an event arrives
+    //     the code has to work out which export it is about. That id is how.
+    //  3. Reply with the record, and the right status code. It is NOT 200 —
+    //     200 means "here is what you asked for", and nothing has been
+    //     exported yet. Find the one that means "I have taken this on, it is
+    //     not finished".
+    //
+    // Do NOT await the job, and do not build the CSV here. If this handler
+    // takes more than a few milliseconds, you have missed the point.
     throw new Error('TODO 4: not implemented');
   } catch (error) {
     console.error('Error requesting an export:', error);

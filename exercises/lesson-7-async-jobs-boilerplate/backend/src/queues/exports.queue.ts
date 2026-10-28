@@ -33,23 +33,23 @@ export const exportsQueue = new Queue<ExportJobData>(EXPORTS_QUEUE, {
   defaultJobOptions: {
     // TODO 1 — the options that make this a queue rather than a to-do list.
     //
-    // Add four, all documented at https://docs.bullmq.io/guide/jobs :
+    // Four of them. They are all in the BullMQ "Jobs" guide:
+    // https://docs.bullmq.io/guide/jobs
     //
-    //   attempts         how many times to run a job that throws, before
-    //                    giving up. Use 3.
-    //   backoff          how long to wait between those attempts. Use an
-    //                    exponential backoff starting at 1000 ms, so the
-    //                    gaps are roughly 1s, 2s, 4s rather than three
-    //                    retries in the same half-second.
-    //   removeOnComplete keep finished jobs for 3600 seconds, then drop them.
-    //   removeOnFail     keep the last 100 failed jobs, and drop older ones.
+    //   1. Run a job that throws again, up to three times in total. This is
+    //      the reason to use a queue instead of just calling the function:
+    //      a network blip becomes a short delay, not a lost request.
+    //   2. Wait longer after each failed attempt, starting around a second —
+    //      not three retries inside the same half-second. Hammering a service
+    //      that is already down is how you keep it down.
+    //   3. Drop finished jobs after an hour.
+    //   4. Keep only the last hundred failed ones.
     //
-    // Why the last two are not housekeeping: Redis is memory. Without them
-    // every job you ever ran stays in it forever, and the free Render
-    // instance you deploy to at the end of this lesson is 25 MB.
+    // The last two are not housekeeping. Redis is memory: without them every
+    // job you ever ran stays in it forever, and the free instance you deploy
+    // to at the end of this lesson is 25 MB.
     //
-    // Do NOT set a `delay` here — jobs should start as soon as a worker is
-    // free.
+    // Do NOT set a `delay` — jobs should start as soon as a worker is free.
   },
 });
 

@@ -71,21 +71,21 @@ export function attachExportSocket(server: Server): WebSocketServer {
   function sendToUser(userId: number, payload: unknown): void {
     // TODO 5 — send `payload` to this user's sockets, and to nobody else's.
     //
-    // `viewers` is a `Map<WebSocket, number>`: every open socket, and the id
-    // of the user behind it. Walk it, and for each entry send the payload
-    // only when BOTH are true:
+    // `viewers` is declared above: it remembers every open socket and the id
+    // of the user behind it. Use it.
     //
-    //   - the socket belongs to `userId`
-    //   - the socket is still open (`client.readyState === client.OPEN`) —
-    //     sending to a closing socket throws
+    // Two things to be careful about:
     //
-    // Send `JSON.stringify(payload)`; a WebSocket frame is text, not objects.
+    //   - A socket that is closing is still in the map. Sending to one
+    //     throws, so check its state before you do (`ws` exposes
+    //     `readyState`, and `client.OPEN` is the value you want).
+    //   - A WebSocket frame carries text, not objects.
     //
     // This is the filtering an HTTP route got for free. There, each request
-    // had its own handler and its own `userId` in scope. Here one server
-    // holds every socket, so "who should see this?" is a question you have to
-    // answer by hand — and forgetting to is how one student ends up watching
-    // another student's export.
+    // had its own handler with its own `userId` in scope. Here one server
+    // holds every socket at once, so "who should see this?" is a question
+    // you answer by hand — and forgetting to is how one student ends up
+    // watching another student's export.
   }
 
   // The job id carries the export id (`export-12`), and the export id is all

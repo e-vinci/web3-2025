@@ -89,6 +89,11 @@ grep -rn "TODO [0-9]" backend/src frontend/src
 You are not starting from your own Lesson 6 code this week. Copying 500 lines
 of Tailwind and type modules teaches nothing; the six gaps are the lesson.
 
+
+> **&#10067; The TODO comments tell you what and why, not how.** That is
+> deliberate — looking the call up is most of the learning. Each one has a
+> worked answer below it, collapsed. Try first, then open it.
+
 ### Set it up now, before exercise 0
 
 From `backend/`:
@@ -181,6 +186,11 @@ Delete the `/slow` route before moving on. It has done its job.
 
 ### 1. Two databases (~15 min)
 
+> **&#9888; If `docker compose up -d` is still running, leave it.** The first
+> time on a new machine it downloads `postgres:16` and `valkey:8-alpine`, which
+> on shared wifi can take several minutes. Start it and read on — it will be
+> finished by the time you need it.
+
 Open `docker-compose.yml` and look at what you started a moment ago. There are **two**
 services now: `postgres`, which you have had since lesson 2, and `valkey`.
 
@@ -255,6 +265,20 @@ process.
 > Redis is memory. Without them every job you ever ran stays in it forever, and
 > the free instance you deploy to at the end of this lesson is 25 MB.
 
+<details>
+<summary>TODO 1 — the answer, once you have tried it</summary>
+
+```ts
+defaultJobOptions: {
+  attempts: 3,
+  backoff: { type: 'exponential', delay: 1000 },
+  removeOnComplete: { age: 3600 },
+  removeOnFail: { count: 100 },
+},
+```
+
+</details>
+
 Check your options actually landed before moving on. This imports the file and
 reads back what you configured — it fails loudly if `attempts` is still unset:
 
@@ -271,7 +295,9 @@ node --input-type=module -e "
 
 ### 3. The worker (~20 min)
 
-This is the heart of the lesson. Open `backend/src/workers/exports.worker.ts`.
+Open `backend/src/workers/exports.worker.ts`. TODO 2 is the longest thing you
+will write today; TODO 3 just below it is the shortest, and the one worth
+thinking hardest about.
 
 #### TODO 2 — the work itself
 
@@ -295,6 +321,34 @@ listener in every process hears it. That is what will move the progress bar.
 > work. It is the one fake thing in this exercise. Everything around it is
 > real.
 
+<details>
+<summary>TODO 2 — the answer, once you have tried it</summary>
+
+```ts
+await ExportsService.setStatus(exportId, 'running');
+
+await sleep(800);
+await job.updateProgress({ step: 'reading expenses', percent: 10 });
+
+const expenses = await ExpensesService.getExpensesOfUser(requesterId);
+await sleep(1500);
+
+await job.updateProgress({ step: 'building the file', percent: 60 });
+const csv = ExportsService.buildCsv(expenses);
+await sleep(1500);
+
+await job.updateProgress({ step: 'storing the file', percent: 90 });
+
+await ExportsService.setStatus(exportId, 'completed', {
+  rowCount: expenses.length,
+  csv,
+});
+
+return { rowCount: expenses.length };
+```
+
+</details>
+
 #### TODO 3 — retry, or real failure?
 
 A few lines down, `concurrency: 2`. That number is a promise to the rest of
@@ -307,6 +361,22 @@ crash.
 > retry. Without the guard, the first throw writes `failed` to the row — and
 > then the second attempt succeeds, and your user has been told their export
 > died when it did not.
+
+<details>
+<summary>TODO 3 — the answer, once you have tried it</summary>
+
+```ts
+exportsWorker.on('failed', async (job, error) => {
+  console.error(`Export job ${job?.id} failed (attempt ${job?.attemptsMade}):`, error.message);
+  if (!job || !isFinalAttempt(job)) return;
+
+  await ExportsService.setStatus(job.data.exportId, 'failed', {
+    failedReason: error.message,
+  });
+});
+```
+
+</details>
 
 #### Run it as its own process
 
@@ -328,6 +398,23 @@ You cannot try it yet; the route comes next.
 ### 4. Answer before the work is done (~15 min)
 
 Open `backend/src/routes/exports.router.ts` and do **TODO 4**.
+
+<details>
+<summary>TODO 4 — the answer, once you have tried it</summary>
+
+```ts
+const record = await ExportsService.create(userId);
+
+await exportsQueue.add(
+  'export-expenses',
+  { exportId: record.id, requesterId: userId },
+  { jobId: jobIdForExport(record.id) }
+);
+
+res.status(202).json(record);
+```
+
+</details>
 
 Then get a token and try it. Every demo user's password is `topsecret`:
 
@@ -437,6 +524,20 @@ for you. Read it, then do **TODO 5**.
 > question you answer by hand — and forgetting to is how one student watches
 > another student's export.
 
+<details>
+<summary>TODO 5 — the answer, once you have tried it</summary>
+
+```ts
+const text = JSON.stringify(payload);
+for (const [client, viewerId] of viewers) {
+  if (viewerId === userId && client.readyState === client.OPEN) {
+    client.send(text);
+  }
+}
+```
+
+</details>
+
 #### TODO 6 — the browser side
 
 Open `frontend/src/hooks/useExportSocket.ts` and do **TODO 6**. Then start the
@@ -446,6 +547,37 @@ frontend (you installed it during setup) and click the button:
 # from frontend/, in a third terminal
 npm run dev
 ```
+
+<details>
+<summary>TODO 6 — the answer, once you have tried it</summary>
+
+```ts
+if (message.exportId !== exportId) return;
+
+if (message.type === "progress" && message.data) {
+  setProgress(message.data);
+  return;
+}
+
+setProgress(null);
+
+if (message.type === "failed") {
+  setError(message.failedReason ?? "The export failed");
+  setRecord((previous) =>
+    previous ? { ...previous, status: "failed" } : previous
+  );
+} else {
+  // Re-read the row: the event says it finished, the row carries the
+  // row count and the file.
+  void apiRequest<Export>(`/api/exports/${exportId}`).then((fresh) => {
+    if (!cancelled) setRecord(fresh);
+  });
+}
+
+socket.close();
+```
+
+</details>
 
 > **&#10067; Why does the hook do one `GET` before opening the socket?** A
 > socket tells you what happens **next**, not what already happened. If the job

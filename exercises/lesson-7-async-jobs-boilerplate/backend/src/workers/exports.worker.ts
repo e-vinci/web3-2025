@@ -41,32 +41,30 @@ function sleep(ms: number): Promise<void> {
 async function processExportJob(job: Job<ExportJobData>): Promise<{ rowCount: number }> {
   const { exportId, requesterId } = job.data;
 
-  // TODO 2 — the work itself. In order:
+  // TODO 2 — the work itself, in order. Every method you need already
+  // exists on `ExportsService` or `ExpensesService`; this is about the
+  // sequence, not about inventing anything.
   //
-  //  1. Mark the export `running`:
-  //       await ExportsService.setStatus(exportId, 'running');
-  //  2. `await sleep(800)`, then report progress:
-  //       await job.updateProgress({ step: 'reading expenses', percent: 10 });
-  //     The sleep is there so a browser that connects a few milliseconds
-  //     after clicking the button still sees this first update.
-  //  3. Read the expenses:
-  //       await ExpensesService.getExpensesOfUser(requesterId)
-  //     Read them HERE, from the database. Do not expect them in `job.data`:
-  //     a job can sit in the queue for a while, and a copy taken when the
-  //     button was clicked would be stale by now.
-  //  4. `await sleep(1500)`, report `{ step: 'building the file', percent: 60 }`,
-  //     then build the file with `ExportsService.buildCsv(expenses)`.
-  //  5. `await sleep(1500)`, report `{ step: 'storing the file', percent: 90 }`.
-  //  6. Save the result in ONE call, so there is never a row that says
-  //     `completed` with no file in it:
-  //       await ExportsService.setStatus(exportId, 'completed', {
-  //         rowCount: expenses.length,
-  //         csv,
-  //       });
-  //  7. `return { rowCount: expenses.length };`
+  //  1. Mark the export `running`.
+  //  2. `await sleep(800)`, then report your first progress — something like
+  //     `{ step: 'reading expenses', percent: 10 }`. The sleep is there so a
+  //     browser that connects a few milliseconds after the button was
+  //     clicked still sees this first update.
+  //  3. Read the expenses of `requesterId` from the database.
   //
-  // Do NOT catch errors in here. If something throws, BullMQ needs to see it
-  // — that is what triggers the retry you configured in TODO 1.
+  //     Read them HERE, not from `job.data`. A job can sit in the queue for
+  //     a while, and a copy taken when the button was clicked would be stale
+  //     by the time this runs.
+  //  4. `await sleep(1500)`, report progress again, and build the CSV.
+  //  5. `await sleep(1500)`, report progress once more.
+  //  6. Save the result. Write the row count and the file together with the
+  //     `completed` status, in ONE call — otherwise there is a moment where
+  //     the row says `completed` and the file is not there yet.
+  //  7. Return the row count. Whatever you return here becomes the job's
+  //     result, which is what the worker logs on success.
+  //
+  // Do NOT catch errors in here. If something throws, BullMQ has to see it —
+  // that is what triggers the retries you configured in TODO 1.
   throw new Error('TODO 2: not implemented');
 }
 

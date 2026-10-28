@@ -6,26 +6,32 @@ import { AuthService } from '../services/auth.service.ts';
 import { exportsQueueEvents } from '../queues/exports.queue.ts';
 
 /**
- * The same notifications as the SSE route, over a WebSocket instead.
+ * Pushes export progress to the browser over a WebSocket.
  *
- * This is the finished state of the optional "swap SSE for WebSockets"
- * exercise. Both transports run side by side here so you can compare them;
- * a real application would pick one.
+ * Notice where the news comes from: `exportsQueueEvents`, which is reading a
+ * Redis stream. The worker that reported the progress is a different process
+ * and never spoke to this one. It wrote to Redis; Redis told this process;
+ * this process tells the browser.
  *
- * Read it next to `routes/exports.router.ts` and notice how little differs.
- * The queue, the worker and `QueueEvents` are untouched — only the last hop
- * to the browser changed. That is the payoff of putting Redis between the
- * producer and the consumer: the transport is replaceable.
+ * That indirection is the whole point. The queue and the worker do not know
+ * this file exists, so the last hop to the browser could be swapped for
+ * something else entirely without touching either of them.
  */
 export function attachExportSocket(server: Server): WebSocketServer {
   // `noServer: true` means "do not open a port of your own". Express keeps the
-  // HTTP server; we borrow its upgrade requests. One port, one origin, and the
-  // same CORS story as the rest of the API.
+  // HTTP server and we borrow its upgrade requests, so the socket answers on
+  // the same port as the API.
+  //
+  // Note what that does NOT give you: the `cors()` middleware in app.ts never
+  // runs here. CORS is enforced by the browser on HTTP requests, and a
+  // WebSocket upgrade is not one — `ws` will happily accept a connection from
+  // any origin unless you check `request.headers.origin` yourself. The token
+  // below is what actually protects this endpoint.
   const wss = new WebSocketServer({ noServer: true });
 
-  // Who is connected, and who are they? A WebSocket has no per-request handler
-  // to close over, so the identity has to be remembered somewhere — unlike the
-  // SSE route, where `userId` is just a local variable.
+  // Who is connected, and who are they? An HTTP route gets this for free: each
+  // request has its own handler, with `userId` sitting in scope. A socket
+  // outlives any one request, so the identity has to be remembered somewhere.
   const viewers = new Map<WebSocket, number>();
 
   server.on('upgrade', (request, socket, head) => {
@@ -57,10 +63,10 @@ export function attachExportSocket(server: Server): WebSocketServer {
   /**
    * Sends one message to one user's open sockets.
    *
-   * The SSE version never needed this: each request was its own stream, so
-   * filtering happened naturally. Here there is one server and many sockets,
-   * so "who should see this?" becomes something you have to answer by hand —
-   * and forgetting to is how one user ends up watching another user's work.
+   * An HTTP route never needed this: each request was its own response, so
+   * filtering happened naturally. Here one server holds every socket, so
+   * "who should see this?" becomes something you answer by hand — and
+   * forgetting to is how one user ends up watching another user's work.
    */
   function sendToUser(userId: number, payload: unknown): void {
     // TODO 5 — send `payload` to this user's sockets, and to nobody else's.

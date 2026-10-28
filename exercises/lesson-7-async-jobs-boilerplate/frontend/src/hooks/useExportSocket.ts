@@ -76,16 +76,23 @@ export function useExportSocket(exportId: number | null): ExportStream {
 
       // TODO 6 — act on `message`.
       //
-      //  1. Ignore it unless `message.exportId === exportId`. One socket
-      //     carries every export this user owns, so most messages are not
-      //     about the one this hook is watching. This is the client-side
-      //     half of TODO 5, and without it two exports running at once
-      //     overwrite each other's progress bar.
+      //  1. FIRST, and before anything else: ignore the message unless
+      //     `message.exportId === exportId`. One socket carries every export
+      //     this user owns, so most messages are not about the one this hook
+      //     is watching. This is the client-side half of TODO 5.
+      //
+      //     The order matters. Put this check after the type switch and a
+      //     *sibling* export finishing will close this hook's socket, and
+      //     this export's progress bar freezes with no error anywhere.
       //  2. 'progress'  -> `setProgress(message.data)`, and return. The job
       //     is still going; nothing else changes.
       //  3. 'failed'    -> `setProgress(null)`, `setError(...)` from
-      //     `message.failedReason` with a generic fallback, and set the
-      //     record's status to 'failed'.
+      //     `message.failedReason` with a generic fallback, and mark the
+      //     record failed. `record` holds a whole `Export`, so spread the
+      //     previous one and override the status rather than replacing it:
+      //       setRecord((previous) =>
+      //         previous ? { ...previous, status: "failed" } : previous
+      //       );
       //  4. 'completed' -> `setProgress(null)`, then re-read the row:
       //       void apiRequest<Export>(`/api/exports/${exportId}`)
       //         .then((fresh) => { if (!cancelled) setRecord(fresh); });

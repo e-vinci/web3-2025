@@ -88,9 +88,9 @@ router.get('/', async (_req, res) => {
 /**
  * One export's current state.
  *
- * The event stream below is how a client learns about changes, but a client
- * that has just loaded the page needs to know where things stand *now* —
- * events only tell you what happened while you were listening.
+ * The WebSocket is how a client learns about changes, but a client that has
+ * just loaded the page needs to know where things stand *now* — a socket only
+ * tells you what happens while you are listening.
  */
 router.get('/:id', async (req, res) => {
   const { userId } = currentUser(res);
@@ -135,9 +135,9 @@ async function downloadExport(req: Request, res: Response) {
 /**
  * The BullMQ job id for one export row.
  *
- * Written once, used by the route that creates the job and by the stream that
- * filters events for it. If these two ever disagreed, the progress bar would
- * simply never move and nothing would look broken.
+ * The socket server derives the export id back out of this (see
+ * `realtime/exportSocket.ts`). If the two ever disagreed about the format, the
+ * progress bar would simply never move and nothing would look broken.
  */
 function jobIdForExport(exportId: number): string {
   return `export-${exportId}`;

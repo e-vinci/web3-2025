@@ -89,6 +89,34 @@ grep -rn "TODO [0-9]" backend/src frontend/src
 You are not starting from your own Lesson 6 code this week. Copying 500 lines
 of Tailwind and type modules teaches nothing; the six gaps are the lesson.
 
+### Set it up now, before exercise 0
+
+From `backend/`:
+
+```bash
+cp .env.example .env
+docker compose up -d
+npm install
+npm run build                  # Prisma client + migrations
+node scripts/db-populate.ts
+```
+
+And from `frontend/`, in another terminal:
+
+```bash
+npm install
+```
+
+Check the backend starts before going on — the first exercise needs it
+running:
+
+```bash
+# from backend/
+npm run dev
+```
+
+Every demo user's password is `topsecret`.
+
 ## Recommended Reading
 
 Read the first two before the exercises. The rest are for when you are stuck on
@@ -108,10 +136,11 @@ that specific thing.
 
 ## Exercises
 
-### 0. Feel the problem first (~8 min)
+### 0. Feel the problem first (~5 min)
 
-Before building anything, make your own server do the bad thing. In
-`backend/app.ts`, next to the `/ping` route, add this:
+Before building anything, make your own server do the bad thing. Your backend
+is running from the setup above. In `backend/app.ts`, next to the `/ping`
+route, add this:
 
 ```ts
 app.get('/slow', (_req, res) => {
@@ -123,7 +152,7 @@ app.get('/slow', (_req, res) => {
 });
 ```
 
-Restart the backend and open **two** terminals.
+`npm run dev` reloads on save. Now open **two** more terminals.
 
 ```bash
 # terminal 1
@@ -152,17 +181,7 @@ Delete the `/slow` route before moving on. It has done its job.
 
 ### 1. Two databases (~15 min)
 
-Set the boilerplate up. From `backend/`:
-
-```bash
-cp .env.example .env
-docker compose up -d
-npm install
-npm run build                  # Prisma client + migrations
-node scripts/db-populate.ts
-```
-
-Open `docker-compose.yml` and look at what just started. There are **two**
+Open `docker-compose.yml` and look at what you started a moment ago. There are **two**
 services now: `postgres`, which you have had since lesson 2, and `valkey`.
 
 ```bash
@@ -206,7 +225,7 @@ command cannot run anything else, and the worker lives inside blocking reads.
 >
 > Redis is not a faster Postgres. It is a different job.
 
-### 2. What makes it a queue (~12 min)
+### 2. What makes it a queue (~10 min)
 
 Open `backend/src/queues/exports.queue.ts`. Most of it is written. Read it
 first, then do **TODO 1**.
@@ -236,14 +255,21 @@ process.
 > Redis is memory. Without them every job you ever ran stays in it forever, and
 > the free instance you deploy to at the end of this lesson is 25 MB.
 
-Check it loads before moving on:
+Check your options actually landed before moving on. This imports the file and
+reads back what you configured — it fails loudly if `attempts` is still unset:
 
 ```bash
 # from backend/
-node --input-type=module -e "await import('./src/queues/exports.queue.ts'); console.log('queue ok'); process.exit(0)"
+node --input-type=module -e "
+  const { exportsQueue } = await import('./src/queues/exports.queue.ts');
+  const o = exportsQueue.defaultJobOptions ?? {};
+  console.log(o);
+  if (o.attempts !== 3) throw new Error('TODO 1: attempts is not 3');
+  console.log('queue ok'); process.exit(0);
+"
 ```
 
-### 3. The worker (~28 min)
+### 3. The worker (~20 min)
 
 This is the heart of the lesson. Open `backend/src/workers/exports.worker.ts`.
 
@@ -323,6 +349,7 @@ Watch terminal 2. The worker picks the job up, and a few seconds later the row
 is `completed`:
 
 ```bash
+# use the id the POST above returned
 curl -s http://localhost:3000/api/exports/1 -H "Authorization: Bearer $TOKEN"
 curl -s "http://localhost:3000/api/exports/1/download?token=$TOKEN"
 ```
@@ -413,7 +440,12 @@ for you. Read it, then do **TODO 5**.
 #### TODO 6 — the browser side
 
 Open `frontend/src/hooks/useExportSocket.ts` and do **TODO 6**. Then start the
-frontend in a third terminal and click the button.
+frontend (you installed it during setup) and click the button:
+
+```bash
+# from frontend/, in a third terminal
+npm run dev
+```
 
 > **&#10067; Why does the hook do one `GET` before opening the socket?** A
 > socket tells you what happens **next**, not what already happened. If the job
@@ -427,30 +459,51 @@ frontend in a third terminal and click the button.
 
 #### Break it on purpose
 
+A job that always fails is the easy case. The interesting one is a job that
+fails **and then succeeds** — because that is where a missing TODO 3 guard
+does its damage.
+
 Add one line to the top of `processExportJob`:
 
 ```ts
-throw new Error('Simulated flakiness');
+if (job.attemptsMade < 2) throw new Error('Simulated flakiness');
 ```
 
-Restart the worker and ask for an export. In terminal 2 you should see **three**
-attempts, about one and two seconds apart:
+That throws on the first two attempts and succeeds on the third. Restart the
+worker, ask for an export, and **watch the row**, not the browser:
+
+```bash
+# every second, until it settles
+curl -s http://localhost:3000/api/exports/<id> -H "Authorization: Bearer $TOKEN"
+```
+
+With your guard in place, the status goes:
 
 ```
-Export job export-21 failed (attempt 1): Simulated flakiness
-Export job export-21 failed (attempt 2): Simulated flakiness
-Export job export-21 failed (attempt 3): Simulated flakiness
+queued -> running -> completed
 ```
 
-and in the browser, **one** error — carrying the reason, not a generic message.
+Now delete the guard from TODO 3 — just the `isFinalAttempt` check, so the
+listener always writes — and run it again:
 
-> **&#10067; Three log lines, one message.** If you got three messages, your
-> TODO 3 guard is in the wrong place, and your users will be told a job died
-> while it is still being retried.
+```
+queued -> failed -> running -> completed
+```
 
-Delete the `throw` when you are done.
+> **&#9888; Look at that first word.** The export was marked **failed** while
+> BullMQ was quietly about to retry it and succeed. Any user watching that row
+> was told their export died. That is what the guard prevents, and it is why
+> `worker.on('failed')` firing per attempt matters.
 
-### 6. Ship it (~12 min)
+Put the guard back, and delete the `throw` when you are done.
+
+> **&#10067; Why did the browser not show an error either way?** Because the
+> message the browser gets comes from `QueueEvents`, not from the worker's own
+> listener — and that one fires **once**, when the job finally gives up. The
+> two listeners share a name and do different jobs. The row is the only place
+> the bug is visible.
+
+### 6. Ship it (~25 min)
 
 Everything so far runs on your laptop. Your deployed app still has no queue.
 

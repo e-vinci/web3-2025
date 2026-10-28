@@ -262,8 +262,7 @@ POST /api/exports
    Worker  <-- pops the job from Redis
            --> reads expenses from Postgres
            --> builds the CSV
-           --> stores it in Redis with a TTL
-           --> marks the row completed
+           --> saves the CSV on the row, completed
 ```
 
 <!--
@@ -509,30 +508,31 @@ Speaker notes:
 ## One socket server, forty students
 
 ```ts
-function sendToUser(userId, payload) {
-  for (const [client, viewerId] of viewers) {
-    if (viewerId === userId && client.readyState === OPEN) {
-      client.send(JSON.stringify(payload));
-    }
-  }
-}
+// an HTTP route — userId is right there
+router.get('/:id', (req, res) => {
+  const { userId } = currentUser(res);
+  ...
+});
+
+// a socket server — who is this?
+wss.on('connection', (client) => { ... });
 ```
 
-An HTTP route got this **for free** — one handler per
-request, `userId` already in scope.
+A request has one handler and one user.
+A socket server holds **everybody**, at once.
 
-### A socket server holds everybody at once.
+### So who receives this message?
 
 <!--
 Speaker notes:
-• This is TODO 5. It is the conceptual cost of moving to sockets, and the
-  main thing that is genuinely harder than the HTTP version.
-• Ask: "what happens if you forget the viewerId check?" Answer: every
-  student watches every other student's progress bar. Funny in a classroom;
-  a data breach at work.
+• Do NOT answer it. This is TODO 5, and working out that you need a
+  user -> socket map is the exercise.
+• Ask instead: "what happens if you skip the question and send to every
+  client?" Answer: every student watches every other student's progress
+  bar. Funny in a classroom; a data breach at work.
 • The client has the mirror-image problem (TODO 6): one socket carries every
   export this user owns, so the hook filters on exportId too. Two filters,
-  one at each end, for the same reason.
+  one at each end, same reason.
 -->
 ---
 

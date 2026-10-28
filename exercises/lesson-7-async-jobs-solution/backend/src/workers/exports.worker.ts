@@ -79,12 +79,12 @@ async function processExportJob(job: Job<ExportJobData>): Promise<{ rowCount: nu
  * exports or claim a third slice of CPU. A queue without a concurrency limit
  * is just a slower way to fall over.
  *
- * In production this file would be its own process — `node worker.ts` beside
+ * Locally this runs as its own process — `node worker.ts` beside
  * `node app.ts` — so that a long job cannot slow down HTTP requests, and so
- * you can run five workers and one API. We start it inside the API process
- * here because Render's free tier has no separate worker instance type. The
- * code does not change: a worker finds its jobs through Redis, and does not
- * care which process it lives in.
+ * you could run five workers and one API. On Render it is folded into the API
+ * process instead, because the free tier has no separate worker instance type.
+ * The code does not change either way: a worker finds its jobs through Redis,
+ * and does not care which process it lives in.
  */
 export const exportsWorker = new Worker<ExportJobData>(EXPORTS_QUEUE, processExportJob, {
   connection: createRedisConnection(),
@@ -107,6 +107,15 @@ exportsWorker.on('failed', async (job, error) => {
   await ExportsService.setStatus(job.data.exportId, 'failed', {
     failedReason: error.message,
   });
+});
+
+/**
+ * Say something on success, so the terminal running this worker shows its
+ * work. Without it a healthy worker prints nothing at all after startup,
+ * which looks exactly like a broken one.
+ */
+exportsWorker.on('completed', (job, result) => {
+  console.log(`Export job ${job.id} completed:`, result);
 });
 
 /**

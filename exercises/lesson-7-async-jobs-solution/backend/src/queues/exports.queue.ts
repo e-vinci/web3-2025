@@ -65,7 +65,7 @@ export const exportsQueueEvents = new QueueEvents(EXPORTS_QUEUE, {
 /**
  * Has this job run out of attempts?
  *
- * The *worker* needs this and the event stream does not, which is worth
+ * The *worker* needs this and the socket server does not, which is worth
  * understanding because the two look like the same event and are not:
  *
  *   - `worker.on('failed')` fires after **every** attempt. A job with

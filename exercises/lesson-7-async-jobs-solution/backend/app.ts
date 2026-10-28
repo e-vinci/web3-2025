@@ -95,10 +95,9 @@ const server = app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
 });
 
-// The same export notifications as the SSE route, over a WebSocket at
-// /ws/exports. Both transports run here so you can compare them -- the SSE one
-// is what the frontend uses; this is the finished state of the optional
-// exercise. A real application would pick one and delete the other.
+// Export notifications, pushed to the browser over a WebSocket at
+// /ws/exports. It shares this HTTP server rather than opening a port of its
+// own, so the socket and the API have the same origin.
 attachExportSocket(server);
 
 export default app;

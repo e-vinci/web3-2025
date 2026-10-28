@@ -57,9 +57,13 @@ async function processExportJob(job: Job<ExportJobData>): Promise<{ rowCount: nu
   await sleep(1500);
 
   await job.updateProgress({ step: 'storing the file', percent: 90 });
-  await ExportsService.storeCsv(exportId, csv);
 
-  await ExportsService.setStatus(exportId, 'completed', { rowCount: expenses.length });
+  // One write, at the end: the file and the final status land together, so
+  // there is never a row that says `completed` with no file in it.
+  await ExportsService.setStatus(exportId, 'completed', {
+    rowCount: expenses.length,
+    csv,
+  });
 
   // Whatever this returns becomes `returnvalue` on the `completed` event, so
   // a listener learns the outcome without going back to the database.

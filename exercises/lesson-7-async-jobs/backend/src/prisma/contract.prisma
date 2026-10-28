@@ -65,6 +65,13 @@ model Export {
   requesterId Int
   status      String            @default("queued")
   rowCount    Int?
+  // The generated file itself. A text column is the simplest thing that works
+  // and keeps one row as the whole truth about one export.
+  //
+  // It is not what you would do in production: reports grow, and a database is
+  // an expensive place to keep bytes nobody queries. Real systems put the file
+  // in an object store (S3, R2, GCS) and keep only its key here.
+  csv         String?
   failedReason String?
   createdAt   TimestamptzString @default(now())
 

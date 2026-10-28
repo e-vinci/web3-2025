@@ -148,7 +148,7 @@ Speaker notes:
    → **Redis**
 
 3. The browser must be **told**, not made to ask
-   → **Server-Sent Events**
+   → **a WebSocket**
 
 <!--
 Speaker notes:
@@ -180,68 +180,71 @@ Speaker notes:
 | | **PostgreSQL** | **Redis** |
 |---|---|---|
 | Holds | facts | work in progress |
-| Lives | forever | minutes or hours |
-| Losing it is | a disaster | fine |
-| Example | this expense happened | this file, for one hour |
+| Lives | forever | until the work is done |
+| Losing it is | a disaster | survivable |
+| Example | this expense happened | job 12 is waiting |
 
-**Redis is not a faster Postgres. It is a different promise.**
+**Redis is not a faster Postgres. It is a different job.**
 
 <!--
 Speaker notes:
 • Have them read the "Losing it is" row out loud. That row is the model.
-• Concrete check: "Our Render free Key Value loses everything on restart. Is
-  our app broken?" Answer: no — the export ROWS are in Postgres. Only pending
-  jobs and cached files go. That is survivable BY DESIGN.
-• Follow up: "when would it not be survivable?" Answer: if the queue were the
-  only record that someone asked.
+• Resist "Redis is the fast one". It leads straight to "so should I put
+  everything in Redis?" and the answer is no, for reasons about DURABILITY,
+  not speed.
+• The next slide turns this into a question they can actually apply.
 -->
 
 ---
 
-## The line that justifies the whole thing
+## So how do you choose?
 
-```ts
-await redis.set(key, csv, 'EX', 3600);
-```
+One question, every time:
 
-**"Keep this for an hour, then forget it."**
+### "If I lost this, would a user notice?"
 
-- No `DELETE FROM`
-- No cron job to write
-- No cron job to deploy
-- No cron job that silently stopped running three months ago
-
-Expiry is a **property of the key**.
+| | Lose it and... | Goes in |
+|---|---|---|
+| The expense | a fact is gone | **Postgres** |
+| The export row | a fact is gone | **Postgres** |
+| The CSV file | a fact is gone | **Postgres** |
+| A pending job | it runs late | **Redis** |
+| A progress event | a bar jumps | **Redis** |
 
 <!--
 Speaker notes:
-• This is the single most persuasive slide in the deck. Do not hurry it.
-• Ask them to cost the same feature in Postgres out loud. Someone will say
-  "a deletedAt column and a scheduled job". Agree, then ask who monitors it.
-• Honesty note, say it: in production the FILE would go to S3, not Redis.
-  Real reports are megabytes, Redis is memory. The TTL idea is identical;
-  only the shelf changes.
+• Walk the table. Make them answer the question for each row BEFORE you
+  reveal the right column.
+• Then: the free Render Key Value instance is NOT persistent -- it loses
+  everything on restart. Ask "is our app broken?" Answer: no. Look at the
+  table. Only the bottom two rows live there, and both are survivable.
+• The real question: "when would it NOT be survivable?" Answer: if the queue
+  were the only record that someone asked. It is not -- that is the export
+  row, in Postgres. Which is exactly why the route writes the row FIRST and
+  queues the job SECOND.
 -->
-
 ---
 
-## Redis does three different jobs today
-
-In one lesson, the same store is:
+## Redis does two jobs today
 
 1. **The queue** — the list of pending work
-2. **The event bus** — "job 12 finished", across processes
-3. **The shelf** — finished CSVs, expiring by themselves
+2. **The event stream** — "job 12 is 60% done", across processes
 
-Three jobs PostgreSQL would do **badly**.
+Both are **coordination between two programs**.
+Neither one is storing a fact.
+
+### The CSV is a fact. It goes in PostgreSQL.
 
 <!--
 Speaker notes:
-• Worth saying explicitly: this is unusual density on purpose. Most apps use
-  Redis for one of these. Seeing three at once is what stops "Redis = cache"
-  from sticking.
+• That last line is what stops "Redis = fast Postgres" from sticking.
+• Ask: "why not keep the file in Redis too?" Answers you want: it has to
+  survive a restart; it is read alongside its row; it is a record of what
+  happened, not a message between two programs.
+• Honest aside, say it: in production that file goes to object storage
+  (S3, R2), not a text column -- a database is an expensive place to keep
+  bytes nobody queries. They will meet this at their first internship.
 -->
-
 ---
 
 ## A queue, in one picture
@@ -479,108 +482,106 @@ server already knows. Asking it repeatedly is the wrong question.
 
 ## So let the server speak
 
-**Server-Sent Events**: an ordinary `GET` that never ends.
+A **WebSocket**: one connection, stays open, messages both ways.
 
 ```
-Content-Type: text/event-stream
-
-event: progress
-data: {"step":"building the file","percent":60}
-
-event: completed
-data: {"id":12,"status":"completed","rowCount":42}
+browser  --- GET /ws/exports?token=...  --->  server
+         <-- 101 Switching Protocols -------
+         <-- {"type":"progress","percent":60}
+         <-- {"type":"progress","percent":90}
+         <-- {"type":"completed","exportId":12}
 ```
 
-That is the entire protocol. Text, with blank lines between messages.
+Built into the browser. `ws` on the server.
 
 <!--
 Speaker notes:
-• Show this live, and MIND THE ORDER -- POST first, then watch the id it
-  returns:
-      curl -s -X POST localhost:3000/api/exports -H "Authorization: Bearer $T"
-      curl -N "localhost:3000/api/exports/<that id>/events?token=$T"
-  You have about 4s before the job finishes. Opening the stream first and
-  POSTing after does NOT work: the POST creates a new id, and the handler's
-  own jobId filter correctly ignores it. Do not demo it that way.
-• Note the TWO newlines ending a message. One is not enough. They will hit it.
+• The upgrade is an ordinary HTTP request that stops being HTTP halfway
+  through. That is why a rejected one is answered by writing a raw
+  "HTTP/1.1 401 Unauthorized" to the socket -- at that instant there is no
+  `res` object yet.
+• Point at ?token= and park it. Two slides from now it gets its own.
+• They do NOT write the handshake; it is in the boilerplate. They write who
+  receives each message.
 -->
-
 ---
 
-## Zero libraries. Both sides.
+## One socket server, forty students
 
 ```ts
-const source = new EventSource(url);
-
-source.addEventListener('progress', (event) => {
-  setProgress(JSON.parse(event.data));
-});
+function sendToUser(userId, payload) {
+  for (const [client, viewerId] of viewers) {
+    if (viewerId === userId && client.readyState === OPEN) {
+      client.send(JSON.stringify(payload));
+    }
+  }
+}
 ```
 
-- Built into every browser
-- **Reconnects by itself** when the connection drops
-- Nothing to install, update, or trust
+An HTTP route got this **for free** — one handler per
+request, `userId` already in scope.
+
+### A socket server holds everybody at once.
 
 <!--
 Speaker notes:
-• Ask: "why addEventListener('progress') and not onmessage?" Because the
-  server wrote `event: progress`. Named events never fire onmessage. The
-  names must match on both sides — a classic silent failure.
-• The free reconnection is the main reason to prefer SSE over WebSockets when
-  the traffic only goes one way.
+• This is TODO 5. It is the conceptual cost of moving to sockets, and the
+  main thing that is genuinely harder than the HTTP version.
+• Ask: "what happens if you forget the viewerId check?" Answer: every
+  student watches every other student's progress bar. Funny in a classroom;
+  a data breach at work.
+• The client has the mirror-image problem (TODO 6): one socket carries every
+  export this user owns, so the hook filters on exportId too. Two filters,
+  one at each end, for the same reason.
 -->
-
 ---
 
-## Three ways to get the server side wrong
+## A socket is not a mailbox
+
+It tells you what happens **next**.
+Not what already happened.
 
 ```ts
-if (jobId !== mine) return;              // 1
-req.on('close', cleanup);                // 2
-res.flushHeaders();                      // 3
+// before opening the socket
+const current = await apiRequest(`/api/exports/${id}`);
 ```
 
-1. **One** event stream serves the whole queue — filter, or every user
-   watches every other user's progress bar
-2. Listeners on a long-lived emitter **pile up per request** until the
-   process dies
-3. Without it Express buffers, and the browser waits for a response that
-   has already started
+If the job finished while the page was loading,
+**no event is ever coming**.
 
 <!--
 Speaker notes:
-• Number 2 is the one that reaches production. Nothing warns you. It looks
-  fine for a week and then the pod OOMs.
-• Frame it: streaming endpoints are different from normal ones because they
-  OUTLIVE the handler. Anything you open, you must close.
+• This catches people. They open the socket, see nothing, and assume the
+  socket is broken. It is working perfectly -- there is simply no news.
+• Same class of bug as a chat app that shows no history: a stream carries
+  the future, a GET carries the present.
+• It is one line in the boilerplate and the lesson points at it, but ask
+  them WHY it is there rather than telling them.
 -->
-
 ---
 
-## A subtle one: success and failure are not symmetric
 
-```ts
-onCompleted: re-read the row    ✅ safe
-onFailed:    re-read the row    ❌ race
-```
+## The other half of the family: SSE
 
-- **Success:** the worker writes the row *before* its processor returns.
-  BullMQ emits *after*. The write already landed.
+| | **WebSocket** | **Server-Sent Events** |
+|---|---|---|
+| Direction | both ways | server → browser |
+| Server library | `ws` | none |
+| Reconnects | **you write it** | automatically |
+| Protocol | upgrade | plain HTTP |
 
-- **Failure:** the row is written by the worker's **own** `failed` listener,
-  reacting to the **same event**. Nothing orders the two.
+**One direction only? SSE is less to get wrong.**
 
 <!--
 Speaker notes:
-• This bug was real — it was written, shipped into a draft, and caught by
-  forcing the worker to throw.
-• Symptom (measured, do not overstate it): the client is sent a row that has
-  not caught up -- still `queued` or `running`, with no failedReason -- so the
-  user sees the generic "the export failed" and never the real reason. The
-  browser does NOT hang; it shows the wrong message.
-• Worth saying: "I got this wrong first" is more useful to them than a
-  slide that pretends the correct version was obvious.
-• Fix: the failure path uses the event's own data and never reads the DB.
+• Be honest: for THIS feature SSE would have been enough, and would have
+  given them reconnection for free. We built WebSockets because they are the
+  general tool and the one they will be asked about in interviews.
+• Reach for WebSockets when the BROWSER also has something to say: chat,
+  cursors, collaborative editing, games. A job notification is one-way.
+• Optional exercise A makes them write reconnection by hand. That is the
+  concrete way to feel what the SSE column hands you.
+• No exercise on SSE this week. This slide is the whole coverage.
 -->
 
 ---
@@ -588,7 +589,7 @@ Speaker notes:
 ## When the browser calls, your headers are gone
 
 ```ts
-new EventSource(url)                  // URL only
+new WebSocket(url)                    // URL only
 <a href="/download">                  // a real navigation
 ```
 
@@ -613,7 +614,7 @@ Speaker notes:
 Neither is built today — both are worth knowing:
 
 1. **A cookie**
-   `EventSource` sends them, with `withCredentials: true`
+   the browser attaches them to both, automatically
 
 2. **A single-use ticket**
    Mint a token valid for *this one stream*, expiring in 30 seconds
@@ -627,29 +628,6 @@ Speaker notes:
 
 ---
 
-## SSE or WebSockets?
-
-| | **SSE** | **WebSockets** |
-|---|---|---|
-| Direction | server → browser | both ways |
-| Library | none | `ws` on the server |
-| Reconnects | automatically | you write it |
-| Protocol | plain HTTP | upgrade |
-
-**One direction? Use SSE.** It is less to get wrong.
-
-<!--
-Speaker notes:
-• Reach for WebSockets when the BROWSER also has something to say: chat,
-  cursors, collaborative editing, games.
-• A job notification is one-way. Using WebSockets here would be a choice to
-  write reconnection logic for nothing.
-• The optional exercise swaps the transport — the queue, worker and
-  QueueEvents do not change at all. That is the payoff: the last hop is
-  replaceable.
--->
-
----
 
 ## Where this runs in production
 
@@ -682,12 +660,12 @@ Speaker notes:
 ## Today, in one slide
 
 - A long request is a **broken promise** — answer `202` instead
-- **Two stores, two promises**: facts forever vs. work in progress
-- `EX 3600` is a feature you would otherwise **build, deploy and monitor**
+- **Two stores, two jobs**: facts vs. coordination between processes
+- *"If I lost this, would a user notice?"* — that is the whole decision
 - A job is a **note**, not a payload
 - **Retries** and a **concurrency limit** are why a queue beats a function call
 - **The API and the worker share nothing but Redis** — you watched it
-- **Push beats poll** — and clean up your listeners
+- **Push beats poll** — and filtering is now your job, at both ends
 - When the **browser** calls, your headers are gone
 
 <!--
@@ -709,13 +687,16 @@ file, and a progress bar that moves because the server is **pushing** to it.
 
 <!--
 Speaker notes:
-• Flag the time shape: exercises 0-5 are the queue (about 105 min), 6-7 are
-  the streaming (about 55 min), 8 is the deploy (20 min).
-• Exercise 6 is the only one where they write code with no answer in front
-  of them (onFailed). Tell them that up front — it is the point of the day,
-  not a gap in the handout. The answer is in a <details> block if they are
-  stuck, but let them try first.
-• Tell them exercise 0 is ten minutes and they should not skip it.
-• Optional exercises at the end: swap to WebSockets, force random failures,
-  or build the history list. All genuinely optional.
+• THEY DOWNLOAD A BOILERPLATE this week, not last week's solution. Put the
+  link on the board. It is the finished lesson 6 with six gaps in it.
+• `grep -rn "TODO [0-9]" backend/src frontend/src` finds all six. Everything
+  else -- Tailwind, type modules, migrations, the WebSocket handshake -- is
+  written for them, on purpose. None of it is the lesson.
+• Time shape: ex 0-3 (queue + worker) about 63 min, ex 4 (the route) 15,
+  ex 5 (the socket) 30, ex 6 (deploy) 12.
+• The two-terminal demo in exercise 4 is the one everybody must actually
+  run -- stop the worker, queue five, start it, watch them drain in pairs.
+  Walk the room during it.
+• Optional at the end: make the socket reconnect, mint single-use tickets,
+  or build the history list.
 -->

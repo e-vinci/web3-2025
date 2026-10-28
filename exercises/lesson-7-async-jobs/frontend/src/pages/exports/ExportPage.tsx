@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { apiRequest } from "../../lib/rest";
 import { getToken } from "../../lib/token";
-import { useExportStream } from "../../hooks/useExportStream";
+import { useExportSocket } from "../../hooks/useExportSocket";
 import type { Export } from "../../types/Export";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -10,7 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 function ExportPage() {
   const [exportId, setExportId] = useState<number | null>(null);
   const [requesting, setRequesting] = useState(false);
-  const { record, progress, error } = useExportStream(exportId);
+  const { record, progress, error } = useExportSocket(exportId);
 
   const handleRequest = async () => {
     setRequesting(true);
@@ -65,8 +65,9 @@ function ExportPage() {
           </p>
           {/*
             A plain link, not a fetch. The browser has to make this request
-            itself for the download to land in the user's Downloads folder, and
-            that means the token cannot travel in a header here either.
+            itself for the file to land in the Downloads folder, and that means
+            the token cannot travel in a header here either — same reason as
+            the WebSocket URL.
           */}
           <a
             className="text-sm font-semibold text-indigo-700 underline"
@@ -74,10 +75,6 @@ function ExportPage() {
           >
             Download the CSV
           </a>
-          <p className="mt-2 text-xs text-green-700">
-            This link works for one hour. After that the file is gone and you can ask
-            for a new one.
-          </p>
         </div>
       )}
 

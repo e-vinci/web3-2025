@@ -1,0 +1,57 @@
+{
+  "name": "backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "node --watch app.ts",
+    "worker": "node --watch worker.ts",
+    "build": "npm install && npm run contract:emit && npx prisma db migrate",
+    "start": "node app.ts",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma skills sync || exit 0",
+    "contract:emit": "prisma contract emit"
+  },
+  "dependencies": {
+    "@prisma/orm-postgres": "8.0.0-rc.20",
+    "bcrypt": "^6.0.0",
+    "bullmq": "^6.5.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.1",
+    "express": "^5.2.1",
+    "graphql": "^17.0.2",
+    "graphql-yoga": "^5.24.4",
+    "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.12.1",
+    "ws": "^8.22.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@prisma/cli-engine": "0.9.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.13.3",
+    "@types/ws": "^8.18.2",
+    "prisma": "8.0.0-rc.27",
+    "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.2": true,
+    "workerd@1.20261002.1": true
+  },
+  "overrides": {
+    "hono": "^4.13.13",
+    "@hono/node-server": "^1.19.15",
+    "lodash": "^4.18.1",
+    "valibot": "^1.5.0"
+  }
+}

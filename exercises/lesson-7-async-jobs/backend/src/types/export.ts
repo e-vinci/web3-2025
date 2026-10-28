@@ -7,10 +7,8 @@ import { z } from 'zod';
  * inferred type, and the `...FromDBO()` mapper. One boundary between what the
  * database returns and what the app sees.
  *
- * Read the fields and notice what is *not* here: the CSV itself. This row is
- * the receipt, not the goods. The bytes live in Redis under a key that expires
- * (see `src/redis.ts`); this row is the durable record that someone asked, and
- * how it turned out.
+ * One row is the whole truth about one export: who asked, how it went, and —
+ * once the worker is done — the file itself.
  */
 export const exportStatusSchema = z.enum(['queued', 'running', 'completed', 'failed']);
 
@@ -19,6 +17,7 @@ export const exportSchema = z.object({
   requesterId: z.number().int().positive(),
   status: exportStatusSchema,
   rowCount: z.number().int().nonnegative().optional(),
+  csv: z.string().optional(),
   failedReason: z.string().optional(),
   createdAt: z.coerce.date(),
 });
@@ -42,6 +41,7 @@ export interface ExportDBO {
   requesterId: number;
   status: string;
   rowCount: number | null;
+  csv: string | null;
   failedReason: string | null;
   createdAt: string;
 }
@@ -55,6 +55,7 @@ export function exportFromDBO(dbo: ExportDBO): Export {
     // rest of the code can rely on instead of a hope.
     status: exportStatusSchema.parse(dbo.status),
     rowCount: dbo.rowCount ?? undefined,
+    csv: dbo.csv ?? undefined,
     failedReason: dbo.failedReason ?? undefined,
     createdAt: dateFromDBO(dbo.createdAt),
   };

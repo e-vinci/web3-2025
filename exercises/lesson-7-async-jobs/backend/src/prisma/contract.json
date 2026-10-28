@@ -215,6 +215,13 @@
                   "kind": "scalar"
                 }
               },
+              "csv": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "failedReason": {
                 "nullable": true,
                 "type": {
@@ -273,6 +280,9 @@
               "fields": {
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "csv": {
+                  "column": "csv"
                 },
                 "failedReason": {
                   "column": "failedReason"
@@ -765,6 +775,11 @@
                   },
                   "nullable": false
                 },
+                "csv": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "failedReason": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -1072,7 +1087,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "2483c3013b69cfbb38e177fe7fbd69c241055c4da0b57e1327182a21af426ef4"
+    "storageHash": "b3388a903340d43da555b0e661552cc9225bc8c4afb870e6528747c615538c9b"
   },
   "capabilities": {
     "postgres": {

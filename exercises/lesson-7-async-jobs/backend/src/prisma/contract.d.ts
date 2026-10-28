@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'2483c3013b69cfbb38e177fe7fbd69c241055c4da0b57e1327182a21af426ef4'>;
+  StorageHashBase<'b3388a903340d43da555b0e661552cc9225bc8c4afb870e6528747c615538c9b'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -289,6 +289,7 @@ export namespace Models {
   };
   export type public_Export = {
     createdAt: FieldOutputTypes['public']['Export']['createdAt'];
+    csv: FieldOutputTypes['public']['Export']['csv'];
     failedReason: FieldOutputTypes['public']['Export']['failedReason'];
     id: FieldOutputTypes['public']['Export']['id'];
     requesterId: FieldOutputTypes['public']['Export']['requesterId'];
@@ -483,6 +484,12 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly many: false;
+                };
+                readonly csv: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly failedReason: {
@@ -871,6 +878,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-string@1';
                 };
               };
+              readonly csv: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly failedReason: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -908,6 +919,7 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly createdAt: { readonly column: 'createdAt' };
+                readonly csv: { readonly column: 'csv' };
                 readonly failedReason: { readonly column: 'failedReason' };
                 readonly id: { readonly column: 'id' };
                 readonly requesterId: { readonly column: 'requesterId' };

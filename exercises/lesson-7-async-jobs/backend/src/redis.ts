@@ -27,15 +27,20 @@ const REDIS_URL = process.env['REDIS_URL'] || 'redis://localhost:6379';
 /**
  * Builds a new Redis connection.
  *
- * Why a factory and not a single shared client? Because BullMQ's Worker and
+ * Why a factory and not one shared client? Because BullMQ's Worker and
  * QueueEvents spend their lives inside *blocking* commands — they ask Redis
- * "give me the next job, and don't answer until there is one". A connection
- * parked on a blocking command cannot run anything else, so each of them needs
- * its own. Sharing one client between them deadlocks.
+ * "give me the next job, and do not answer until there is one". A connection
+ * parked on a blocking command cannot run anything else, so each needs its
+ * own.
  *
- * `maxRetriesPerRequest: null` is required by BullMQ: ioredis otherwise gives
- * up on a command after 20 retries, which is exactly the wrong behaviour for a
- * blocking read that is *supposed* to wait.
+ * Hand BullMQ a single shared client and it will quietly duplicate it for you
+ * rather than break, so this is about being explicit about how many
+ * connections you are opening, not about avoiding a crash.
+ *
+ * `maxRetriesPerRequest: null` is not optional, though. ioredis otherwise
+ * gives up on a command after 20 retries, which is exactly wrong for a
+ * blocking read that is *supposed* to wait — and BullMQ refuses to start
+ * without it, throwing at construction rather than misbehaving later.
  */
 export function createRedisConnection(): IORedis {
   return new IORedis(REDIS_URL, { maxRetriesPerRequest: null });

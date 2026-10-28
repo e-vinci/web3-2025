@@ -25,10 +25,10 @@ Speaker notes:
 
 **Laptops closed.**
 
-Last week you put `requireAuth` in **one** place in `app.ts`, instead of a
-check inside every route handler.
+Last week you guarded whole routers in `app.ts` with `requireAuth`, instead of
+writing a check inside every route handler.
 
-1. **Why one place** instead of one check per route?
+1. **Why guard the router** instead of each handler?
 2. What did that buy you for routes you **had not written yet**?
 
 *60 seconds. Talk to the person next to you.*
@@ -445,9 +445,13 @@ That is the entire protocol. Text, with blank lines between messages.
 
 <!--
 Speaker notes:
-• Show this live with: curl -N "localhost:3000/api/exports/2/events?token=..."
-  then POST an export in the other terminal. Watching the text appear is
-  worth more than the slide.
+• Show this live, and MIND THE ORDER -- POST first, then watch the id it
+  returns:
+      curl -s -X POST localhost:3000/api/exports -H "Authorization: Bearer $T"
+      curl -N "localhost:3000/api/exports/<that id>/events?token=$T"
+  You have about 4s before the job finishes. Opening the stream first and
+  POSTing after does NOT work: the POST creates a new id, and the handler's
+  own jobId filter correctly ignores it. Do not demo it that way.
 • Note the TWO newlines ending a message. One is not enough. They will hit it.
 -->
 
@@ -520,7 +524,10 @@ onFailed:    re-read the row    ❌ race
 Speaker notes:
 • This bug was real — it was written, shipped into a draft, and caught by
   forcing the worker to throw.
-• Symptom: the export row says `failed`, and the browser spins forever.
+• Symptom (measured, do not overstate it): the client is sent a row that has
+  not caught up -- still `queued` or `running`, with no failedReason -- so the
+  user sees the generic "the export failed" and never the real reason. The
+  browser does NOT hang; it shows the wrong message.
 • Worth saying: "I got this wrong first" is more useful to them than a
   slide that pretends the correct version was obvious.
 • Fix: the failure path uses the event's own data and never reads the DB.
@@ -652,7 +659,7 @@ file, and a progress bar that moves because the server is **pushing** to it.
 Speaker notes:
 • Flag the time shape: exercises 0-5 are the queue (about 110 min), 6-7 are
   the streaming (about 55 min), 8 is the deploy (15 min).
-• Tell them exercise 0 is five minutes and they should not skip it.
+• Tell them exercise 0 is ten minutes and they should not skip it.
 • Optional exercises at the end: swap to WebSockets, force random failures,
   or build the history list. All genuinely optional.
 -->

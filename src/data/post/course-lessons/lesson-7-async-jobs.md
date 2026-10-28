@@ -92,8 +92,7 @@ stuck on that specific thing.
    skim it. You only need strings and expiry today, but seeing the list of what
    else is there is what makes Redis stop feeling like "a cache".
 4. [MDN — 202 Accepted](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/202) —
-   one short page about one status code, and it is the status code this whole
-   lesson turns on.
+   one short page about one status code. This whole lesson depends on it.
 5. [Render — Key Value](https://render.com/docs/key-value) — for the deployment
    exercise at the end.
 
@@ -176,12 +175,15 @@ second one:
       - '6379:6379'
 ```
 
-Then start it:
+Then start it and check it answers before you write any code against it:
 
 ```bash
 # from backend/
 docker compose up -d
+docker compose exec valkey valkey-cli ping
 ```
+
+You should see `PONG`.
 
 Add the connection string to `backend/.env` and to `backend/.env.example`:
 
@@ -195,6 +197,10 @@ Install the two libraries you will need:
 # from backend/
 npm install bullmq ioredis
 ```
+
+You will see a warning about `msgpackr-extract` and install scripts. It is an
+optional native speed-up for one of BullMQ's dependencies. Everything works
+without it, and you can ignore it.
 
 > **&#10067; Why is this called Valkey and not Redis?** Redis changed its
 > licence in 2024. The people who had been maintaining it forked the last
@@ -228,16 +234,25 @@ Two details in that file are not decoration.
 **`maxRetriesPerRequest: null` is required by BullMQ.** By default `ioredis`
 gives up on a command after 20 retries. A worker asking Redis "give me the next
 job, and do not answer until there is one" is *supposed* to wait, possibly for
-hours. Without this line it gives up and your worker stops.
+hours.
 
-**It is a factory, not a single shared client.** A connection parked on a
-blocking command cannot run anything else. BullMQ's `Worker` and `QueueEvents`
-both live inside blocking reads, so each needs its own connection. Share one
-between them and you get a deadlock with no error message.
+Leave the line out and BullMQ refuses to start at all:
+
+```
+BullMQ: Your redis options maxRetriesPerRequest must be null.
+```
+
+That is good behaviour. It crashes loudly at startup instead of running for a
+week and then quietly stalling.
+
+**It is a factory, not one shared client.** A connection parked on a blocking
+command cannot run anything else, and `Worker` and `QueueEvents` both live
+inside blocking reads. If you hand BullMQ one shared client it will duplicate
+it for you rather than break — so this is about being explicit about how many
+connections you open, not about avoiding a crash.
 
 > **&#9888; Stop and name what you just added.** You now have two databases.
-> Before you write another line, write down — actually write it — what goes in
-> each one. If your answer is "Postgres for important things, Redis for fast
+> Before you write another line, write down what goes in each one. On paper. If your answer is "Postgres for important things, Redis for fast
 > things", that is the wrong model and the next exercise will not make sense.
 >
 > The real split is **how long the data must live**. PostgreSQL holds facts
@@ -246,15 +261,7 @@ between them and you get a deadlock with no error message.
 > an event that was interesting for one second, a file nobody will want in an
 > hour. Redis is not a faster Postgres. It is a different promise.
 
-Check it works:
-
-```bash
-docker compose exec valkey valkey-cli ping
-```
-
-You should see `PONG`.
-
-### 2. Write down that someone asked (~20 min)
+### 2. Write down that someone asked (~15 min)
 
 A user clicks "export". The work has not happened yet. But something must exist
 immediately, or there is nothing to show them and nothing to come back to.
@@ -347,7 +354,7 @@ export function exportFromDBO(dbo: ExportDBO): Export {
 > somebody wrote in a migration two years ago. Parsing here is what turns
 > `Export["status"]` from a hope into something the rest of your code can trust.
 
-### 3. The queue (~15 min)
+### 3. The queue (~10 min)
 
 Create `backend/src/queues/exports.queue.ts`:
 
@@ -385,8 +392,8 @@ export function isFinalAttempt(job: Job): boolean {
 Four things worth stopping on.
 
 **The queue is a string.** `'exports'` is the only thing connecting the code
-that adds jobs to the code that runs them. Get it wrong by one character and
-you have two queues, one of which nobody is watching, and no error anywhere.
+that adds jobs to the code that runs them. Change one character and you create a
+second queue. Nobody reads it. Nothing reports an error.
 
 **`attempts: 3` with exponential backoff** is the single most valuable line
 here. A transient failure — the database blinked, a network call timed out —
@@ -394,8 +401,8 @@ stops being a lost request and becomes a one-second delay. You get that for
 free, and writing it yourself correctly is genuinely hard.
 
 **`removeOnComplete` and `removeOnFail` are not tidiness.** Redis is memory.
-Without these, every finished job stays in it forever, and on a 25 MB free
-instance you will find out what that means.
+Without these, every finished job stays in it forever, and a 25 MB free
+instance fills up fast.
 
 **`QueueEvents` is the pub/sub half of this lesson.** It reads a Redis *stream*
 that every worker writes to. That is how one process learns about work that
@@ -495,8 +502,8 @@ export class ExportsService {
 > and monitor. Expiry is a property of the key.
 >
 > Now cost the same feature in PostgreSQL: a `text` column that grows forever,
-> plus a scheduled job you have to write, plus the day you discover it stopped
-> running three months ago. **That** is why there are two databases in this
+> plus a scheduled job you have to write, deploy and monitor. And then the day
+> you notice it stopped running three months ago. **That** is why there are two databases in this
 > application, and it is a better reason than "Redis is fast".
 >
 > In a real product this file would go to object storage (S3) rather than
@@ -580,7 +587,7 @@ the whole point.
 
 Then `concurrency: 2`. That number is a promise to the rest of your system:
 however long the queue gets, this worker will never run a third export at once.
-A queue with no concurrency limit is just a slower way to fall over.
+A queue with no concurrency limit is just a slower way to crash.
 
 > **&#10067; Why does the `failed` listener need `isFinalAttempt`?** Because it
 > fires after **every** attempt, including the ones BullMQ is about to retry.
@@ -604,7 +611,7 @@ import './src/workers/exports.worker.ts';
 > the API also does the work. Nothing in the worker file changes when you split
 > it out — it finds its jobs through Redis, not through that import.
 
-### 5. Ask for an export over HTTP (~20 min)
+### 5. Ask for an export over HTTP (~25 min)
 
 The export routes need to know **who** is asking — not just that the token is
 valid. Right now `requireAuth` verifies the token and throws the answer away.
@@ -738,11 +745,32 @@ async function downloadExport(req: Request, res: Response) {
 export default router;
 ```
 
-Mount it in `backend/app.ts`, next to the other routers:
+Mount it in `backend/app.ts`. Add the import beside the other router imports:
+
+```ts
+import exportsRouter from './src/routes/exports.router.ts';
+```
+
+and the mount beside the other mounts:
 
 ```ts
 app.use('/api/exports', exportsRouter);
 ```
+
+> **&#9888; There is no `requireAuth` on that line.** Every router above it has
+> one — `app.use('/api/expenses', requireAuth, expensesRouter)` — so copying
+> the neighbours is the natural thing to do. Do not. This router guards itself,
+> because two of its routes need the query-string check instead. Add
+> `requireAuth` here and those two routes answer `401`: the button still works,
+> the progress bar never moves, and the only clue is a `401` in the network
+> tab.
+
+> **&#10067; Why REST? We have GraphQL.** Lesson 5 moved reads to GraphQL and
+> `graphql-yoga` is still mounted. But look at what these two routes return: an
+> endless stream of events, and a file. GraphQL answers a question with a JSON
+> object shaped like your query. Neither of those is that shape. Choosing the
+> transport that fits the payload is the point — not using one tool for
+> everything.
 
 Now read the `POST` handler again and count what it does: one row, one job, one
 response. Then look at the status code.
@@ -750,20 +778,42 @@ response. Then look at the status code.
 > **&#9888; `202 Accepted`, not `200 OK`.** `200` means "here is what you asked
 > for". `202` means "I have taken this on, it is not done yet". This is not
 > pedantry — it is the only thing in the response that tells a client the work
-> is still moving. A client that sees `200` is entitled to think it is holding
-> the finished thing.
+> is still moving. A client that sees `200` will assume the work is done.
+
+> **&#10067; What is `jobId: jobIdForExport(record.id)` for?** There is one
+> queue and one event stream for everybody. When the stream in the next
+> exercise hears "a job finished", it needs a way to know whether that was
+> *this* export or one of the forty other students'. A predictable id is that
+> way.
+>
+> It has a cost worth knowing. BullMQ refuses to add a job with an id it
+> already holds, and `removeOnComplete: { age: 3600 }` keeps finished jobs for
+> an hour. So if you re-run `node scripts/db-populate.ts`, export ids restart
+> at 1 while `bull:exports:export-1` is still in Redis — and your next export
+> is silently dropped with no error anywhere. If an export stays on `queued`
+> forever after a reseed, that is why. `docker compose exec valkey valkey-cli
+> DEL bull:exports:export-1` clears it.
 
 > **&#10067; Why does `/:id/download` sit above `router.use(requireAuth)`?**
 > Because `router.use` only applies to routes declared **after** it. That line
 > is how `download` opts out of the header guard and takes the query-string one
-> instead. Hold the question of *why it needs to* — the next exercise answers
-> it.
+> instead. You will see why it needs to in the next exercise.
 
 > **&#10067; And why is there one `404` for both "no such export" and "not
-> yours"?** Telling a stranger that export #12 exists but belongs to somebody
-> else is still telling them something.
+> yours"?** A `403` would confirm that export #12 exists. A `404` tells a stranger
+> nothing at all.
 
-Test it with curl. Log in first to get a token, then:
+Test it with curl. First get a token — the seed script gives every demo user
+the password `topsecret`:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"john.doe@example.com","password":"topsecret"}' \
+  | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).token")
+```
+
+Then ask for an export:
 
 ```bash
 curl -i -X POST http://localhost:3000/api/exports \
@@ -801,12 +851,12 @@ that never ends. The response says `Content-Type: text/event-stream`, the
 connection stays open, and the server writes a line whenever it has something
 to say. Browsers understand the format natively.
 
-Add this to `backend/src/routes/exports.router.ts`. The route registration goes
-**above** `router.use(requireAuth)`, beside the download route:
+Add this to `backend/src/routes/exports.router.ts`. One new registration line,
+**above** `router.use(requireAuth)` and beside the download route you already
+have:
 
 ```ts
 router.get('/:id/events', requireAuthQuery, streamExportEvents);
-router.get('/:id/download', requireAuthQuery, downloadExport);
 ```
 
 And the handler, at the bottom of the file:
@@ -907,10 +957,13 @@ deliberate, and it is the subtle bug in this lesson:
 >
 > On failure there is no such guarantee. The row is written by the worker's own
 > `failed` listener, which is reacting to **the same event** as this handler,
-> with nothing ordering the two. Re-read the row here and you will usually find
-> it still on `running`, drop the event, and leave the browser watching a
-> spinner forever. So the failure path uses the event's own data and never
-> looks at the database.
+> with nothing ordering the two. Re-read the row here and you will usually win
+> the race and send the user a row that has not caught up yet — still
+> `queued` or `running`, with no `failedReason` in it.
+>
+> The user is then told "the export failed" with no reason why, while the row
+> in the database has the reason sitting right there. So the failure path uses
+> the event's own data and never looks at the database.
 
 > **&#10067; One more, and it catches people out.** You wrote
 > `worker.on('failed')` in exercise 4 and it fired after every attempt. This
@@ -919,15 +972,29 @@ deliberate, and it is the subtle bug in this lesson:
 > name, two different events, and only one of them needs an `isFinalAttempt`
 > guard.
 
-Test it from the terminal — `curl -N` keeps the connection open:
+Test it from the terminal. `curl -N` keeps the connection open instead of
+waiting for the response to end.
+
+**Order matters here.** Ask for the export *first*, note the id it gives you,
+then watch that same id — you have about four seconds before the job finishes:
 
 ```bash
-# In one terminal, start watching (use a real export id and token):
-curl -N "http://localhost:3000/api/exports/2/events?token=$TOKEN"
+# 1. ask for an export, and read the "id" in the reply
+curl -s -X POST http://localhost:3000/api/exports -H "Authorization: Bearer $TOKEN"
+
+# 2. straight away, watch that id (replace 3 with the id you just got)
+curl -N "http://localhost:3000/api/exports/3/events?token=$TOKEN"
 ```
 
-Then in another terminal, `POST` a new export and watch the first terminal
-fill up with `status`, three `progress` events, and `completed`.
+You should see `status`, three `progress` events, then `completed`, and the
+command exits on its own.
+
+> **&#10067; Why not open the stream first and then `POST` from another
+> terminal?** Because a `POST` creates a **new** export with a **new** id, and
+> the `jobId !== mine` filter you just wrote will correctly ignore every one of
+> its events. A stream only ever reports on the one export it was opened for.
+> If you try it, you will see a single `status` line and nothing else — which
+> is the filter working, not a bug.
 
 ### 7. The browser side (~25 min)
 
@@ -972,11 +1039,20 @@ export function useExportStream(exportId: number | null): ExportStream {
   const [progress, setProgress] = useState<ExportProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (exportId === null) return;
-
+  // Resetting during render rather than inside the effect: a new export id
+  // means the old progress and the old error belong to a different job. React
+  // documents this pattern for "adjust state when a prop changes", and it is
+  // why there is no `setState` at the top of the effect below -- doing it
+  // there would queue a second render every time.
+  const [watchedId, setWatchedId] = useState(exportId);
+  if (exportId !== watchedId) {
+    setWatchedId(exportId);
     setProgress(null);
     setError(null);
+  }
+
+  useEffect(() => {
+    if (exportId === null) return;
 
     const token = getToken();
     const source = new EventSource(
@@ -984,7 +1060,11 @@ export function useExportStream(exportId: number | null): ExportStream {
     );
 
     source.addEventListener('status', (event) => {
-      setRecord(JSON.parse(event.data) as Export);
+      const current = JSON.parse(event.data) as Export;
+      setRecord(current);
+      if (current.status === 'completed' || current.status === 'failed') {
+        source.close();
+      }
     });
 
     source.addEventListener('progress', (event) => {
@@ -998,8 +1078,12 @@ export function useExportStream(exportId: number | null): ExportStream {
     });
 
     source.addEventListener('failed', (event) => {
-      const failed = JSON.parse(event.data) as Export;
-      setRecord(failed);
+      // A narrow type, not `as Export`: the failure event carries only what
+      // the server knew without re-reading the database.
+      const failed = JSON.parse(event.data) as Pick<Export, 'id' | 'status'> & {
+        failedReason?: string;
+      };
+      setRecord((previous) => (previous ? { ...previous, ...failed } : null));
       setError(failed.failedReason ?? 'The export failed');
       setProgress(null);
       source.close();
@@ -1020,8 +1104,8 @@ export function useExportStream(exportId: number | null): ExportStream {
 
 > **&#9888; Count the libraries you installed for this.** Zero. `EventSource`
 > is part of every browser. It even reconnects on its own when the connection
-> drops — that retry behaviour is in the standard, not in a package you have to
-> pick, update and trust.
+> drops — that reconnection is part of the standard. It is not a package you have
+> to choose, update and trust.
 
 > **&#10067; Why `addEventListener('progress', ...)` and not `onmessage`?**
 > Because the server wrote `event: progress`. Named events do not arrive as
@@ -1031,6 +1115,17 @@ export function useExportStream(exportId: number | null): ExportStream {
 > **&#9888; The `return () => source.close()` is not optional.** Navigate away
 > without it and the request stays open: the server keeps a dead listener, the
 > browser keeps a socket. An effect that opens something must close it.
+
+> **&#9888; Neither is the `source.close()` inside the `status` listener.** The
+> server sends `status` and hangs up when the job is already finished.
+> `EventSource` cannot tell a finished stream from a dropped one — it treats
+> both as "reconnect" — so if you do not close it yourself, the browser reopens
+> that request every few seconds, forever. Each reopen costs a database read.
+>
+> Nothing in the UI shows it, and `onerror` stays quiet because `readyState`
+> never reaches `CLOSED`. You can only see it in the network tab or in your
+> backend logs. **Automatic reconnection is a feature right up to the moment
+> there is nothing left to reconnect to.**
 
 Now the page, `frontend/src/pages/exports/ExportPage.tsx`:
 
@@ -1122,7 +1217,14 @@ function ExportPage() {
 export default ExportPage;
 ```
 
-Add the route in `frontend/src/main.tsx`, inside the guarded `children` array:
+Add the route in `frontend/src/main.tsx`. The import goes beside the other
+page imports:
+
+```tsx
+import ExportPage from "./pages/exports/ExportPage.tsx";
+```
+
+and the route inside the guarded `children` array:
 
 ```tsx
 { path: "exports", Component: ExportPage },
@@ -1155,12 +1257,17 @@ offer you a file.
 > else in this app your own JavaScript calls `fetch`, and `fetch` can set any
 > header it likes.
 >
+> **Now look at your backend terminal.** `morgan` has been logging every
+> request since lesson 1, and your token is sitting in those lines in plain
+> text. That is not a hypothetical — it is the access-log problem, on your own
+> machine, caused by the code you just wrote.
+>
 > The two production answers, neither of which we are building today: put the
 > session in a **cookie** (`EventSource` sends those, with
 > `withCredentials: true`), or mint a **single-use ticket** that is valid for
 > this one stream and expires in thirty seconds.
 
-### 8. Ship it (~15 min)
+### 8. Ship it (~20 min)
 
 Everything so far runs on your laptop. Your deployed app still has no queue.
 
@@ -1172,7 +1279,16 @@ Everything so far runs on your laptop. Your deployed app still has no queue.
    that value.
 4. Push. Render redeploys, and the worker starts inside your API process.
 
-Test it in production — not just locally.
+Then test it in production, not just locally. Concretely:
+
+1. Open your deployed frontend and log in.
+2. Click **Export my expenses**. The button should answer at once.
+3. Watch the progress bar move. If it never moves, open the network tab and
+   look at the `/events` request. A `401` points at the guard. A request that
+   stays pending and receives nothing points at the worker.
+4. Download the file and open it.
+5. In the Render dashboard, open your Key Value instance and confirm it is
+   holding keys.
 
 > **&#9888; Three things about the free tier that will confuse you later.**
 >

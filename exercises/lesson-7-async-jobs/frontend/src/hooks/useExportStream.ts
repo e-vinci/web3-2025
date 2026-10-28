@@ -35,11 +35,20 @@ export function useExportStream(exportId: number | null): ExportStream {
   // a re-render, and the cleanup function needs to reach it.
   const sourceRef = useRef<EventSource | null>(null);
 
-  useEffect(() => {
-    if (exportId === null) return;
-
+  // Resetting during render rather than inside the effect: a new export id
+  // means the old progress and the old error belong to a different job. React
+  // documents this pattern for "adjust state when a prop changes", and it is
+  // why there is no `setState` at the top of the effect below -- doing it
+  // there would queue a second render every time.
+  const [watchedId, setWatchedId] = useState(exportId);
+  if (exportId !== watchedId) {
+    setWatchedId(exportId);
     setProgress(null);
     setError(null);
+  }
+
+  useEffect(() => {
+    if (exportId === null) return;
 
     const token = getToken();
     const source = new EventSource(
@@ -51,7 +60,17 @@ export function useExportStream(exportId: number | null): ExportStream {
     // are not `message` events, so `onmessage` would never fire for them —
     // the names have to match the ones the server sends.
     source.addEventListener("status", (event) => {
-      setRecord(JSON.parse(event.data) as Export);
+      const current = JSON.parse(event.data) as Export;
+      setRecord(current);
+
+      // The server sends `status` and then closes if the job is already over.
+      // We have to close our side too. `EventSource` cannot tell a finished
+      // stream from a dropped one -- it treats both as "reconnect" -- so
+      // without this it reopens the request forever, every few seconds, and
+      // nothing in the UI ever shows that it is happening.
+      if (current.status === "completed" || current.status === "failed") {
+        source.close();
+      }
     });
 
     source.addEventListener("progress", (event) => {
@@ -67,8 +86,13 @@ export function useExportStream(exportId: number | null): ExportStream {
     });
 
     source.addEventListener("failed", (event) => {
-      const failed = JSON.parse(event.data) as Export;
-      setRecord(failed);
+      // Note the narrow type. The failure event carries only what the server
+      // could know without re-reading the database, so calling it an `Export`
+      // would be a lie that `record` then spreads through the UI.
+      const failed = JSON.parse(event.data) as Pick<Export, "id" | "status"> & {
+        failedReason?: string;
+      };
+      setRecord((previous) => (previous ? { ...previous, ...failed } : null));
       setError(failed.failedReason ?? "The export failed");
       setProgress(null);
       source.close();

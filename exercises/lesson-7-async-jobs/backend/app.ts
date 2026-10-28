@@ -9,14 +9,25 @@ import authRouter from './src/routes/auth.router.ts';
 import exportsRouter from './src/routes/exports.router.ts';
 import { yoga } from './src/graphql/yoga.ts';
 import { requireAuth } from './src/middleware/requireAuth.ts';
+import { attachExportSocket } from './src/realtime/exportSocket.ts';
 
-// Importing the worker is what starts it. In production this line would not
-// exist here: the worker would be its own process (`node worker.ts`), so a
-// long job could not compete with HTTP requests for the event loop. Render's
-// free tier has no separate worker instance type, so for this lesson the API
-// also does the work. Nothing in the worker changes when you split it out --
-// it finds its jobs through Redis, not through this import.
-import './src/workers/exports.worker.ts';
+// Does this process also run the worker?
+//
+// Locally: no. You run `npm run dev` here and `npm run worker` in a second
+// terminal, so the two are genuinely separate processes that share nothing
+// but Redis -- which is the point, and which you can prove by killing one.
+//
+// On Render: yes, because the free tier has no background-worker instance
+// type. Setting RUN_WORKER_IN_API=true there folds the worker into this
+// process. It is a deployment compromise, written down as one, rather than a
+// design we are pretending to want.
+//
+// Nothing inside the worker changes either way. It finds its jobs through
+// Redis, not through this import.
+if (process.env['RUN_WORKER_IN_API'] === 'true') {
+  console.log('Running the export worker inside the API process.');
+  await import('./src/workers/exports.worker.ts');
+}
 
 const app = express();
 
@@ -80,8 +91,14 @@ app.use('/api/categories', requireAuth, categoriesRouter);
 // routes it applies to.
 app.use('/api/exports', exportsRouter);
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
 });
+
+// The same export notifications as the SSE route, over a WebSocket at
+// /ws/exports. Both transports run here so you can compare them -- the SSE one
+// is what the frontend uses; this is the finished state of the optional
+// exercise. A real application would pick one and delete the other.
+attachExportSocket(server);
 
 export default app;

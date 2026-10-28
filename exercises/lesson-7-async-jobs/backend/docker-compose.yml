@@ -21,6 +21,10 @@ services:
   # Key Value service. It speaks the same protocol, so every client and every
   # command in this lesson is identical either way.
   #
+  # Version 8 rather than the newest one, on purpose: it is what Render's Key
+  # Value service runs, and a local setup that matches production is worth more
+  # than a local setup that is current.
+  #
   # Note what is missing compared to postgres above: there is no `volumes:`
   # line. Nothing here survives `docker compose down`, and that is deliberate.
   # Treating this store as disposable locally is the habit you want, because

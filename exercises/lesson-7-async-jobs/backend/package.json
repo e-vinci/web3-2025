@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "node --watch app.ts",
+    "worker": "node --watch worker.ts",
     "build": "npm install && npm run contract:emit && npx prisma db migrate",
     "start": "node app.ts",
     "typecheck": "tsc --noEmit",
@@ -27,6 +28,7 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.12.1",
+    "ws": "^8.22.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -37,6 +39,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.13.3",
+    "@types/ws": "^8.18.2",
     "prisma": "8.0.0-rc.27",
     "typescript": "^7.0.2"
   },

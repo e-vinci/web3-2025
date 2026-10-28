@@ -273,6 +273,56 @@ Speaker notes:
 
 ---
 
+## Two processes, sharing nothing
+
+```bash
+npm run dev      # terminal 1 — the API
+npm run worker   # terminal 2 — the worker
+```
+
+**Kill the worker. Ask for five exports.**
+
+```
+14:queued  15:queued  16:queued  17:queued  18:queued
+```
+
+Nothing failed. Nothing is lost. The API never slowed down.
+
+<!--
+Speaker notes:
+• Do this live if you can. It takes 40 seconds and it is the most convincing
+  thing in the deck.
+• They do not import each other. They do not know each other's port. They do
+  not share a variable. Redis is the whole interface.
+• Ask: "where is the work right now?" Answer: in Redis, as a list. Then ask
+  "what happens if I deploy the API now?" Answer: nothing, the jobs are fine.
+  That is item 3 from the "four problems" slide, solved.
+-->
+
+---
+
+## ...and now start it again
+
+```
+t+3s    14:running    15:running    16:queued     17:queued     18:queued
+t+7s    14:completed  15:completed  16:running    17:running    18:queued
+t+11s   14:completed  15:completed  16:completed  17:completed  18:running
+```
+
+### Two at a time. Why?
+
+<!--
+Speaker notes — ask, wait, then point at the slide from earlier.
+Answer: concurrency: 2.
+
+This is the payoff for that slide. It was an assertion when they wrote it;
+here it is a thing they watched. Invite them to set it to 5 and re-run.
+
+Real output from a real run — this table is not invented.
+-->
+
+---
+
 ## 202, not 200
 
 ```ts
@@ -610,7 +660,7 @@ Render free tier
 └── Key Value     (25 MB, Valkey, NOT persistent)
 ```
 
-- **No free background worker** → worker runs inside the API
+- **No free background worker** → `RUN_WORKER_IN_API=true` folds it in
 - **Sleeps after 15 min** idle
 - **Key Value is not persistent** → and that is survivable, by design
 
@@ -618,10 +668,11 @@ Render free tier
 Speaker notes:
 • "By design" matters: the export ROWS are in Postgres. Losing Redis loses
   pending jobs and cached files, not the record that someone asked.
-• On a paid plan: a Background Worker service, same repo, different start
-  command, same REDIS_URL, and you delete one import from app.ts.
-  Nothing else changes. Say that — it makes the free-tier compromise feel
-  like a deployment detail rather than a lie.
+• On a paid plan: a Background Worker service, same repo, `npm run worker`
+  as its start command, same REDIS_URL, and you never set that variable.
+  Their worker.ts runs there unchanged — because it already does, on their
+  laptop, in terminal 2. That is why the two-process exercise matters: the
+  free-tier shape is the compromise, not the normal one.
 • Valkey vs Redis: Redis changed its licence in 2024, the maintainers forked
   it, the fork is what most managed "Redis" runs now. Same protocol.
 -->
@@ -635,6 +686,7 @@ Speaker notes:
 - `EX 3600` is a feature you would otherwise **build, deploy and monitor**
 - A job is a **note**, not a payload
 - **Retries** and a **concurrency limit** are why a queue beats a function call
+- **The API and the worker share nothing but Redis** — you watched it
 - **Push beats poll** — and clean up your listeners
 - When the **browser** calls, your headers are gone
 
@@ -657,8 +709,12 @@ file, and a progress bar that moves because the server is **pushing** to it.
 
 <!--
 Speaker notes:
-• Flag the time shape: exercises 0-5 are the queue (about 110 min), 6-7 are
-  the streaming (about 55 min), 8 is the deploy (15 min).
+• Flag the time shape: exercises 0-5 are the queue (about 105 min), 6-7 are
+  the streaming (about 55 min), 8 is the deploy (20 min).
+• Exercise 6 is the only one where they write code with no answer in front
+  of them (onFailed). Tell them that up front — it is the point of the day,
+  not a gap in the handout. The answer is in a <details> block if they are
+  stuck, but let them try first.
 • Tell them exercise 0 is ten minutes and they should not skip it.
 • Optional exercises at the end: swap to WebSockets, force random failures,
   or build the history list. All genuinely optional.

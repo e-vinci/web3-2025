@@ -64,7 +64,7 @@ By the end of this lesson you should be able to:
 - Explain why a long task does not belong inside an HTTP request.
 - Say what Redis is for, and what it is **not** for, in one sentence each.
 - Put a job on a queue and process it in a worker, with retries and a
-  concurrency limit.
+  concurrency limit, running as a separate process.
 - Tell the difference between "this failed" and "this is about to be retried".
 - Stream events to a browser with Server-Sent Events, and clean up after them.
 - Deploy all of it to Render.
@@ -168,6 +168,10 @@ second one:
 
 ```yaml
   # The second database, and the reason this lesson exists.
+  #
+  # Version 8 rather than the newest one, on purpose: it is what Render's Key
+  # Value service runs, and a local setup that matches production is worth
+  # more than a local setup that is current.
   valkey:
     image: valkey/valkey:8-alpine
     restart: always
@@ -389,6 +393,14 @@ export function isFinalAttempt(job: Job): boolean {
 }
 ```
 
+Before reading another word, check it loads. The queue connects to Redis the
+moment this file is imported, so a typo in `REDIS_URL` shows up here:
+
+```bash
+# from backend/, in a third terminal
+node --input-type=module -e "await import('./src/queues/exports.queue.ts'); console.log('queue ok'); process.exit(0)"
+```
+
 Four things worth stopping on.
 
 **The queue is a string.** `'exports'` is the only thing connecting the code
@@ -415,7 +427,7 @@ request handler and the worker will never speak to each other directly.
 > time anyone looked at it. The job is a note saying *what to do*, not the data
 > to do it with. The worker reads that fresh.
 
-### 4. The worker (~30 min)
+### 4. The worker (~35 min)
 
 First, the service that does the actual work. Create
 `backend/src/services/exports.service.ts`:
@@ -598,20 +610,79 @@ A queue with no concurrency limit is just a slower way to crash.
 > Keep this one in your head, because the next exercise contains an event with
 > the same name that behaves differently.
 
-Finally, start the worker by importing it in `backend/app.ts`, near the top:
+#### Run it as its own process
+
+Nothing has started the worker yet. You could import it into `app.ts` — but
+then it would share a process with your API, and the whole claim of this
+lesson is that it does not have to.
+
+Create `backend/worker.ts`, beside `app.ts`:
 
 ```ts
-import './src/workers/exports.worker.ts';
+import { exportsWorker } from './src/workers/exports.worker.ts';
+
+console.log('Export worker started. Waiting for jobs...');
+
+/**
+ * Stop politely when the platform asks. SIGTERM is what Render, Docker and
+ * Kubernetes send before a shutdown; `close()` stops taking new jobs and
+ * waits for the running ones.
+ */
+async function shutdown(signal: string) {
+  console.log(`${signal} received, finishing current jobs...`);
+  await exportsWorker.close();
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
 ```
 
-> **&#9888; In production this would be its own process.** `node worker.ts`
-> running beside `node app.ts`, so that a long job cannot compete with HTTP
-> requests for the event loop, and so you can run five workers and one API.
-> Render's free tier has no separate worker instance type, so for this lesson
-> the API also does the work. Nothing in the worker file changes when you split
-> it out — it finds its jobs through Redis, not through that import.
+Add a script to `backend/package.json`, next to `dev`:
 
-### 5. Ask for an export over HTTP (~25 min)
+```json
+"worker": "node --watch worker.ts",
+```
+
+Now you need **two terminals**, both in `backend/`:
+
+```bash
+npm run dev      # terminal 1 — the API
+npm run worker   # terminal 2 — the worker
+```
+
+#### Prove they are really separate
+
+This is the part worth doing slowly, because it is the whole lesson in one
+experiment. You cannot run it yet — the HTTP route comes in exercise 5 — so
+come back here once it does, or read it now and run it then.
+
+**Stop the worker** (Ctrl-C in terminal 2), leave the API running, and ask for
+five exports. Then look at the list. Every one says `queued`. Nothing failed,
+nothing is lost, and the API never slowed down — the work is sitting in Redis
+waiting for somebody to come and do it.
+
+**Start the worker again.** Watch them drain:
+
+```
+t+3s    14:running    15:running    16:queued     17:queued     18:queued
+t+7s    14:completed  15:completed  16:running    17:running    18:queued
+t+11s   14:completed  15:completed  16:completed  17:completed  18:running
+```
+
+> **&#10067; Look at that table again. Why two at a time?** Because of
+> `concurrency: 2`. You wrote that number earlier and it was an assertion;
+> this is it being true. Change it to 5, restart the worker, and all five run
+> at once.
+
+> **&#9888; Two processes, sharing nothing.** The API and the worker do not
+> import each other. They do not know each other's port. They do not share a
+> variable. The only thing between them is Redis — and that is exactly why the
+> worker could move to another machine tomorrow, and why you can run five of
+> them and one API. Everything this lesson claims about queues, you just
+> watched happen.
+
+### 5. Ask for an export over HTTP (~20 min)
 
 The export routes need to know **who** is asking — not just that the token is
 valid. Right now `requireAuth` verifies the token and throws the answer away.
@@ -768,9 +839,14 @@ app.use('/api/exports', exportsRouter);
 > **&#10067; Why REST? We have GraphQL.** Lesson 5 moved reads to GraphQL and
 > `graphql-yoga` is still mounted. But look at what these two routes return: an
 > endless stream of events, and a file. GraphQL answers a question with a JSON
-> object shaped like your query. Neither of those is that shape. Choosing the
-> transport that fits the payload is the point — not using one tool for
-> everything.
+> object shaped like your query. Neither of those is that shape.
+>
+> To be fair to GraphQL: Yoga *does* support subscriptions, and it delivers
+> them over Server-Sent Events — the very thing you are about to build. So the
+> progress half could have been a subscription. The download could not, so you
+> would still need a REST route, and you would have paid for a second way of
+> doing the same thing. Choosing the transport that fits the payload is the
+> point, not using one tool for everything.
 
 Now read the `POST` handler again and count what it does: one row, one job, one
 response. Then look at the status code.
@@ -833,7 +909,7 @@ curl "http://localhost:3000/api/exports/1/download?token=$TOKEN"
 > `docker compose exec valkey valkey-cli TTL export:1:csv` and watch the number
 > count down. Nothing you wrote will delete that key. It deletes itself.
 
-### 6. Watch it happen: Server-Sent Events (~30 min)
+### 6. Watch it happen: Server-Sent Events (~35 min)
 
 Right now the only way for the browser to learn that an export finished is to
 ask. Over and over.
@@ -903,10 +979,7 @@ async function streamExportEvents(req: Request, res: Response) {
   };
 
   const onFailed = async ({ jobId, failedReason }: { jobId: string; failedReason: string }) => {
-    if (jobId !== mine) return;
-    sendEvent(res, 'failed', { id, status: 'failed', failedReason });
-    cleanup();
-    res.end();
+    // YOU WRITE THIS ONE. Read "Your turn" below before you do.
   };
 
   exportsQueueEvents.on('progress', onProgress);
@@ -947,23 +1020,87 @@ warn you about it.
 and the browser sits there waiting for a response that has technically already
 started.
 
-**`onCompleted` re-reads the row but `onFailed` does not.** That asymmetry is
-deliberate, and it is the subtle bug in this lesson:
+#### Your turn: write `onFailed`
 
-> **&#9888; Read this one twice.** On success, the row is safe to re-read: the
-> worker writes `completed` to PostgreSQL *before* its processor returns, and
-> BullMQ only emits `completed` after it has returned. The write is guaranteed
-> to have landed first.
+Every other line in this lesson is given to you. This one is not, because it
+is the one place where the obvious answer is wrong.
+
+The obvious answer is to copy `onCompleted`: check the id, re-read the row,
+send it. That will even look like it works — until a job actually fails.
+
+> **&#9888; Read this before you write it.** On success, re-reading the row is
+> safe. The worker writes `completed` to PostgreSQL *before* its processor
+> returns, and BullMQ only emits `completed` after the processor has returned.
+> The write has definitely landed.
 >
 > On failure there is no such guarantee. The row is written by the worker's own
-> `failed` listener, which is reacting to **the same event** as this handler,
+> `failed` listener — which is reacting to **the same event as this handler**,
 > with nothing ordering the two. Re-read the row here and you will usually win
-> the race and send the user a row that has not caught up yet — still
-> `queued` or `running`, with no `failedReason` in it.
+> the race and send the user a row that has not caught up: still `queued` or
+> `running`, with no `failedReason` in it.
 >
-> The user is then told "the export failed" with no reason why, while the row
-> in the database has the reason sitting right there. So the failure path uses
-> the event's own data and never looks at the database.
+> The user is then told "the export failed" with no reason why, while the
+> reason sits in the database.
+
+So write `onFailed` so that it **never reads the database**. Everything the
+client needs is already in the two arguments the event handed you. Remember to
+`cleanup()` and `res.end()` — a stream nobody closes is a stream that stays
+open.
+
+#### Test it by breaking the worker on purpose
+
+Add one line to the top of `processExportJob` in
+`backend/src/workers/exports.worker.ts`:
+
+```ts
+throw new Error('Simulated flakiness');
+```
+
+Restart the worker, ask for an export, and watch its stream. In the worker's
+terminal you should see **three** attempts, about one and two seconds apart:
+
+```
+Export job export-21 failed (attempt 1): Simulated flakiness
+Export job export-21 failed (attempt 2): Simulated flakiness
+Export job export-21 failed (attempt 3): Simulated flakiness
+```
+
+and in the stream, **one** `failed` event carrying the reason:
+
+```
+event: failed
+data: {"id":21,"status":"failed","failedReason":"Simulated flakiness"}
+```
+
+> **&#10067; Two numbers, and they should not match.** Three lines in the
+> worker's log, one event on the wire. If you get three events, you put the
+> `isFinalAttempt` guard in the wrong place. If you get an event with no
+> `failedReason`, you read the database — go back and read the warning above.
+
+Now try the wrong version on purpose: change your `onFailed` to
+`sendEvent(res, 'failed', await ExportsService.getById(id))` and run it again.
+The event still arrives, but look at what is in it — a row that has not caught
+up, and no reason for the failure. That is the race, and it is why this
+handler is the one you had to write yourself.
+
+Delete the `throw` when you are done.
+
+<details>
+<summary>The answer, once you have tried it</summary>
+
+```ts
+const onFailed = async ({ jobId, failedReason }: { jobId: string; failedReason: string }) => {
+  if (jobId !== mine) return;
+
+  // Reaching here at all means the job is out of attempts: unlike the
+  // worker's `failed` listener, this one fires once, at the end.
+  sendEvent(res, 'failed', { id, status: 'failed', failedReason });
+  cleanup();
+  res.end();
+};
+```
+
+</details>
 
 > **&#10067; One more, and it catches people out.** You wrote
 > `worker.on('failed')` in exercise 4 and it fired after every attempt. This
@@ -996,7 +1133,7 @@ command exits on its own.
 > If you try it, you will see a single `status` line and nothing else — which
 > is the filter working, not a bug.
 
-### 7. The browser side (~25 min)
+### 7. The browser side (~20 min)
 
 Create `frontend/src/types/Export.ts`:
 
@@ -1277,7 +1414,31 @@ Everything so far runs on your laptop. Your deployed app still has no queue.
    the traffic inside Render's network and it is faster.
 3. In your **backend** service, add an environment variable `REDIS_URL` with
    that value.
-4. Push. Render redeploys, and the worker starts inside your API process.
+4. Add a second environment variable, `RUN_WORKER_IN_API`, set to `true`.
+5. Push. Render redeploys.
+
+That fourth step needs explaining, and it needs one small change in
+`backend/app.ts`:
+
+```ts
+// Locally: not set, so the worker is the separate process you ran in
+// terminal 2. On Render: set to true, because the free tier has no
+// background-worker instance type, so the API has to do the work too.
+if (process.env['RUN_WORKER_IN_API'] === 'true') {
+  console.log('Running the export worker inside the API process.');
+  await import('./src/workers/exports.worker.ts');
+}
+```
+
+> **&#9888; This is a deployment compromise, and it is written down as one.**
+> On a paid plan you would create a **Background Worker** service pointing at
+> the same repository, with `npm run worker` as its start command and the same
+> `REDIS_URL`, and never set this variable. Your `worker.ts` would run there
+> unchanged — because it already does, on your laptop, in terminal 2.
+>
+> Notice what did *not* have to change to support both shapes: the queue, the
+> worker, the service, the routes. One `if`, in the file that decides what
+> this process is.
 
 Then test it in production, not just locally. Concretely:
 
@@ -1320,6 +1481,9 @@ Then test it in production, not just locally. Concretely:
   is a feature you would otherwise have to build, deploy and monitor.
 - **A job is a note, not a payload.** It says what to do. The worker reads the
   data fresh, so nothing is ever stale.
+- **The API and the worker share nothing but Redis.** You ran them as two
+  processes and killed one while the other kept serving. That is why a worker
+  can move to another machine, and why you can run five of them and one API.
 - **Retries and a concurrency limit are the two things a queue gives you that a
   function call cannot.** `attempts: 3` turns a network blip into a one-second
   delay. `concurrency: 2` is a promise that this work will never swamp the rest
@@ -1346,6 +1510,12 @@ email you when your report is ready" you have ever received.
 Optional. Pick one if you have time — the lesson is complete without them.
 
 ### A. Swap Server-Sent Events for WebSockets
+
+> A finished version of this one ships in the reference solution:
+> `backend/src/realtime/exportSocket.ts` and
+> `frontend/src/hooks/useExportSocket.ts`. Try it yourself first — then read
+> that and compare. The two hooks take the same argument and return the same
+> shape, so switching is one import in `ExportPage.tsx`.
 
 SSE only goes one way: server to browser. That is all this feature needs, which
 is why we used it. **WebSockets** go both ways, and they are the right tool the
@@ -1431,21 +1601,47 @@ Three things to notice while you do it:
   `WebSocket` does not. You now have to write that yourself, and it is the main
   reason not to reach for WebSockets when one direction would do.
 
-### B. Make a job fail on purpose
 
-Add a line to the top of `processExportJob`:
+### B. Stop putting the token in the URL
+
+Exercise 7 put your JWT in two URLs and explained why there was nowhere else
+to put it. There is a way out, and it is not much code: stop sending the
+*session* token, and send a ticket that is worth almost nothing instead.
+
+Add one route, behind the normal header guard:
 
 ```ts
-if (Math.random() < 0.5) throw new Error('Simulated flakiness');
+// POST /api/exports/:id/ticket
+// Returns a token that is good for one stream, for thirty seconds.
+router.post('/:id/ticket', async (req, res) => {
+  const { userId } = currentUser(res);
+  const id = Number(req.params.id);
+  const record = await ExportsService.getById(id);
+
+  if (!record || record.requesterId !== userId) {
+    return res.status(404).json({ error: 'Export not found' });
+  }
+
+  const ticket = jwt.sign({ userId, exportId: id, kind: 'export-stream' }, JWT_SECRET, {
+    expiresIn: '30s',
+  });
+
+  return res.json({ ticket });
+});
 ```
 
-Watch the server logs. You should see several attempts for one job, spaced
-about a second apart and then two, before either a success or a final failure.
+Then make `requireAuthQuery` accept **only** that kind of token, and have the
+frontend ask for a ticket just before it opens the stream.
 
-Then answer two questions by reading your own code:
+Three things to think about while you do it:
 
-1. Why does the export row not go to `failed` on the first throw?
-2. Why does the browser not show an error until the third?
+- **What did you actually gain?** The URL still contains a token. But one that
+  expires in thirty seconds, works for one export, and cannot create expenses
+  or read your profile. A leaked access log is now worth nothing.
+- **`kind: 'export-stream'` is doing real work.** Without it the server cannot
+  tell a ticket from a session token, and you are back where you started.
+- **The download link has the same problem** and the same fix. Does one ticket
+  cover both, or does each get its own?
 
 ### C. Give the user their history
 

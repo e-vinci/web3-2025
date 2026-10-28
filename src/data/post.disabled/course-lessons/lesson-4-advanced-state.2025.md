@@ -17,7 +17,7 @@ category: 'course-lesson'
 
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-4-theory.pptx)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-4-search-migration2-theory.pptx)
 
 ## Introduction
 

@@ -17,7 +17,7 @@ category: 'course-lesson'
 
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-5-theory.pptx)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-5-router-graphql-theory.pptx)
 
 ## Introduction
 
@@ -62,7 +62,7 @@ Read the first two before you start. The others are references to come back to d
 
 ## Setup (~15 min)
 
-Start from [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-4-form-migration-end), or from your own code if you got lesson 4 working.
+Start from [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-4-form-migration-end-solution), or from your own code if you got lesson 4 working.
 
 Make sure the backend and the frontend both still run before you change anything. You should be able to list expenses, filter them, and add one.
 

@@ -20,7 +20,7 @@ category: 'course-lesson'
 ---
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-6-theory.pptx)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-6-when-things-go-wrong-theory.pptx)
 
 
 ## Introduction
@@ -92,7 +92,7 @@ Read the first two before you start. The others are references to come back to d
 
 ## Exercises
 
-> **Starting Point:** These exercises build upon the code from Lesson 5. You should have a working Express backend with GraphQL and a React frontend. If you haven't completed Lesson 5, you can use the code in `exercises/lesson-5-router-graphql/` as your starting point.
+> **Starting Point:** These exercises build upon the code from Lesson 5. You should have a working Express backend with GraphQL and a React frontend. If you haven't completed Lesson 5, you can use the code in `exercises/lesson-5-router-graphql-solution/` as your starting point.
 
 ### 0. Post an expense as somebody else (~10 min)
 

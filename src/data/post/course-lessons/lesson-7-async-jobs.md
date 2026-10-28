@@ -22,8 +22,8 @@ category: 'course-lesson'
 
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-7-theory.pptx)
-- [Boilerplate](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/exercises/lesson-7-boilerplate/boilerplate.zip)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-7-async-jobs-theory.pptx)
+- [Boilerplate](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/exercises/lesson-7-async-jobs-boilerplate/boilerplate.zip)
 
 ## Introduction
 
@@ -73,7 +73,7 @@ By the end of this lesson you should be able to:
 **This lesson uses a boilerplate.** Download and unzip it:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/exercises/lesson-7-boilerplate/boilerplate.zip
+curl -LO https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/exercises/lesson-7-async-jobs-boilerplate/boilerplate.zip
 unzip boilerplate.zip
 rm boilerplate.zip
 ```

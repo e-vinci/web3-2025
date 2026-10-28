@@ -17,7 +17,7 @@ category: 'course-lesson'
 ---
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-5-theory.pptx)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-5-router-graphql-theory.pptx)
   
 
 ## Introduction

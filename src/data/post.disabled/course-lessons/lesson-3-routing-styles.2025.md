@@ -15,7 +15,7 @@ category: 'course-lesson'
 
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-3-theory.pptx)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-3-form-migration-theory.pptx)
 
 ## Introduction
 
@@ -33,7 +33,7 @@ Don't forget to commit regularly & to push on render - an application that's not
 
 ## Setup
 
-- Get [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-2-deploy-and-persistence) as a starting point for this exercise. You can also work from your own code (assuming you got it working), but you may need to adapt a bit the instructions.
+- Get [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-2-deploy-and-persistence-solution) as a starting point for this exercise. You can also work from your own code (assuming you got it working), but you may need to adapt a bit the instructions.
 
 ## Recommended Reading
 

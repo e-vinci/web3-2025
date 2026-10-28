@@ -71,12 +71,12 @@ until you have done TODO 4.
 
 ## Maintainers
 
-This folder and `exercises/lesson-7-async-jobs/` must stay in sync: the latter is
+This folder and `exercises/lesson-7-async-jobs-solution/` must stay in sync: the latter is
 this boilerplate with every gap filled. After changing anything here, rebuild the
 zip in the same commit:
 
 ```bash
-# from exercises/lesson-7-boilerplate/
+# from exercises/lesson-7-async-jobs-boilerplate/
 zip -r boilerplate.zip frontend backend README.md \
   -x '*/node_modules/*' '*/dist/*' '*/data/*' '*.env' \
      '*/.claude/*' '*/.cursor/*' '*/.devin/*' '*/.agents/*'

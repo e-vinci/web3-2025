@@ -1,8 +1,8 @@
 ---
-title: 'Lesson 4 – Migration following and end'
-description: 'Migration: adding the category to the expense'
+title: 'Lesson 4 – Search and Categories'
+description: 'Filter expenses by amount and payer, then add a category resource with a migration.'
 publishDate: 2025-10-17T00:00:00Z
-excerpt: 'Migration: adding the category to the expense'
+excerpt: 'Filter expenses by amount and payer, then add a category resource with a migration.'
 tags:
   - react
   - typescript

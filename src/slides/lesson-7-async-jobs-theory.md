@@ -162,21 +162,6 @@ Speaker notes:
 
 You have had **one** place to put things since lesson 2.
 
-Today you add another.
-
-### Not because it is faster.
-
-<!--
-Speaker notes:
-• Pause on that last line. "Redis is fast" is the answer they will give, and
-  it is the wrong model — it leads to "so should I put everything in Redis?"
-• Let the question hang before the next slide.
--->
-
----
-
-## Two stores, two jobs
-
 |              | **PostgreSQL**        | **Redis**              |
 |--------------|-----------------------|------------------------|
 | Holds        | facts                 | work in progress       |
@@ -184,16 +169,15 @@ Speaker notes:
 | Losing it is | a disaster            | survivable             |
 | Example      | this expense happened | job 12 is waiting      |
 
-**Redis is not a faster Postgres.**
+### Not because it is faster.
 
 <!--
 Speaker notes:
 • Have them read the "Losing it is" row out loud. That row is the model.
 • Do NOT say "Redis is the fast one". It leads straight to "so should I put
   everything in Redis?", and the answer is no.
-• Someone will now ask the good question: "but Postgres could hold a queue
-  too, couldn't it?" The next two slides are that question. If nobody asks
-  it, ask it yourself.
+• Redis is the new thing today. Postgres they know. Spend the time on what
+  Redis is FOR, not on comparing query languages.
 -->
 
 ---
@@ -208,115 +192,44 @@ Every row Postgres stores also gets:
 - a dead row left behind for autovacuum
 
 For an expense, you want all four.
-
-### A job lives ten seconds. Do you?
-
-<!--
-Speaker notes:
-• This is the slide that answers "why not Postgres", and it is NOT about
-  speed. Say that out loud.
-• The dead-row point needs one sentence of MVCC: in Postgres an UPDATE does
-  not edit a row, it writes a NEW version and leaves the old one to be
-  cleaned up later. A queue row is INSERT, UPDATE (claimed), UPDATE
-  (progress), DELETE -- four versions for one job. Multiply by your job rate
-  and autovacuum is permanently chasing that one table.
-• The vivid one is the backup. Ask: "what is in your 3am backup?" Answer: a
-  snapshot of which jobs happened to be pending at 3am. Useless. You paid
-  fsync for it.
--->
----
-
-## "Could we just use Postgres?"
-
-**Yes. And plenty of teams should.**
-
-```sql
-SELECT * FROM job
-  WHERE status = 'queued'
-  ORDER BY id
-  FOR UPDATE SKIP LOCKED
-  LIMIT 1;
-```
-
-That is a real queue. `pg-boss` ships it, and it is
-downloaded millions of times a week.
-
-<!--
-Speaker notes:
-• Be genuinely honest here. For a normal CRUD app with modest throughput,
-  Postgres-as-queue is a good decision and one less thing to operate.
-• SKIP LOCKED is the trick: two workers running this at the same time get
-  two DIFFERENT rows instead of blocking on each other.
-• What you give up: Postgres has no "wait until a job appears". pg-boss
-  polls on a timer, with LISTEN/NOTIFY to wake it early -- and NOTIFY is
-  fire-and-forget, so the poll stays as a backstop. Redis workers genuinely
-  block; an idle worker costs nothing and picks up in under a millisecond.
-• So the rule is not "Redis wins". It is: do you want blocking workers and
-  job churn kept out of your main database? Then Redis. Otherwise Postgres
-  is fine.
--->
-
----
-
-## And the thing Postgres does better
-
-```sql
-BEGIN;
-  INSERT INTO expense ...;
-  INSERT INTO job    ...;   -- same transaction
-COMMIT;
-```
-
-Both, or neither. **Redis cannot do that.**
-
-In TODO 4 you write a row, *then* queue a job.
-Two steps. Two chances to fail.
-
-<!--
-Speaker notes:
-• This is the strongest argument against the choice we made, so make it
-  yourself before a student does.
-• Walk the failure: the API writes the export row, the process dies, the job
-  was never queued. The row sits on `queued` forever and nothing retries it.
-  That is a DUAL WRITE, and it is the price of putting the queue in another
-  system.
-• Ask: "how bad is it here?" Answer: survivable. The row exists, so the user
-  can see a stuck export and ask again. Compare with queueing FIRST -- then
-  a job would reference a row that does not exist. Order matters, and that
-  is why the route writes the row first.
-• The real-world fix is the outbox pattern -- write the job into Postgres in
-  the same transaction, and ship it to Redis separately. Name it, do not
-  teach it.
--->
-
----
-
-## So how do you choose?
-
-One question, every time:
+A job lives ten seconds.
 
 ### "If I lost this, would a user notice?"
 
-|                  | Lose it and... | Goes in      |
-|------------------|----------------|--------------|
-| The expense      | a fact is gone | **Postgres** |
-| The export row   | a fact is gone | **Postgres** |
-| The CSV file     | a fact is gone | **Postgres** |
-| A pending job    | it runs late   | **Redis**    |
-| A progress event | a bar jumps    | **Redis**    |
-
 <!--
 Speaker notes:
-• Walk the table. Make them answer the question for each row BEFORE you
-  reveal the right column.
-• Then: the free Render Key Value instance is NOT persistent -- it loses
-  everything on restart. Ask "is our app broken?" Answer: no. Look at the
-  table. Only the bottom two rows live there, and both are survivable.
-• The real question: "when would it NOT be survivable?" Answer: if the queue
-  were the only record that someone asked. It is not -- that is the export
-  row, in Postgres. Which is exactly why the route writes the row FIRST and
-  queues the job SECOND.
+• THIS is why we are not using Postgres for the queue, and it is not about
+  speed. Say that out loud.
+• One sentence of MVCC if they want it: an UPDATE in Postgres does not edit
+  a row, it writes a new version and leaves the old one for autovacuum. One
+  job is four versions -- insert, claimed, progress, delete.
+• The vivid one is the backup. Ask "what is in your 3am backup?" Answer: a
+  snapshot of which jobs happened to be pending at 3am. Useless, and you
+  paid fsync for it.
+• Then the closing question, applied: the expense, the export row and the
+  CSV all go in Postgres. A pending job and a progress event go in Redis.
+  Make them answer each one before you say it.
+• The free Render Key Value instance is NOT persistent. Ask "is our app
+  broken?" No -- only the two survivable things live there.
+
+IF SOMEONE ASKS "but Postgres could do this, couldn't it?" -- good question,
+answer it honestly, no slide needed:
+  - Yes. SELECT ... FOR UPDATE SKIP LOCKED is a real queue, and pg-boss
+    ships exactly that. For modest throughput it is a fine choice and one
+    less thing to run.
+  - What it gives up: Postgres has no "wait until a job appears". pg-boss
+    polls on a timer and uses LISTEN/NOTIFY to wake early -- but NOTIFY is
+    fire-and-forget, so the poll stays as a backstop. Redis workers truly
+    block: an idle worker costs nothing and picks up in under a millisecond.
+  - What Postgres does BETTER: you can enqueue inside the same transaction
+    as the write that caused it. Redis cannot. In TODO 4 they write the row
+    and THEN queue the job -- two steps, two chances to fail. If the process
+    dies between, the row sits on `queued` forever. That is a dual write,
+    and it is the price of a second system. It is survivable here precisely
+    because the row is written FIRST. The real fix is the outbox pattern;
+    name it, do not teach it.
 -->
+
 ---
 
 ## Redis does two jobs today
@@ -331,14 +244,20 @@ Neither one is storing a fact.
 
 <!--
 Speaker notes:
-• That last line is what stops "Redis = fast Postgres" from sticking.
-• Ask: "why not keep the file in Redis too?" Answers you want: it has to
+• Redis is the new thing today, so this is the slide that says what it is
+  actually DOING in their app. Do not rush it.
+• Ask: "why not keep the CSV in Redis too?" Answers you want: it has to
   survive a restart; it is read alongside its row; it is a record of what
   happened, not a message between two programs.
 • Honest aside, say it: in production that file goes to object storage
   (S3, R2), not a text column -- a database is an expensive place to keep
   bytes nobody queries. They will meet this at their first internship.
+• Job 2 is the one they will not have expected. The worker is a SEPARATE
+  PROCESS, so when it reports progress that has to cross a process boundary
+  to reach the socket the API is holding. BullMQ writes those to a Redis
+  stream. That is the next slide's picture.
 -->
+
 ---
 
 ## A queue, in one picture

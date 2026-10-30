@@ -508,21 +508,21 @@
               "columns": {
                 "colour": {
                   "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "dataType": "pg/text",
                   "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "name": {
                   "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "dataType": "pg/text",
                   "nullable": false
                 }
               },
@@ -545,45 +545,48 @@
               "columns": {
                 "amount": {
                   "codecId": "pg/float8@1",
-                  "nativeType": "float8",
+                  "dataType": "pg/float8",
                   "nullable": false
                 },
                 "categoryId": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": true
                 },
                 "date": {
                   "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "description": {
                   "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "dataType": "pg/text",
                   "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "payerId": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 }
               },
               "foreignKeys": [
                 {
+                  "index": {
+                    "name": "expense_payerId_idx_3d3ae95d"
+                  },
                   "source": {
                     "columns": [
                       "payerId"
@@ -600,6 +603,9 @@
                   }
                 },
                 {
+                  "index": {
+                    "name": "expense_categoryId_idx_15c304f2"
+                  },
                   "source": {
                     "columns": [
                       "categoryId"
@@ -645,17 +651,20 @@
               "columns": {
                 "expenseId": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 },
                 "userId": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 }
               },
               "foreignKeys": [
                 {
+                  "index": {
+                    "name": "participations_expenseId_idx_69d413fa"
+                  },
                   "onDelete": "cascade",
                   "source": {
                     "columns": [
@@ -673,6 +682,9 @@
                   }
                 },
                 {
+                  "index": {
+                    "name": "participations_userId_idx_a489d58a"
+                  },
                   "onDelete": "cascade",
                   "source": {
                     "columns": [
@@ -720,40 +732,43 @@
               "columns": {
                 "amount": {
                   "codecId": "pg/float8@1",
-                  "nativeType": "float8",
+                  "dataType": "pg/float8",
                   "nullable": false
                 },
                 "date": {
                   "codecId": "pg/timestamptz-string@1",
+                  "dataType": "pg/timestamptz",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "sourceId": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 },
                 "targetId": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 }
               },
               "foreignKeys": [
                 {
+                  "index": {
+                    "name": "transfer_sourceId_idx_d92a2571"
+                  },
                   "source": {
                     "columns": [
                       "sourceId"
@@ -770,6 +785,9 @@
                   }
                 },
                 {
+                  "index": {
+                    "name": "transfer_targetId_idx_9852d518"
+                  },
                   "source": {
                     "columns": [
                       "targetId"
@@ -815,31 +833,31 @@
               "columns": {
                 "bankAccount": {
                   "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "dataType": "pg/text",
                   "nullable": true
                 },
                 "email": {
                   "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "dataType": "pg/text",
                   "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "name": {
                   "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "dataType": "pg/text",
                   "nullable": false
                 },
                 "passwordHash": {
                   "codecId": "pg/text@1",
-                  "nativeType": "text",
+                  "dataType": "pg/text",
                   "nullable": false
                 }
               },
@@ -864,11 +882,13 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "36d08ae6dc4502531c6692b363c04e9aaa9077a6d14e61539dc4892da2e38a31"
+    "storageHash": "001a3b33f87264341a6e61912c7005a4cd93c7b10822c62c1d77b9f71401227b"
   },
   "capabilities": {
     "postgres": {
       "distinctOn": true,
+      "forKeyShare": true,
+      "forNoKeyUpdate": true,
       "jsonAgg": true,
       "lateral": true,
       "limit": true,
@@ -879,9 +899,14 @@
       "checkConstraint": true,
       "defaultInInsert": true,
       "enums": true,
+      "forShare": true,
+      "forUpdate": true,
       "insertOnConflictSkip": true,
       "insertOnConflictWithoutTarget": true,
       "lateral": true,
+      "lockNowait": true,
+      "lockOf": true,
+      "lockSkipLocked": true,
       "returning": true,
       "scalarList": true
     }

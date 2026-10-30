@@ -1,0 +1,28 @@
+# Local development only. Render does not read this file: in production it
+# provides its own managed PostgreSQL and its own Key Value instance.
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: expenso
+      POSTGRES_PASSWORD: expenso
+      POSTGRES_DB: expenso
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+
+  # The second database (see exercise 1 for why). Valkey, not Redis -- same
+  # protocol either way; see exercise 1 for that story too.
+  #
+  # Version 8, not the newest: matches what Render's Key Value service runs.
+  #
+  # No `volumes:` line, unlike postgres above -- nothing here survives
+  # `docker compose down`, on purpose. Treat this store as disposable, because
+  # on Render's free tier it genuinely is.
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    ports:
+      - "6379:6379"

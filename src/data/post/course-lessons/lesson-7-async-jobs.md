@@ -120,49 +120,6 @@ that specific thing.
 
 ## Exercises
 
-### 0. Feel the problem first (~5 min)
-
-Before building anything, make your own server do the bad thing. Your backend
-is running from the setup above. In `backend/app.ts`, next to the `/ping`
-route, add this:
-
-```ts
-app.get('/slow', (_req, res) => {
-  const stop = Date.now() + 15_000;
-  while (Date.now() < stop) {
-    // busy: this is what real CPU work looks like to Node
-  }
-  res.json({ done: true });
-});
-```
-
-`npm run dev` reloads on save. Now open **two** more terminals.
-
-```bash
-# terminal 1
-curl http://localhost:3000/slow
-```
-
-```bash
-# terminal 2, while the first is still hanging
-curl http://localhost:3000/ping
-```
-
-> **&#10067; Predict first.** Write down one word before you run the second
-> command: does `/ping` answer **immediately**, or does it wait?
-
-It waits. **Your whole server is frozen for fifteen seconds**, for every user,
-because one request is doing real work on the single thread that serves all of
-them.
-
-> **&#9888; This is the lesson in one experiment.** And the problem is bigger
-> than the freeze. Even if this work were cheap for Node — waiting on a
-> database, say — the request would still hold a socket open, still lose
-> everything if the server restarts, and still leave the user watching a
-> spinner. A queue fixes all four at once.
-
-Delete the `/slow` route before moving on. It has done its job.
-
 ### 1. Two databases (~15 min)
 
 > **&#9888; If `docker compose up -d` is still running, leave it.** The first
@@ -256,7 +213,10 @@ defaultJobOptions: {
 ```
 </details>
 
-
+```bash
+# from backend/
+./checks/step_2.bash
+```
 
 ### 3. The worker (~20 min)
 
@@ -313,6 +273,14 @@ return { rowCount: expenses.length };
 > years of history. The sleeps buy you those seconds so you can *see* the queue
 > work. It is the one fake thing in this exercise. Everything around it is
 > real.
+
+This one runs a real job through your worker and checks the result — give it a
+few seconds:
+
+```bash
+# from backend/
+./checks/step_3.bash
+```
 
 #### TODO 3 — retry, or real failure?
 

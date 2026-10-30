@@ -555,9 +555,8 @@ Speaker notes:
 • If one student remembers one thing, make it this: we did not pick Redis
   because it is fast. We picked it because we did not want this data in the
   backups.
-• Then send them to the exercises. Exercise 0 repeats the live demo from
-  slide 4 on their own machines — that is deliberate, they need to feel it,
-  not just have watched it.
+• The live demo on slide 4 is the only time they see the frozen-server
+  problem — it is not repeated as an exercise, so do not rush it.
 -->
 
 ---

@@ -43,6 +43,13 @@ Find them all with:
 grep -rn "TODO [0-9]" backend/src frontend/src
 ```
 
+## Checking your work
+
+`backend/checks/step_<n>.bash` scripts verify a gap for you where the result
+isn't something you can see in a browser or check with one curl command — the
+lesson tells you when to run one. They print what they checked, and exit
+non-zero with a clear reason if something is still missing.
+
 ## Getting started
 
 ```bash

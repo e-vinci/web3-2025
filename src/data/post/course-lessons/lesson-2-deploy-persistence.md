@@ -17,7 +17,7 @@ tags:
   - course
   - web3-2025
 category: 'course-lesson'
-# image: https://picsum.photos/id/48/200/200
+image: '~/assets/images/lessons/lesson-2.svg'
 ---
 
 ## Course material

@@ -22,7 +22,7 @@ category: 'course-lesson'
 
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-2-theory.pptx)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-2-deploy-persistence-theory.pptx)
 
 ## Introduction
 
@@ -31,7 +31,7 @@ Last week we started a new full stack app, brushing off last year course of Reac
 ## Setup
 
 - Create an account on [Render](https://render.com/) - you'll need it. You can use your vinci email, we'll use the free tier there and it does not require a credit card.
-- Get [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-1-refresh) as a starting point for this exercise. You can also work from your own code (assuming you got it working), but you may need to adapt a bit the instructions.
+- Get [last week's solution](https://github.com/e-vinci/web3-2025/tree/main/exercises/lesson-1-refresh-solution) as a starting point for this exercise. You can also work from your own code (assuming you got it working), but you may need to adapt a bit the instructions.
 
 ## Recommended Reading
 

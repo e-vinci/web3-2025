@@ -18,7 +18,7 @@ category: 'course-lesson'
 
 ## Course material
 
-- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-1-theory.pptx)
+- [Presentation Slides](https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/src/slides/lesson-1-refresh-theory.pptx)
 
 ## Introduction
 
@@ -44,11 +44,11 @@ provided boilerplate, as described in Exercise 1.
 
 **Goal**: Set up your project with a standard, industry-compliant starting point.
 
-- Create and Navigate to your exercise directory, eg: `web3/exercises/lesson-1-refresh`
+- Create and Navigate to your exercise directory, eg: `web3/exercises/lesson-1-refresh-solution`
 - Download the course boilerplate and extract it here:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/exercises/0-boilerplate/boilerplate.zip
+curl -LO https://raw.githubusercontent.com/e-vinci/web3-2025/refs/heads/main/exercises/lesson-1-refresh-boilerplate/boilerplate.zip
 unzip boilerplate.zip
 rm boilerplate.zip
 ```

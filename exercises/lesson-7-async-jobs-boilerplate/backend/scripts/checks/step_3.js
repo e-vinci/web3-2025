@@ -7,9 +7,9 @@
 //
 // It does NOT check TODO 3 (the retry/failure guard) — "break it on purpose"
 // later in exercise 5 is where you see that one happen.
-import { ExportsService } from '../src/services/exports.service.ts';
-import { exportsQueue } from '../src/queues/exports.queue.ts';
-import { exportsWorker } from '../src/workers/exports.worker.ts';
+import { ExportsService } from '../../src/services/exports.service.ts';
+import { exportsQueue } from '../../src/queues/exports.queue.ts';
+import { exportsWorker } from '../../src/workers/exports.worker.ts';
 
 const REQUESTER_ID = 1; // john.doe@example.com, from db-populate.ts
 

@@ -2,7 +2,7 @@
 //
 // This only inspects the Queue instance's configuration — it does not need
 // Redis to be reachable, so it works the moment you save the file.
-const { exportsQueue } = await import('../src/queues/exports.queue.ts');
+const { exportsQueue } = await import('../../src/queues/exports.queue.ts');
 const o = exportsQueue.defaultJobOptions ?? {};
 
 const checks = [

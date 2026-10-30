@@ -215,7 +215,7 @@ defaultJobOptions: {
 
 ```bash
 # from backend/
-./checks/step_2.bash
+node scripts/checks/step_2.js
 ```
 
 ### 3. The worker (~20 min)
@@ -279,7 +279,7 @@ few seconds:
 
 ```bash
 # from backend/
-./checks/step_3.bash
+node scripts/checks/step_3.js
 ```
 
 #### TODO 3 — retry, or real failure?

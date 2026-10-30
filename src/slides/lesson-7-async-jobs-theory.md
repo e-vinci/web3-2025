@@ -232,34 +232,6 @@ answer it honestly, no slide needed:
 
 ---
 
-## Redis does two jobs today
-
-1. **The queue** — the list of pending work
-2. **The event stream** — "job 12 is 60% done", across processes
-
-Both are **coordination between two programs**.
-Neither one is storing a fact.
-
-### The CSV is a fact. It goes in PostgreSQL.
-
-<!--
-Speaker notes:
-• Redis is the new thing today, so this is the slide that says what it is
-  actually DOING in their app. Do not rush it.
-• Ask: "why not keep the CSV in Redis too?" Answers you want: it has to
-  survive a restart; it is read alongside its row; it is a record of what
-  happened, not a message between two programs.
-• Honest aside, say it: in production that file goes to object storage
-  (S3, R2), not a text column -- a database is an expensive place to keep
-  bytes nobody queries. They will meet this at their first internship.
-• Job 2 is the one they will not have expected. The worker is a SEPARATE
-  PROCESS, so when it reports progress that has to cross a process boundary
-  to reach the socket the API is holding. BullMQ writes those to a Redis
-  stream. That is the next slide's picture.
--->
-
----
-
 ## A queue, in one picture
 
 ```
@@ -284,56 +256,6 @@ Speaker notes:
 • The key visual: the request handler and the worker NEVER touch each other.
   Redis sits between them. That is what lets the worker move to another
   machine later without changing a line.
--->
-
----
-
-## Two processes, sharing nothing
-
-```bash
-npm run dev      # terminal 1 — the API
-npm run worker   # terminal 2 — the worker
-```
-
-**Kill the worker. Ask for five exports.**
-
-```
-14:queued  15:queued  16:queued  17:queued  18:queued
-```
-
-Nothing failed. Nothing is lost. The API never slowed down.
-
-<!--
-Speaker notes:
-• Do this live if you can. It takes 40 seconds and it is the most convincing
-  thing in the deck.
-• They do not import each other. They do not know each other's port. They do
-  not share a variable. Redis is the whole interface.
-• Ask: "where is the work right now?" Answer: in Redis, as a list. Then ask
-  "what happens if I deploy the API now?" Answer: nothing, the jobs are fine.
-  That is item 3 from the "four problems" slide, solved.
--->
-
----
-
-## ...and now start it again
-
-```
-t+3s    14:running    15:running    16:queued     17:queued     18:queued
-t+7s    14:completed  15:completed  16:running    17:running    18:queued
-t+11s   14:completed  15:completed  16:completed  17:completed  18:running
-```
-
-### Two at a time. Why?
-
-<!--
-Speaker notes — ask, wait, then point at the slide from earlier.
-Answer: concurrency: 2.
-
-This is the payoff for that slide. It was an assertion when they wrote it;
-here it is a thing they watched. Invite them to set it to 5 and re-run.
-
-Real output from a real run — this table is not invented.
 -->
 
 ---
@@ -387,71 +309,85 @@ a queue of fat jobs fills it.
 
 ---
 
-## What a queue gives you that a function call cannot
+## What a queue gives you
 
 ```ts
-{
-  attempts: 3,
-  backoff: { type: 'exponential', delay: 1000 },
-  removeOnComplete: { age: 3600 },
-}
+{ attempts: 3, backoff: { type: 'exponential', delay: 1000 } }
 ```
 
-- **`attempts`** — a network blip becomes a 1-second delay, not a lost request
-- **`backoff`** — 1s, then 2s, then 4s. Do not stampede a service that is down
-- **`removeOnComplete`** — Redis is memory. Finished jobs are not free
+- a network blip becomes a **1-second delay**, not a lost request
+- `removeOnComplete` — Redis is memory, and finished jobs are not free
+
+```ts
+new Worker(QUEUE, processExportJob, { concurrency: 2 });
+```
+
+### However long the queue gets: **two at a time.**
 
 <!--
 Speaker notes:
 • "Write retry-with-exponential-backoff yourself, correctly, including the
-  case where the process dies mid-retry." That is the sell.
-• removeOnComplete is the one they will skip and regret. 25 MB free tier.
+  case where the process dies mid-retry." That is the sell for a queue over
+  a plain function call.
+• concurrency is a promise to the REST of the system, not to the user. Ask
+  "what breaks without it?" -- connection pool exhausted, memory, the API
+  starved of CPU. A queue with no limit is a slower way to fall over.
+• Hold the number 2. The next two slides are them watching it be true.
+• removeOnComplete they will skip and regret: the free instance is 25 MB.
+• NOT on a slide, say it if asked: worker.on('failed') fires after EVERY
+  attempt, queueEvents.on('failed') fires once at the end. That trap is
+  TODO 3, and the exercise makes them measure it -- three log lines, one
+  browser message. Do not pre-empt it here.
 -->
 
 ---
 
-## And one promise you make back
+## Two processes, sharing nothing
 
-```ts
-new Worker(EXPORTS_QUEUE, processExportJob, {
-  concurrency: 2,
-});
+```bash
+npm run dev      # terminal 1 — the API
+npm run worker   # terminal 2 — the worker
 ```
 
-However long the queue gets, this worker runs **two** at a time.
+**Kill the worker. Ask for five exports.**
 
-**A queue with no concurrency limit is just a slower way to fall over.**
+```
+14:queued  15:queued  16:queued  17:queued  18:queued
+```
+
+Nothing failed. Nothing is lost. The API never slowed down.
 
 <!--
 Speaker notes:
-• Ask: "what breaks without this?" Answers: database connection pool
-  exhausted, memory, CPU starvation of the API.
-• This is a promise to the REST of the system, not to the user.
+• Do this live if you can. It takes 40 seconds and it is the most convincing
+  thing in the deck.
+• They do not import each other. They do not know each other's port. They do
+  not share a variable. Redis is the whole interface.
+• Ask: "where is the work right now?" Answer: in Redis, as a list. Then ask
+  "what happens if I deploy the API now?" Answer: nothing, the jobs are fine.
+  That is item 3 from the "four problems" slide, solved.
 -->
 
 ---
 
-## Two events with the same name
+## ...and now start it again
 
-```ts
-worker.on('failed', ...)        // fires after EVERY attempt
-queueEvents.on('failed', ...)   // fires ONCE, at the end
+```
+t+3s    14:running    15:running    16:queued     17:queued     18:queued
+t+7s    14:completed  15:completed  16:running    17:running    18:queued
+t+11s   14:completed  15:completed  16:completed  17:completed  18:running
 ```
 
-With `attempts: 3` and a job that always throws:
-
-- `worker.on('failed')` → **3 times**
-- `queueEvents.on('failed')` → **1 time**
+### Two at a time. Why?
 
 <!--
-Speaker notes:
-• This is the trap of the lesson. They WILL get it wrong.
-• Between attempts the job moves to `delayed`, which is not a failure.
-• Consequence: only the worker listener needs an isFinalAttempt() guard.
-  Without it, the first throw marks the export failed — and then attempt two
-  succeeds, and the user has been told their export died when it did not.
-• Measured, not guessed: attemptsMade was 1, 2, 3 on the worker; one event
-  with attemptsMade 3 on queueEvents.
+Speaker notes — ask, wait, then page back two slides.
+Answer: concurrency: 2, which they saw on "What a queue gives you".
+
+That was an assertion. This is them watching it be true. Invite them to set
+it to 5 and re-run — the exercise tells them how.
+
+Real output from a real run; this table is not invented.
 -->
 
 ---
@@ -477,8 +413,8 @@ Speaker notes:
 | Every... | Cost |
 |---|---|
 | **5 seconds** | user waits up to 5s after it is already done |
-| **1 second** | 40 students = 40 req/s, answer is "no" every time |
-| **200 ms** | 200 req/s, answer is "no" every time |
+| **1 second** | 40 students = 40 req/s, can the server handle it? |
+| **200 ms** | 200 req/s, the server cannot handle it. |
 
 ### There is no good number.
 
@@ -516,6 +452,7 @@ Speaker notes:
 • They do NOT write the handshake; it is in the boilerplate. They write who
   receives each message.
 -->
+
 ---
 
 ## One socket server, forty students
@@ -547,32 +484,8 @@ Speaker notes:
   export this user owns, so the hook filters on exportId too. Two filters,
   one at each end, same reason.
 -->
+
 ---
-
-## A socket is not a mailbox
-
-It tells you what happens **next**.
-Not what already happened.
-
-```ts
-// before opening the socket
-const current = await apiRequest(`/api/exports/${id}`);
-```
-
-If the job finished while the page was loading,
-**no event is ever coming**.
-
-<!--
-Speaker notes:
-• This catches people. They open the socket, see nothing, and assume the
-  socket is broken. It is working perfectly -- there is simply no news.
-• Same class of bug as a chat app that shows no history: a stream carries
-  the future, a GET carries the present.
-• It is one line in the boilerplate and the lesson points at it, but ask
-  them WHY it is there rather than telling them.
--->
----
-
 
 ## The other half of the family: SSE
 
@@ -618,54 +531,10 @@ Speaker notes:
 • Ask: "why is this fine for fetch()?" Because YOUR JavaScript makes that
   call. The moment the BROWSER makes it, headers are not yours.
 • That is the rule worth keeping. Two instances today, same cause.
--->
-
----
-
-## The two real answers
-
-Neither is built today — both are worth knowing:
-
-1. **A cookie**
-   the browser attaches them to both, automatically
-
-2. **A single-use ticket**
-   Mint a token valid for *this one stream*, expiring in 30 seconds
-
-<!--
-Speaker notes:
-• If anyone asks "so was lesson 6 wrong to use localStorage?" — good question,
-  honest answer: it is a trade-off, and cookies bring CSRF with them. Not a
-  today problem, but do not pretend localStorage is strictly worse.
--->
-
----
-
-
-## Where this runs in production
-
-```
-Render free tier
-├── Web service   (API + worker, because...)
-├── PostgreSQL    (the facts)
-└── Key Value     (25 MB, Valkey, NOT persistent)
-```
-
-- **No free background worker** → `RUN_WORKER_IN_API=true` folds it in
-- **Sleeps after 15 min** idle
-- **Key Value is not persistent** → and that is survivable, by design
-
-<!--
-Speaker notes:
-• "By design" matters: the export ROWS are in Postgres. Losing Redis loses
-  pending jobs and cached files, not the record that someone asked.
-• On a paid plan: a Background Worker service, same repo, `npm run worker`
-  as its start command, same REDIS_URL, and you never set that variable.
-  Their worker.ts runs there unchanged — because it already does, on their
-  laptop, in terminal 2. That is why the two-process exercise matters: the
-  free-tier shape is the compromise, not the normal one.
-• Valkey vs Redis: Redis changed its licence in 2024, the maintainers forked
-  it, the fork is what most managed "Redis" runs now. Same protocol.
+• If they ask "so what DO you do?" -- two real answers, neither built today:
+  a cookie (the browser attaches those to both automatically), or a
+  single-use ticket valid for one connection and expiring in seconds.
+  Optional exercise B builds the ticket. Name them and move on.
 -->
 
 ---
@@ -673,15 +542,12 @@ Speaker notes:
 ## Today, in one slide
 
 - A long request is a **broken promise** — answer `202` instead
-- **Two stores, two jobs**: facts vs. coordination between processes
-- **Durability is a cost** — WAL, replicas, backups, vacuum. Worth it for an
-  expense, wasted on a job that lives ten seconds
+- **Durability is a cost.** Worth it for an expense. Wasted on a job that
+  lives ten seconds
 - *"If I lost this, would a user notice?"* — that is the whole decision
-- A job is a **note**, not a payload
 - **Retries** and a **concurrency limit** are why a queue beats a function call
 - **The API and the worker share nothing but Redis** — you watched it
-- **Push beats poll** — and filtering is now your job, at both ends
-- When the **browser** calls, your headers are gone
+- **Push beats poll.** And when the browser calls, your headers are gone
 
 <!--
 Speaker notes:
@@ -710,11 +576,23 @@ Speaker notes:
 • `grep -rn "TODO [0-9]" backend/src frontend/src` finds all six. Everything
   else -- Tailwind, type modules, migrations, the WebSocket handshake -- is
   written for them, on purpose. None of it is the lesson.
-• Time shape: ex 0-3 (queue + worker) about 63 min, ex 4 (the route) 15,
-  ex 5 (the socket) 30, ex 6 (deploy) 12.
+• Time shape: ex 0-3 (queue + worker) 50 min, ex 4 (the route) 15,
+  ex 5 (the socket) 30, ex 6 (deploy) 25.
 • The two-terminal demo in exercise 4 is the one everybody must actually
   run -- stop the worker, queue five, start it, watch them drain in pairs.
   Walk the room during it.
 • Optional at the end: make the socket reconnect, mint single-use tickets,
   or build the history list.
+
+THE RENDER BITS (exercise 6 walks them through it; flag these three so
+nobody loses twenty minutes to them):
+  • No free background-worker instance type -- so RUN_WORKER_IN_API=true
+    folds the worker into the API there. One `if` in app.ts. On a paid plan
+    it is a Background Worker service running `npm run worker`, and their
+    worker.ts runs there unchanged.
+  • A free web service SLEEPS after 15 min idle and takes ~1 min to wake.
+    WebSocket messages count as traffic, so an open page keeps it alive.
+  • The Key Value instance is NOT persistent. Ask them: is our app broken?
+    No -- the rows and the CSV are in Postgres. Only pending jobs are lost.
+    That is the decision rule from earlier, paying off in production.
 -->

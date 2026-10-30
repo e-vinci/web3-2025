@@ -7,61 +7,28 @@ import { exportsQueue } from '../queues/exports.queue.ts';
 const router = Router();
 
 /**
- * The download route, and its guard, come first.
- *
- * The order is the point: `router.use(requireAuth)` below applies only to
- * routes declared after it, so this one opts out of the header-based guard and
- * takes `requireAuthQuery` instead.
- *
- * Why it has to: everywhere else in this app your own JavaScript makes the
- * request with `fetch`, and `fetch` can set any header it likes. A download is
- * different — it has to be a real browser navigation or the file never reaches
- * the Downloads folder, and a navigation has nowhere to put an `Authorization`
- * header. So the token goes in the URL.
- *
- * The WebSocket in `src/realtime/exportSocket.ts` has the same problem for the
- * same reason. Worth remembering as a rule rather than two special cases: the
- * moment the browser is the one calling, your headers are gone. See the note
- * in `middleware/requireAuth.ts` for what that costs.
+ * The download route, and its guard, come first: `router.use(requireAuth)`
+ * below applies only to routes declared after it, so this one opts out and
+ * takes `requireAuthQuery` instead. Same reason as the WebSocket upgrade in
+ * `exportSocket.ts` — see exercise 5's "headers are gone" note.
  */
 router.get('/:id/download', requireAuthQuery, downloadExport);
 
 /** Everything below this line takes its token from the Authorization header. */
 router.use(requireAuth);
 
-/**
- * Ask for an export.
- *
- * Read the two lines that matter and then read the status code. We write one
- * row, we add one job, and we answer **202 Accepted** — not 200 OK. 200 means
- * "here is what you asked for". 202 means "I have taken this on, it is not
- * done, here is where to watch it". Using the right one is not pedantry: it is
- * the only thing in the response that tells a client the work is still moving.
- */
+/** Ask for an export: write the receipt row, queue the job, answer 202 (see exercise 4). */
 router.post('/', async (_req, res) => {
   const { userId } = currentUser(res);
 
   try {
-    // TODO 4 — take the request, and answer before the work is done.
+    // TODO 4:
+    //  1. Create the receipt row (`ExportsService`).
+    //  2. Queue the job on `exportsQueue` with `{ exportId, requesterId }` and
+    //     `{ jobId: jobIdForExport(record.id) }` (see that function below).
+    //  3. Respond `res.status(202).json(record)` — not 200 (see docblock above).
     //
-    // Three things, and then stop:
-    //
-    //  1. Write the receipt row, so the user has something to come back to.
-    //     `ExportsService` has a method for exactly this.
-    //  2. Put a job on `exportsQueue`. Give it the two numbers the worker
-    //     needs and nothing else — the worker reads the expenses itself,
-    //     because a copy taken now would be stale by the time it runs.
-    //
-    //     Also give the job a predictable id, using `jobIdForExport` below.
-    //     There is one socket server for everybody, so when an event arrives
-    //     the code has to work out which export it is about. That id is how.
-    //  3. Reply with the record, and the right status code. It is NOT 200 —
-    //     200 means "here is what you asked for", and nothing has been
-    //     exported yet. Find the one that means "I have taken this on, it is
-    //     not finished".
-    //
-    // Do NOT await the job, and do not build the CSV here. If this handler
-    // takes more than a few milliseconds, you have missed the point.
+    // Do NOT await the job or build the CSV here.
     throw new Error('TODO 4: not implemented');
   } catch (error) {
     console.error('Error requesting an export:', error);
@@ -81,13 +48,7 @@ router.get('/', async (_req, res) => {
   }
 });
 
-/**
- * One export's current state.
- *
- * The WebSocket is how a client learns about changes, but a client that has
- * just loaded the page needs to know where things stand *now* — a socket only
- * tells you what happens while you are listening.
- */
+/** One export's current state — the WebSocket only tells you what happens next, not what already happened. */
 router.get('/:id', async (req, res) => {
   const { userId } = currentUser(res);
   const record = await ExportsService.getById(Number(req.params.id));

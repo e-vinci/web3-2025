@@ -54,9 +54,7 @@ export function useExportSocket(exportId: number | null): ExportStream {
       `${API_BASE_URL.replace(/^http/, "ws")}/ws/exports?token=${getToken()}`
     );
 
-    // Where things stand right now. Without this the page shows nothing until
-    // the first event, and shows nothing at all for a job that is already
-    // done.
+    // See docblock point 3: this covers a job that finished before the socket opened.
     void apiRequest<Export>(`/api/exports/${exportId}`).then((current) => {
       if (cancelled) return;
       setRecord(current);

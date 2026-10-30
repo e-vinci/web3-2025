@@ -11,19 +11,9 @@ import { yoga } from './src/graphql/yoga.ts';
 import { requireAuth } from './src/middleware/requireAuth.ts';
 import { attachExportSocket } from './src/realtime/exportSocket.ts';
 
-// Does this process also run the worker?
-//
-// Locally: no. You run `npm run dev` here and `npm run worker` in a second
-// terminal, so the two are genuinely separate processes that share nothing
-// but Redis -- which is the point, and which you can prove by killing one.
-//
-// On Render: yes, because the free tier has no background-worker instance
-// type. Setting RUN_WORKER_IN_API=true there folds the worker into this
-// process. It is a deployment compromise, written down as one, rather than a
-// design we are pretending to want.
-//
-// Nothing inside the worker changes either way. It finds its jobs through
-// Redis, not through this import.
+// Does this process also run the worker? Locally: no (see worker.ts, and
+// exercise 3). On Render: yes, via RUN_WORKER_IN_API — see exercise 6.
+// Nothing inside the worker changes either way.
 if (process.env['RUN_WORKER_IN_API'] === 'true') {
   console.log('Running the export worker inside the API process.');
   await import('./src/workers/exports.worker.ts');

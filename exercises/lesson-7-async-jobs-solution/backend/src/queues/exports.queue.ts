@@ -31,16 +31,9 @@ export interface ExportJobData {
 export const exportsQueue = new Queue<ExportJobData>(EXPORTS_QUEUE, {
   connection: createRedisConnection(),
   defaultJobOptions: {
-    // Try three times before giving up, waiting longer after each failure
-    // (1s, then 2s, then 4s). This is the single most valuable thing a queue
-    // gives you over calling the function directly: a transient failure — the
-    // database blinked, the network dropped — stops being a lost request.
+    // See exercise 2 for why these four matter, not just what they do.
     attempts: 3,
     backoff: { type: 'exponential', delay: 1000 },
-
-    // Redis is memory. Left alone, every finished job stays in it forever and
-    // the instance slowly fills up. Keep the last hour of successes so you can
-    // inspect them, and the last 100 failures so you can debug them.
     removeOnComplete: { age: 3600 },
     removeOnFail: { count: 100 },
   },
@@ -65,18 +58,9 @@ export const exportsQueueEvents = new QueueEvents(EXPORTS_QUEUE, {
 /**
  * Has this job run out of attempts?
  *
- * The *worker* needs this and the socket server does not, which is worth
- * understanding because the two look like the same event and are not:
- *
- *   - `worker.on('failed')` fires after **every** attempt. A job with
- *     `attempts: 3` that throws three times calls it three times, and the
- *     first two mean "retrying shortly", not "this did not work".
- *   - `queueEvents.on('failed')` fires **once**, when the job runs out of
- *     attempts and lands in the failed set. Between attempts the job moves to
- *     `delayed`, which is not a failure anyone needs to hear about.
- *
- * So the guard belongs in the worker. Writing the export row on the first
- * attempt would mark a job failed that is about to succeed on its second try.
+ * `worker.on('failed')` fires after every attempt; `queueEvents.on('failed')`
+ * fires once, at the end. This answers the first — see the worker's own
+ * `on('failed')` handler for why that distinction matters.
  */
 export function isFinalAttempt(job: Job): boolean {
   return job.attemptsMade >= (job.opts.attempts ?? 1);

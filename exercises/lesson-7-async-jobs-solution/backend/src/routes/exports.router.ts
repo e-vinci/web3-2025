@@ -7,37 +7,17 @@ import { exportsQueue } from '../queues/exports.queue.ts';
 const router = Router();
 
 /**
- * The download route, and its guard, come first.
- *
- * The order is the point: `router.use(requireAuth)` below applies only to
- * routes declared after it, so this one opts out of the header-based guard and
- * takes `requireAuthQuery` instead.
- *
- * Why it has to: everywhere else in this app your own JavaScript makes the
- * request with `fetch`, and `fetch` can set any header it likes. A download is
- * different — it has to be a real browser navigation or the file never reaches
- * the Downloads folder, and a navigation has nowhere to put an `Authorization`
- * header. So the token goes in the URL.
- *
- * The WebSocket in `src/realtime/exportSocket.ts` has the same problem for the
- * same reason. Worth remembering as a rule rather than two special cases: the
- * moment the browser is the one calling, your headers are gone. See the note
- * in `middleware/requireAuth.ts` for what that costs.
+ * The download route, and its guard, come first: `router.use(requireAuth)`
+ * below applies only to routes declared after it, so this one opts out and
+ * takes `requireAuthQuery` instead. Same reason as the WebSocket upgrade in
+ * `exportSocket.ts` — see exercise 5's "headers are gone" note.
  */
 router.get('/:id/download', requireAuthQuery, downloadExport);
 
 /** Everything below this line takes its token from the Authorization header. */
 router.use(requireAuth);
 
-/**
- * Ask for an export.
- *
- * Read the two lines that matter and then read the status code. We write one
- * row, we add one job, and we answer **202 Accepted** — not 200 OK. 200 means
- * "here is what you asked for". 202 means "I have taken this on, it is not
- * done, here is where to watch it". Using the right one is not pedantry: it is
- * the only thing in the response that tells a client the work is still moving.
- */
+/** Ask for an export: write the receipt row, queue the job, answer 202 (see exercise 4). */
 router.post('/', async (_req, res) => {
   const { userId } = currentUser(res);
 
@@ -47,11 +27,7 @@ router.post('/', async (_req, res) => {
     await exportsQueue.add(
       'export-expenses',
       { exportId: record.id, requesterId: userId },
-      // Name the job after the row it works on. There is one queue and one
-      // event stream for everybody, so when the stream below hears "job
-      // finished" it needs a way to know whether that was *this* export or one
-      // of the forty other students'. A predictable id is that way.
-      { jobId: jobIdForExport(record.id) }
+      { jobId: jobIdForExport(record.id) }  // see jobIdForExport below
     );
 
     res.status(202).json(record);
@@ -73,13 +49,7 @@ router.get('/', async (_req, res) => {
   }
 });
 
-/**
- * One export's current state.
- *
- * The WebSocket is how a client learns about changes, but a client that has
- * just loaded the page needs to know where things stand *now* — a socket only
- * tells you what happens while you are listening.
- */
+/** One export's current state — the WebSocket only tells you what happens next, not what already happened. */
 router.get('/:id', async (req, res) => {
   const { userId } = currentUser(res);
   const record = await ExportsService.getById(Number(req.params.id));

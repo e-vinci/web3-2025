@@ -54,9 +54,7 @@ export function useExportSocket(exportId: number | null): ExportStream {
       `${API_BASE_URL.replace(/^http/, "ws")}/ws/exports?token=${getToken()}`
     );
 
-    // Where things stand right now. Without this the page shows nothing until
-    // the first event, and shows nothing at all for a job that is already
-    // done.
+    // See docblock point 3: this covers a job that finished before the socket opened.
     void apiRequest<Export>(`/api/exports/${exportId}`).then((current) => {
       if (cancelled) return;
       setRecord(current);
@@ -74,32 +72,21 @@ export function useExportSocket(exportId: number | null): ExportStream {
         failedReason?: string;
       };
 
-      // TODO 6 — act on `message`.
-      //
-      //  1. FIRST, and before anything else: ignore the message unless
-      //     `message.exportId === exportId`. One socket carries every export
-      //     this user owns, so most messages are not about the one this hook
-      //     is watching. This is the client-side half of TODO 5.
-      //
-      //     The order matters. Put this check after the type switch and a
-      //     *sibling* export finishing will close this hook's socket, and
-      //     this export's progress bar freezes with no error anywhere.
-      //  2. 'progress'  -> `setProgress(message.data)`, and return. The job
-      //     is still going; nothing else changes.
-      //  3. 'failed'    -> `setProgress(null)`, `setError(...)` from
-      //     `message.failedReason` with a generic fallback, and mark the
-      //     record failed. `record` holds a whole `Export`, so spread the
-      //     previous one and override the status rather than replacing it:
+      // TODO 6 — act on `message`:
+      //  1. FIRST: `if (message.exportId !== exportId) return;` — must run
+      //     before the type switch, or a sibling export's 'completed' closes
+      //     this hook's socket (see docblock point 2).
+      //  2. 'progress'  -> `setProgress(message.data)`, return.
+      //  3. 'failed'    -> `setProgress(null)`, `setError(message.failedReason
+      //     ?? "The export failed")`, and spread-update the record's status:
       //       setRecord((previous) =>
       //         previous ? { ...previous, status: "failed" } : previous
       //       );
-      //  4. 'completed' -> `setProgress(null)`, then re-read the row:
+      //  4. 'completed' -> `setProgress(null)`, re-read the row (the event
+      //     carries no rowCount/file):
       //       void apiRequest<Export>(`/api/exports/${exportId}`)
       //         .then((fresh) => { if (!cancelled) setRecord(fresh); });
-      //     The event does not carry the row count or the file, and the row
-      //     does.
-      //  5. On 'completed' and 'failed', `socket.close()`. There is nothing
-      //     left to hear.
+      //  5. On 'completed'/'failed': `socket.close()`.
       void message;
     };
 

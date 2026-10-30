@@ -25,27 +25,10 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
- * The same check, but reading the token from `?token=` instead of the header.
- *
- * This exists for the two places where the *browser itself* makes the
- * request, rather than your JavaScript calling `fetch`:
- *
- *   - the WebSocket upgrade — `new WebSocket(url)` takes a URL and nothing
- *     else, so there is nowhere to put a header
- *   - the CSV download — it has to be a real navigation, or the file never
- *     reaches the Downloads folder
- *
- * In both, a bearer token has nowhere to go but the query string. That is a
- * real compromise, not a neutral choice: URLs end up in server access logs, in
- * browser history, and in the `Referer` header of whatever the page loads
- * next. A password would never go here.
- *
- * The usual production answers are a cookie (the browser attaches those to
- * both automatically) or a single-use ticket minted for this one connection
- * and expiring in seconds.
- *
- * It lives in its own exported function so the compromise is visible at the
- * routes that take it, instead of hidden inside `requireAuth`.
+ * The same check, reading the token from `?token=` instead of the header.
+ * Used where the browser itself makes the request (WebSocket upgrade, CSV
+ * download) — see exercise 5's "headers are gone" note for why that forces
+ * the token into the URL, and what production does instead.
  */
 export function requireAuthQuery(req: Request, res: Response, next: NextFunction) {
   const token = typeof req.query['token'] === 'string' ? req.query['token'] : '';

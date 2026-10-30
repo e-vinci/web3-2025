@@ -31,23 +31,14 @@ export interface ExportJobData {
 export const exportsQueue = new Queue<ExportJobData>(EXPORTS_QUEUE, {
   connection: createRedisConnection(),
   defaultJobOptions: {
-    // TODO 1 — the options that make this a queue rather than a to-do list.
-    //
-    // Four of them. They are all in the BullMQ "Jobs" guide:
+    // TODO 1 — four options, all in the BullMQ "Jobs" guide:
     // https://docs.bullmq.io/guide/jobs
     //
-    //   1. Run a job that throws again, up to three times in total. This is
-    //      the reason to use a queue instead of just calling the function:
-    //      a network blip becomes a short delay, not a lost request.
-    //   2. Wait longer after each failed attempt, starting around a second —
-    //      not three retries inside the same half-second. Hammering a service
-    //      that is already down is how you keep it down.
-    //   3. Drop finished jobs after an hour.
-    //   4. Keep only the last hundred failed ones.
-    //
-    // The last two are not housekeeping. Redis is memory: without them every
-    // job you ever ran stays in it forever, and the free instance you deploy
-    // to at the end of this lesson is 25 MB.
+    //   1. attempts: retry a throwing job, 3 total.
+    //   2. backoff: wait longer each time, starting ~1s (exponential).
+    //   3. removeOnComplete: drop finished jobs after an hour (see exercise 2
+    //      for why this one is not optional).
+    //   4. removeOnFail: keep only the last 100 failed jobs.
     //
     // Do NOT set a `delay` — jobs should start as soon as a worker is free.
   },
@@ -72,18 +63,9 @@ export const exportsQueueEvents = new QueueEvents(EXPORTS_QUEUE, {
 /**
  * Has this job run out of attempts?
  *
- * The *worker* needs this and the socket server does not, which is worth
- * understanding because the two look like the same event and are not:
- *
- *   - `worker.on('failed')` fires after **every** attempt. A job with
- *     `attempts: 3` that throws three times calls it three times, and the
- *     first two mean "retrying shortly", not "this did not work".
- *   - `queueEvents.on('failed')` fires **once**, when the job runs out of
- *     attempts and lands in the failed set. Between attempts the job moves to
- *     `delayed`, which is not a failure anyone needs to hear about.
- *
- * So the guard belongs in the worker. Writing the export row on the first
- * attempt would mark a job failed that is about to succeed on its second try.
+ * `worker.on('failed')` fires after every attempt; `queueEvents.on('failed')`
+ * fires once, at the end. This answers the first — see the worker's own
+ * `on('failed')` handler for why that distinction matters.
  */
 export function isFinalAttempt(job: Job): boolean {
   return job.attemptsMade >= (job.opts.attempts ?? 1);

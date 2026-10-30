@@ -97,31 +97,9 @@ of Tailwind and type modules teaches nothing; the six gaps are the lesson.
 
 ### Set it up now, before exercise 0
 
-From `backend/`:
+The boilerplate contains a README.md file with the steps to install from scratch, follow the instructions.
 
-```bash
-cp .env.example .env
-docker compose up -d
-npm install
-npm run build                  # Prisma client + migrations
-node scripts/db-populate.ts
-```
-
-And from `frontend/`, in another terminal:
-
-```bash
-npm install
-```
-
-Check the backend starts before going on — the first exercise needs it
-running:
-
-```bash
-# from backend/
-npm run dev
-```
-
-Every demo user's password is `topsecret`.
+> Always package your app with a README file which helps new contributors onboard rapidly.
 
 ## Recommended Reading
 
@@ -212,20 +190,19 @@ Now open `backend/src/redis.ts` and read it. Two details are not decoration.
 **`maxRetriesPerRequest: null` is required by BullMQ.** By default `ioredis`
 gives up on a command after 20 retries. A worker asking Redis "give me the next
 job, and do not answer until there is one" is *supposed* to wait, possibly for
-hours. Leave the line out and BullMQ refuses to start at all:
+hours. Leave the line out and BullMQ refuses to start at all.
+
+Which is good behaviour — it crashes at startup rather than stalling next week.
 
 ```
 BullMQ: Your redis options maxRetriesPerRequest must be null.
 ```
 
-Which is good behaviour — it crashes at startup rather than stalling next week.
-
-**It is a factory, not one shared client.** A connection parked on a blocking
-command cannot run anything else, and the worker lives inside blocking reads.
 
 > **&#9888; Stop and name what you just added.** You now have two databases.
-> Before going further, write down what goes in each. On paper. If your answer
-> is "Postgres for important things, Redis for fast things", that is the wrong
+> Before going further, write down what goes in each. On paper. 
+> 
+> If your answer is "Postgres for important things, Redis for fast things", that is the wrong
 > model and the rest of this lesson will not make sense.
 >
 > The real split is **what the data is for**. PostgreSQL holds **facts** that
@@ -277,22 +254,9 @@ defaultJobOptions: {
   removeOnFail: { count: 100 },
 },
 ```
-
 </details>
 
-Check your options actually landed before moving on. This imports the file and
-reads back what you configured — it fails loudly if `attempts` is still unset:
 
-```bash
-# from backend/
-node --input-type=module -e "
-  const { exportsQueue } = await import('./src/queues/exports.queue.ts');
-  const o = exportsQueue.defaultJobOptions ?? {};
-  console.log(o);
-  if (o.attempts !== 3) throw new Error('TODO 1: attempts is not 3');
-  console.log('queue ok'); process.exit(0);
-"
-```
 
 ### 3. The worker (~20 min)
 
@@ -313,14 +277,6 @@ the entire point.
 
 **It reports progress.** `job.updateProgress()` writes to Redis, and every
 listener in every process hears it. That is what will move the progress bar.
-
-> **&#9888; Be honest about the `sleep` calls.** Building a CSV from a few
-> hundred rows takes milliseconds. On its own this feature would not need a
-> queue at all. Real report jobs are slow for reasons we are not building
-> today: rendering a PDF, calling a currency API once per row, scanning two
-> years of history. The sleeps buy you those seconds so you can *see* the queue
-> work. It is the one fake thing in this exercise. Everything around it is
-> real.
 
 <details>
 <summary>TODO 2 — the answer, once you have tried it</summary>
@@ -347,8 +303,16 @@ await ExportsService.setStatus(exportId, 'completed', {
 
 return { rowCount: expenses.length };
 ```
-
 </details>
+
+> **&#9888; Let's be honest about the `sleep` calls.** 
+> Building a CSV from a few  hundred rows takes milliseconds. 
+> On its own this feature would not need a queue at all. 
+> Real report jobs are slow for reasons we are not building
+> today: rendering a PDF, calling a currency API once per row, scanning two
+> years of history. The sleeps buy you those seconds so you can *see* the queue
+> work. It is the one fake thing in this exercise. Everything around it is
+> real.
 
 #### TODO 3 — retry, or real failure?
 
@@ -417,16 +381,6 @@ res.status(202).json(record);
 
 </details>
 
-Then get a token and try it. Every demo user's password is `topsecret`:
-
-```bash
-TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"john.doe@example.com","password":"topsecret"}' \
-  | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).token")
-
-curl -i -X POST http://localhost:3000/api/exports -H "Authorization: Bearer $TOKEN"
-```
 
 > **&#9888; `202 Accepted`, not `200 OK`.** `200` means "here is what you asked
 > for". `202` means "I have taken this on, it is not done yet". This is not

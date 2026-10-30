@@ -60,14 +60,7 @@ export function attachExportSocket(server: Server): WebSocketServer {
     });
   });
 
-  /**
-   * Sends one message to one user's open sockets.
-   *
-   * An HTTP route never needed this: each request was its own response, so
-   * filtering happened naturally. Here one server holds every socket, so
-   * "who should see this?" becomes something you answer by hand — and
-   * forgetting to is how one user ends up watching another user's work.
-   */
+  /** Sends one message to one user's open sockets — see `viewers` above. */
   function sendToUser(userId: number, payload: unknown): void {
     const text = JSON.stringify(payload);
     for (const [client, viewerId] of viewers) {

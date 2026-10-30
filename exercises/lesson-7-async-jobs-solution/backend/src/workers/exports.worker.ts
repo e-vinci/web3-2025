@@ -71,35 +71,20 @@ async function processExportJob(job: Job<ExportJobData>): Promise<{ rowCount: nu
 }
 
 /**
- * The worker itself.
+ * The worker itself. `concurrency: 2` — never more than two exports at once
+ * (see exercise 3 for why that number matters).
  *
- * `concurrency: 2` means this process will run two export jobs at once and no
- * more. That number is a promise to the rest of your system: however long the
- * queue gets, this worker will never open a third database connection for
- * exports or claim a third slice of CPU. A queue without a concurrency limit
- * is just a slower way to fall over.
- *
- * Locally this runs as its own process — `node worker.ts` beside
- * `node app.ts` — so that a long job cannot slow down HTTP requests, and so
- * you could run five workers and one API. On Render it is folded into the API
- * process instead, because the free tier has no separate worker instance type.
- * The code does not change either way: a worker finds its jobs through Redis,
- * and does not care which process it lives in.
+ * Locally this runs as its own process, `node worker.ts` beside `node app.ts`.
+ * On Render it is folded into the API process instead (see exercise 6). The
+ * code does not change either way: a worker finds its jobs through Redis, and
+ * does not care which process it lives in.
  */
 export const exportsWorker = new Worker<ExportJobData>(EXPORTS_QUEUE, processExportJob, {
   connection: createRedisConnection(),
   concurrency: 2,
 });
 
-/**
- * Fires after every attempt -- including the ones BullMQ is about to retry.
- *
- * The guard is the whole point. Without it, the first throw would write
- * `failed` to the export row and the user would be told the job died while
- * BullMQ was quietly about to run it again and succeed. Without the listener
- * at all, a genuinely dead job would leave the row on `running` forever and
- * the user would watch a spinner that never stops.
- */
+/** Fires after every attempt, including ones about to be retried (see TODO 3 / exercise 3). */
 exportsWorker.on('failed', async (job, error) => {
   console.error(`Export job ${job?.id} failed (attempt ${job?.attemptsMade}):`, error.message);
   if (!job || !isFinalAttempt(job)) return;

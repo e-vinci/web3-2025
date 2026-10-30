@@ -60,32 +60,11 @@ export function attachExportSocket(server: Server): WebSocketServer {
     });
   });
 
-  /**
-   * Sends one message to one user's open sockets.
-   *
-   * An HTTP route never needed this: each request was its own response, so
-   * filtering happened naturally. Here one server holds every socket, so
-   * "who should see this?" becomes something you answer by hand — and
-   * forgetting to is how one user ends up watching another user's work.
-   */
+  /** Sends one message to one user's open sockets — see `viewers` above. */
   function sendToUser(userId: number, payload: unknown): void {
-    // TODO 5 — send `payload` to this user's sockets, and to nobody else's.
-    //
-    // `viewers` is declared above: it remembers every open socket and the id
-    // of the user behind it. Use it.
-    //
-    // Two things to be careful about:
-    //
-    //   - A socket that is closing is still in the map. Sending to one
-    //     throws, so check its state before you do (`ws` exposes
-    //     `readyState`, and `client.OPEN` is the value you want).
-    //   - A WebSocket frame carries text, not objects.
-    //
-    // This is the filtering an HTTP route got for free. There, each request
-    // had its own handler with its own `userId` in scope. Here one server
-    // holds every socket at once, so "who should see this?" is a question
-    // you answer by hand — and forgetting to is how one student ends up
-    // watching another student's export.
+    // TODO 5 — walk `viewers`, send `payload` (JSON.stringify'd — a frame is
+    // text) only where `viewerId === userId` AND `client.readyState ===
+    // client.OPEN` (a closing socket is still in the map; sending to one throws).
   }
 
   // The job id carries the export id (`export-12`), and the export id is all

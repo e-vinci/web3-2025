@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Lesson 3">
+  <title>Lesson 3</title>
+  <defs>
+    <linearGradient id="bgLight" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0161ef"/>
+      <stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="bgDark" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#022f7d"/>
+      <stop offset="1" stop-color="#3d1986"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="50%" cy="46%" r="75%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.16"/>
+    </radialGradient>
+    <filter id="ink-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect class="aw-bg-light" width="1600" height="900" fill="url(#bgLight)"/>
+  <rect class="aw-bg-dark" width="1600" height="900" fill="url(#bgDark)"/>
+  <rect width="1600" height="900" fill="url(#vignette)"/>
+
+  <g filter="url(#ink-shadow)">
+    <g transform="translate(420.8,37.3) scale(1.4158,-1.4158)">
+      <path d="M413.57-220.21Q407.23-161.62 359.13-109.13Q311.04-56.64 239.01-22.22Q166.99 12.21 98.63 12.21Q65.43 12.21 48.58-8.54Q31.74-29.30 31.74-52.25Q31.74-75.20 50.54-97.17Q69.34-119.14 86.43-119.14Q93.75-119.14 95.21-103.52Q98.63-74.22 120.61-74.22Q158.20-74.22 208.74-94.24Q259.28-114.26 295.90-142.82Q332.52-171.39 332.03-193.12Q331.54-214.84 300.05-228.03Q268.55-241.21 210.45-241.21Q200.20-241.21 193.85-252.69Q187.50-264.16 187.50-277.59Q187.50-291.02 194.58-301.76Q201.66-312.50 209.96-318.60Q218.26-324.71 236.33-336.18Q254.39-347.66 261.47-352.78Q268.55-357.91 286.62-371.09Q304.69-384.28 316.41-393.07Q328.13-401.86 347.17-416.75Q366.21-431.64 378.91-443.36Q391.60-455.08 404.30-468.75Q430.66-495.61 430.66-514.16Q430.66-524.90 413.09-524.90Q395.51-524.90 350.83-501.95Q306.15-479 256.84-438.96Q207.52-398.93 183.59-358.89Q182.62-357.42 181.15-354Q179.69-350.59 178.71-348.63Q176.27-344.24 164.79-344.24Q153.32-344.24 142.58-355.96Q127.93-372.07 130.37-389.16Q132.81-406.25 149.90-431.64Q166.99-457.03 197.02-485.11Q227.05-513.18 263.67-538.09Q300.29-562.99 345.70-579.10Q391.11-595.21 429.93-595.21Q468.75-595.21 486.33-576.17Q503.91-557.13 503.91-530.27Q503.91-489.75 457.03-431.15Q410.16-372.56 307.62-305.18Q347.17-305.18 380.37-281.01Q413.57-256.84 413.57-220.21" fill="#FFFFFF"/>
+    </g>
+  </g>
+
+  <style>
+    .aw-bg-dark { opacity: 0; }
+    @media (prefers-color-scheme: dark) {
+      .aw-bg-light { opacity: 0; }
+      .aw-bg-dark { opacity: 1; }
+    }
+  </style>
+</svg>

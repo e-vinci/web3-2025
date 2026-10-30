@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Lesson 6">
+  <title>Lesson 6</title>
+  <defs>
+    <linearGradient id="bgLight" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0161ef"/>
+      <stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="bgDark" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#022f7d"/>
+      <stop offset="1" stop-color="#3d1986"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="50%" cy="46%" r="75%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.16"/>
+    </radialGradient>
+    <filter id="ink-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect class="aw-bg-light" width="1600" height="900" fill="url(#bgLight)"/>
+  <rect class="aw-bg-dark" width="1600" height="900" fill="url(#bgDark)"/>
+  <rect width="1600" height="900" fill="url(#vignette)"/>
+
+  <g filter="url(#ink-shadow)">
+    <g transform="translate(394.1,44.4) scale(1.3517,-1.3517)">
+      <path d="M212.40-305.18Q304.69-369.14 359.38-369.14Q383.30-369.14 403.81-352.05Q424.32-334.96 425.05-300.78Q425.78-266.60 408.20-222.66Q390.63-178.71 358.89-136.72Q327.15-94.73 287.84-59.81Q248.54-24.90 200.20-3.42Q151.86 18.07 105.96 18.07Q78.13 18.07 57.37-4.39Q36.62-26.86 36.62-63.96Q36.62-69.34 37.11-72.27Q49.80-212.40 192.38-393.07Q235.84-447.75 290.28-493.41Q344.73-539.06 391.11-564.45Q487.79-618.16 523.93-618.16Q563.96-618.16 563.96-572.27Q563.96-550.78 555.18-547.85Q454.10-514.65 372.07-457.52Q290.04-400.39 212.40-305.18M310.06-297.85Q281.25-297.85 234.86-273.44Q188.48-249.02 162.11-225.10Q110.84-129.88 110.84-80.08Q110.84-55.18 126.71-55.18Q142.58-55.18 176.51-74.46Q210.45-93.75 249.51-130.13Q288.57-166.50 314.21-205.81Q339.84-245.12 339.36-264.40Q338.87-283.69 329.83-290.77Q320.80-297.85 310.06-297.85" fill="#FFFFFF"/>
+    </g>
+  </g>
+
+  <style>
+    .aw-bg-dark { opacity: 0; }
+    @media (prefers-color-scheme: dark) {
+      .aw-bg-light { opacity: 0; }
+      .aw-bg-dark { opacity: 1; }
+    }
+  </style>
+</svg>

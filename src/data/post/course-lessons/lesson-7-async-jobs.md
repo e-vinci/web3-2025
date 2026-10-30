@@ -18,6 +18,7 @@ tags:
   - web3-2025
 
 category: 'course-lesson'
+image: '~/assets/images/lessons/lesson-7.svg'
 ---
 
 ## Course material

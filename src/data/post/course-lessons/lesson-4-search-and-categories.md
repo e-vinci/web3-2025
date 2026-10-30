@@ -12,6 +12,7 @@ tags:
   - course
   - web3-2025
 category: 'course-lesson'
+image: '~/assets/images/lessons/lesson-4.svg'
 ---
 
 # Objectives

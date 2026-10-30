@@ -48,9 +48,10 @@ grep -rn "TODO [0-9]" backend/src frontend/src
 ```bash
 # from backend/
 cp .env.example .env
+# change your JWT_SECRET value
 docker compose up -d
 npm install
-npm run build          # generates the Prisma client and applies migrations
+npx prisma db migrate
 node scripts/db-populate.ts
 
 npm run dev            # terminal 1 — the API

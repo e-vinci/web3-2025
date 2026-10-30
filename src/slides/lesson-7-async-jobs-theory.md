@@ -175,24 +175,118 @@ Speaker notes:
 
 ---
 
-## Two stores, two promises
+## Two stores, two jobs
 
-| | **PostgreSQL** | **Redis** |
-|---|---|---|
-| Holds | facts | work in progress |
-| Lives | forever | until the work is done |
-| Losing it is | a disaster | survivable |
-| Example | this expense happened | job 12 is waiting |
+|              | **PostgreSQL**        | **Redis**              |
+|--------------|-----------------------|------------------------|
+| Holds        | facts                 | work in progress       |
+| Lives        | forever               | until the work is done |
+| Losing it is | a disaster            | survivable             |
+| Example      | this expense happened | job 12 is waiting      |
 
-**Redis is not a faster Postgres. It is a different job.**
+**Redis is not a faster Postgres.**
 
 <!--
 Speaker notes:
 • Have them read the "Losing it is" row out loud. That row is the model.
-• Resist "Redis is the fast one". It leads straight to "so should I put
-  everything in Redis?" and the answer is no, for reasons about DURABILITY,
-  not speed.
-• The next slide turns this into a question they can actually apply.
+• Do NOT say "Redis is the fast one". It leads straight to "so should I put
+  everything in Redis?", and the answer is no.
+• Someone will now ask the good question: "but Postgres could hold a queue
+  too, couldn't it?" The next two slides are that question. If nobody asks
+  it, ask it yourself.
+-->
+
+---
+
+## Durability is a cost, not a gift
+
+Every row Postgres stores also gets:
+
+- a line in the write-ahead log
+- a copy on every replica
+- a place in tonight's backup
+- a dead row left behind for autovacuum
+
+For an expense, you want all four.
+
+### A job lives ten seconds. Do you?
+
+<!--
+Speaker notes:
+• This is the slide that answers "why not Postgres", and it is NOT about
+  speed. Say that out loud.
+• The dead-row point needs one sentence of MVCC: in Postgres an UPDATE does
+  not edit a row, it writes a NEW version and leaves the old one to be
+  cleaned up later. A queue row is INSERT, UPDATE (claimed), UPDATE
+  (progress), DELETE -- four versions for one job. Multiply by your job rate
+  and autovacuum is permanently chasing that one table.
+• The vivid one is the backup. Ask: "what is in your 3am backup?" Answer: a
+  snapshot of which jobs happened to be pending at 3am. Useless. You paid
+  fsync for it.
+-->
+---
+
+## "Could we just use Postgres?"
+
+**Yes. And plenty of teams should.**
+
+```sql
+SELECT * FROM job
+  WHERE status = 'queued'
+  ORDER BY id
+  FOR UPDATE SKIP LOCKED
+  LIMIT 1;
+```
+
+That is a real queue. `pg-boss` ships it, and it is
+downloaded millions of times a week.
+
+<!--
+Speaker notes:
+• Be genuinely honest here. For a normal CRUD app with modest throughput,
+  Postgres-as-queue is a good decision and one less thing to operate.
+• SKIP LOCKED is the trick: two workers running this at the same time get
+  two DIFFERENT rows instead of blocking on each other.
+• What you give up: Postgres has no "wait until a job appears". pg-boss
+  polls on a timer, with LISTEN/NOTIFY to wake it early -- and NOTIFY is
+  fire-and-forget, so the poll stays as a backstop. Redis workers genuinely
+  block; an idle worker costs nothing and picks up in under a millisecond.
+• So the rule is not "Redis wins". It is: do you want blocking workers and
+  job churn kept out of your main database? Then Redis. Otherwise Postgres
+  is fine.
+-->
+
+---
+
+## And the thing Postgres does better
+
+```sql
+BEGIN;
+  INSERT INTO expense ...;
+  INSERT INTO job    ...;   -- same transaction
+COMMIT;
+```
+
+Both, or neither. **Redis cannot do that.**
+
+In TODO 4 you write a row, *then* queue a job.
+Two steps. Two chances to fail.
+
+<!--
+Speaker notes:
+• This is the strongest argument against the choice we made, so make it
+  yourself before a student does.
+• Walk the failure: the API writes the export row, the process dies, the job
+  was never queued. The row sits on `queued` forever and nothing retries it.
+  That is a DUAL WRITE, and it is the price of putting the queue in another
+  system.
+• Ask: "how bad is it here?" Answer: survivable. The row exists, so the user
+  can see a stuck export and ask again. Compare with queueing FIRST -- then
+  a job would reference a row that does not exist. Order matters, and that
+  is why the route writes the row first.
+• The real-world fix is the outbox pattern -- write the job into Postgres in
+  the same transaction, and ship it to Redis separately. Name it, do not
+  teach it.
 -->
 
 ---
@@ -203,13 +297,13 @@ One question, every time:
 
 ### "If I lost this, would a user notice?"
 
-| | Lose it and... | Goes in |
-|---|---|---|
-| The expense | a fact is gone | **Postgres** |
-| The export row | a fact is gone | **Postgres** |
-| The CSV file | a fact is gone | **Postgres** |
-| A pending job | it runs late | **Redis** |
-| A progress event | a bar jumps | **Redis** |
+|                  | Lose it and... | Goes in      |
+|------------------|----------------|--------------|
+| The expense      | a fact is gone | **Postgres** |
+| The export row   | a fact is gone | **Postgres** |
+| The CSV file     | a fact is gone | **Postgres** |
+| A pending job    | it runs late   | **Redis**    |
+| A progress event | a bar jumps    | **Redis**    |
 
 <!--
 Speaker notes:
@@ -661,6 +755,8 @@ Speaker notes:
 
 - A long request is a **broken promise** — answer `202` instead
 - **Two stores, two jobs**: facts vs. coordination between processes
+- **Durability is a cost** — WAL, replicas, backups, vacuum. Worth it for an
+  expense, wasted on a job that lives ten seconds
 - *"If I lost this, would a user notice?"* — that is the whole decision
 - A job is a **note**, not a payload
 - **Retries** and a **concurrency limit** are why a queue beats a function call
@@ -670,7 +766,10 @@ Speaker notes:
 
 <!--
 Speaker notes:
-• Read the second bullet last if you only have time for one.
+• Read the second and third bullets last if you only have time for two.
+• If one student remembers one thing, make it this: we did not pick Redis
+  because it is fast. We picked it because we did not want this data in the
+  backups.
 • Then send them to the exercises. Exercise 0 repeats the live demo from
   slide 4 on their own machines — that is deliberate, they need to feel it,
   not just have watched it.

@@ -77,6 +77,11 @@ export default defineConfig({
 
   image: {
     domains: ['cdn.pixabay.com'],
+    // Lesson cover illustrations are authored as SVG (src/assets/images/lessons/)
+    // and rasterized here like every other post image, through the same
+    // responsive widths/format pipeline. They are flat vector shapes (a
+    // numeral on a gradient), so rasterizing costs nothing visually.
+    dangerouslyProcessSVG: true,
   },
 
   markdown: {

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Lesson 5">
+  <title>Lesson 5</title>
+  <defs>
+    <linearGradient id="bgLight" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0161ef"/>
+      <stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="bgDark" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#022f7d"/>
+      <stop offset="1" stop-color="#3d1986"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="50%" cy="46%" r="75%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.16"/>
+    </radialGradient>
+    <filter id="ink-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect class="aw-bg-light" width="1600" height="900" fill="url(#bgLight)"/>
+  <rect class="aw-bg-dark" width="1600" height="900" fill="url(#bgDark)"/>
+  <rect width="1600" height="900" fill="url(#vignette)"/>
+
+  <g filter="url(#ink-shadow)">
+    <g transform="translate(420.2,854.6) scale(1.4079)">
+      <path d="M303.71-568.85Q344.24-578.61 497.56-592.77Q508.30-592.77 521.97-571.78Q535.64-550.78 535.64-542.48Q535.64-534.18 532.96-522.95Q530.27-511.72 526.61-508.79Q522.95-505.86 511.72-502.44Q500.49-499.02 483.64-496.09Q466.80-493.16 450.68-490.97Q434.57-488.77 411.13-486.57Q387.70-484.37 373.05-482.91Q330.08-478.52 301.76-477.05Q275.39-434.57 219.73-339.84Q244.14-344.73 280.52-344.73Q316.89-344.73 350.10-325.20Q383.30-305.66 386.23-260.74Q386.23-213.38 365.23-168.46Q344.24-123.54 311.04-90.58Q277.83-57.62 237.79-32.23Q157.23 18.07 87.89 18.07Q3.91 18.07 3.91-59.08Q3.91-85.45 15.38-105.22Q26.86-125 44.92-125Q55.66-125 55.66-107.91Q57.62-68.36 104.49-68.36Q140.14-68.36 188.48-91.06Q236.82-113.77 273.19-150.39Q309.57-187.01 309.57-221.19Q307.62-255.86 233.40-255.86Q188.96-255.86 163.82-250.24Q138.67-244.63 136.47-244.63Q134.28-244.63 132.81-245.61Q129.88-248.05 123.78-261.23Q117.68-274.41 117.68-281.25Q117.68-288.09 128.17-312.99Q138.67-337.89 202.15-440.67Q265.63-543.46 276.61-556.15Q287.60-568.85 303.71-568.85" fill="#FFFFFF"/>
+    </g>
+  </g>
+
+  <style>
+    .aw-bg-dark { opacity: 0; }
+    @media (prefers-color-scheme: dark) {
+      .aw-bg-light { opacity: 0; }
+      .aw-bg-dark { opacity: 1; }
+    }
+  </style>
+</svg>

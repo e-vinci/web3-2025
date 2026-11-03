@@ -11,6 +11,7 @@ tags:
   - course
   - web3-2025
 category: 'course-lesson'
+image: '~/assets/images/lessons/lesson-3.svg'
 ---
 
 # End of lesson 2

@@ -200,6 +200,8 @@ process.
 > Redis is memory. Without them every job you ever ran stays in it forever, and
 > the free instance you deploy to at the end of this lesson is 25 MB.
 
+You may found this link interesting: https://docs.bullmq.io/api/classes/v6.Queue.html#defaultjoboptions
+
 <details>
 <summary>TODO 1 — the answer, once you have tried it</summary>
 

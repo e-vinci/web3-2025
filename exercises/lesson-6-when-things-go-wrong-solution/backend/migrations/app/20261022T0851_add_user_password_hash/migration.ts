@@ -1,12 +1,13 @@
 #!/usr/bin/env -S node
-import type { Contract as End } from '../../snapshots/36d08ae6dc4502531c6692b363c04e9aaa9077a6d14e61539dc4892da2e38a31/contract';
-import endContract from '../../snapshots/36d08ae6dc4502531c6692b363c04e9aaa9077a6d14e61539dc4892da2e38a31/contract.json' with { type: 'json' };
-import type { Contract as Start } from '../../snapshots/95f37b9b12fec5762ac676ab11c49cdd4c278d51c361c943fdefb78b8a34c160/contract';
-import startContract from '../../snapshots/95f37b9b12fec5762ac676ab11c49cdd4c278d51c361c943fdefb78b8a34c160/contract.json' with { type: 'json' };
+import type { Contract as End } from '../../snapshots/ac3b1fe37bfa54a1b5702cdd58643cda41378a2b5b1afe19e8932136ccc8a43d/contract';
+import endContract from '../../snapshots/ac3b1fe37bfa54a1b5702cdd58643cda41378a2b5b1afe19e8932136ccc8a43d/contract.json' with { type: 'json' };
+import type { Contract as Start } from '../../snapshots/9362562725e1e904986c63456ecc604ae8757596c5f72c333bbb9f82d72cc9f1/contract';
+import startContract from '../../snapshots/9362562725e1e904986c63456ecc604ae8757596c5f72c333bbb9f82d72cc9f1/contract.json' with { type: 'json' };
 import { Migration, MigrationCLI, col, placeholder } from '@prisma/orm-postgres/migration';
 import postgres from '@prisma/orm-postgres/runtime';
+import { contractFromJson } from '@prisma/orm-postgres/static';
 
-const { sql: db, contract } = postgres<End>({ contractJson: endContract });
+const { sql: db, contract } = postgres({ contract: contractFromJson<End>(endContract) });
 
 /**
  * The bcrypt hash of "topsecret".

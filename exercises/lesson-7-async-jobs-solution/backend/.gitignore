@@ -1,0 +1,11 @@
+node_modules/
+
+# Written by Prisma's postinstall (`prisma skills sync`). Generated, large,
+# and regenerated on every install — not worth committing.
+.agents/
+.claude/
+.cursor/
+.devin/
+dist/
+.env
+data/postgres/

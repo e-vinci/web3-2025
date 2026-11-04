@@ -1,0 +1,151 @@
+[
+  {
+    "id": "table.export",
+    "label": "Create table \"export\"",
+    "summary": "Creates table \"export\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "export"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"export\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"export\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"export\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"export\"",
+        "sql": "CREATE TABLE \"public\".\"export\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"failedReason\" text,\n  \"id\" SERIAL NOT NULL,\n  \"requesterId\" int4 NOT NULL,\n  \"rowCount\" int4,\n  \"status\" text DEFAULT 'queued' NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"export\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"export\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"export\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "index.export.export_requesterId_idx_a5f4af92",
+    "label": "Create index \"export_requesterId_idx_a5f4af92\" on \"export\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "export_requesterId_idx_a5f4af92",
+        "table": "export"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"export_requesterId_idx_a5f4af92\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"export_requesterId_idx_a5f4af92\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"export_requesterId_idx_a5f4af92\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"export_requesterId_idx_a5f4af92\"",
+        "sql": "CREATE INDEX \"export_requesterId_idx_a5f4af92\" ON \"public\".\"export\" (\"requesterId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"export_requesterId_idx_a5f4af92\" exists on \"export\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"export_requesterId_idx_a5f4af92\"",
+          "i",
+          "I",
+          "\"public\".\"export\"",
+          "btree",
+          "[\"requesterId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.export.export_requesterId_fkey",
+    "label": "Add foreign key \"export_requesterId_fkey\" on \"export\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "export_requesterId_fkey",
+        "table": "export"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"export_requesterId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "export_requesterId_fkey",
+          "public",
+          "\"public\".\"export\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"export_requesterId_fkey\" on \"export\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"export_requesterId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"export\"\nADD CONSTRAINT \"export_requesterId_fkey\"\nFOREIGN KEY (\"requesterId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"export_requesterId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "export_requesterId_fkey",
+          "public",
+          "\"public\".\"export\"",
+          "f",
+          "[\"requesterId\"]",
+          "\"public\".\"user\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]
